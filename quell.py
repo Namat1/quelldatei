@@ -4,7 +4,10 @@ import json
 
 st.title("🚛 Kunden nach Tournummer sortiert exportieren")
 
-excel_file = st.file_uploader("Excel-Datei mit Blättern 'Direkt 1 - 99' und 'Hupa MK 882'", type=["xlsx"])
+excel_file = st.file_uploader(
+    "Excel-Datei mit Blättern 'Direkt 1 - 99', 'Hupa MK 882', 'Hupa 2221-4444', 'Hupa 7773-7779'",
+    type=["xlsx"]
+)
 
 if excel_file:
     if st.button("JSON erzeugen – nach Tournummer sortiert"):
@@ -46,11 +49,16 @@ if excel_file:
                         tour_dict[tournr].append(eintrag)
 
             # Blätter einlesen
-            df_direkt = pd.read_excel(excel_file, sheet_name="Direkt 1 - 99")
-            df_mk = pd.read_excel(excel_file, sheet_name="Hupa MK 882")
+            blattnamen = [
+                "Direkt 1 - 99",
+                "Hupa MK 882",
+                "Hupa 2221-4444",
+                "Hupa 7773-7779"
+            ]
 
-            kunden_sammeln(df_direkt)
-            kunden_sammeln(df_mk)
+            for blatt in blattnamen:
+                df = pd.read_excel(excel_file, sheet_name=blatt)
+                kunden_sammeln(df)
 
             # Nach Tournummer sortieren
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda item: int(item[0])))
