@@ -2,14 +2,13 @@ import streamlit as st
 import pandas as pd
 import json
 
-st.title("🚚 Tournummern-basiertes Kundenverzeichnis erzeugen")
+st.title("🚛 Kunden nach Tournummer sortiert exportieren")
 
-excel_file = st.file_uploader("Excel-Datei mit 'Direkt' und 'MK'", type=["xlsx"])
+excel_file = st.file_uploader("Excel-Datei mit Blättern 'Direkt' und 'MK'", type=["xlsx"])
 
 if excel_file:
-    if st.button("JSON nach Tournummern erzeugen"):
+    if st.button("JSON erzeugen – nach Tournummer sortiert"):
         try:
-            # Wochentage + Spaltenindex
             liefertage = {
                 "Montag": 5,
                 "Dienstag": 6,
@@ -19,7 +18,6 @@ if excel_file:
                 "Samstag": 10
             }
 
-            # Dictionary: tournummer → [kunden...]
             tour_dict = {}
 
             def kunden_sammeln(df):
@@ -40,28 +38,28 @@ if excel_file:
                                 tour_dict[tournr] = []
                             tour_dict[tournr].append(eintrag)
 
-            # Blätter einlesen
             df_direkt = pd.read_excel(excel_file, sheet_name="Direkt")
             df_mk = pd.read_excel(excel_file, sheet_name="MK")
 
             kunden_sammeln(df_direkt)
             kunden_sammeln(df_mk)
 
-            # JSON serialisieren
-            json_data = json.dumps(tour_dict, indent=4, ensure_ascii=False)
+            # Nach Tournummern numerisch sortieren
+            sorted_tours = dict(sorted(tour_dict.items(), key=lambda item: int(item[0])))
 
-            st.success(f"{len(tour_dict)} Touren gefunden.")
+            json_data = json.dumps(sorted_tours, indent=4, ensure_ascii=False)
+
+            st.success(f"{len(sorted_tours)} Touren exportiert (sortiert).")
             st.download_button(
-                label="📥 Touren-JSON herunterladen",
+                label="📥 Sortierte JSON-Datei herunterladen",
                 data=json_data.encode("utf-8"),
-                file_name="kunden_nach_tournummer.json",
+                file_name="tourkunden_sortiert.json",
                 mime="application/json"
             )
 
-            # Vorschau einer Tour anzeigen
-            beispiel = next(iter(tour_dict.keys()))
+            beispiel = next(iter(sorted_tours.keys()))
             st.subheader(f"📋 Vorschau Tour {beispiel}")
-            st.json(tour_dict[beispiel])
+            st.json(sorted_tours[beispiel])
 
         except Exception as e:
             st.error(f"Fehler: {e}")
