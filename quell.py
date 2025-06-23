@@ -9,7 +9,7 @@ excel_file = st.file_uploader("Excel-Datei mit Blättern 'Direkt 1 - 99' und 'Hu
 if excel_file:
     if st.button("JSON erzeugen – nach Tournummer sortiert"):
         try:
-            # Liefertage mit entsprechenden Spaltenindizes (0-basiert)
+            # Liefertage: Spaltenindex (0-basiert)
             liefertage = {
                 "Montag": 6,
                 "Dienstag": 7,
@@ -28,30 +28,31 @@ if excel_file:
                         if isinstance(tournr, (int, float)) and not pd.isna(tournr):
                             tournr = str(int(tournr))
                         else:
-                            continue  # ungültige Tournummer (Text/leer) überspringen
+                            continue  # Text oder leer → überspringen
 
                         eintrag = {
-                            "csb_nummer": str(row[0]),
-                            "sap_nummer": str(row[1]),
-                            "name": row[2],
-                            "strasse": row[3],
-                            "postleitzahl": str(row[4]),
-                            "ort": row[5],
+                            "csb_nummer": str(row[0]).strip(),
+                            "sap_nummer": str(row[1]).strip(),
+                            "name": str(row[2]).strip(),
+                            "strasse": str(row[3]).strip(),
+                            "postleitzahl": str(row[4]).strip(),
+                            "ort": str(row[5]).strip(),
                             "liefertag": tag,
-                            "fachberater": str(row[140]) if len(row) > 140 else ""
+                            "fachberater": str(row[140]).strip() if len(row) > 140 else ""
                         }
+
                         if tournr not in tour_dict:
                             tour_dict[tournr] = []
                         tour_dict[tournr].append(eintrag)
 
-            # Excel-Blätter einlesen
+            # Blätter einlesen
             df_direkt = pd.read_excel(excel_file, sheet_name="Direkt 1 - 99")
             df_mk = pd.read_excel(excel_file, sheet_name="Hupa MK 882")
 
             kunden_sammeln(df_direkt)
             kunden_sammeln(df_mk)
 
-            # Tournummern sortieren
+            # Nach Tournummer sortieren
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda item: int(item[0])))
 
             # JSON erzeugen
@@ -59,7 +60,6 @@ if excel_file:
 
             st.success(f"{len(sorted_tours)} Touren exportiert (sortiert).")
 
-            # Download-Button
             st.download_button(
                 label="📥 Sortierte JSON-Datei herunterladen",
                 data=json_data.encode("utf-8"),
@@ -67,7 +67,7 @@ if excel_file:
                 mime="application/json"
             )
 
-            # Vorschau einer Tour anzeigen
+            # Vorschau anzeigen
             if sorted_tours:
                 beispiel = next(iter(sorted_tours.keys()))
                 st.subheader(f"📋 Vorschau: Tour {beispiel}")
