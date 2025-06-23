@@ -9,7 +9,7 @@ excel_file = st.file_uploader("Excel-Datei mit Blättern 'Direkt 1 - 99' und 'Hu
 if excel_file:
     if st.button("JSON erzeugen – nach Tournummer sortiert"):
         try:
-            # Neue Spaltenindizes basierend auf deiner Struktur (0-basiert)
+            # Liefertage mit entsprechenden Spaltenindizes (0-basiert)
             liefertage = {
                 "Montag": 6,
                 "Dienstag": 7,
@@ -25,29 +25,29 @@ if excel_file:
                 for _, row in df.iterrows():
                     for tag, idx in liefertage.items():
                         tournr = row[idx]
-                        # Nur numerische Tournummern verarbeiten
                         if isinstance(tournr, (int, float)) and not pd.isna(tournr):
                             tournr = str(int(tournr))
                         else:
-                            continue  # z. B. "ADENDORF" überspringen
+                            continue  # ungültige Tournummer (Text/leer) überspringen
 
                         eintrag = {
-                            "kundennummer": str(row[0]),
+                            "csb_nummer": str(row[0]),
+                            "sap_nummer": str(row[1]),
                             "name": row[2],
                             "strasse": row[3],
                             "postleitzahl": str(row[4]),
                             "ort": row[5],
-                            "liefertag": tag
+                            "liefertag": tag,
+                            "fachberater": str(row[140]) if len(row) > 140 else ""
                         }
                         if tournr not in tour_dict:
                             tour_dict[tournr] = []
                         tour_dict[tournr].append(eintrag)
 
-            # Blätter einlesen
+            # Excel-Blätter einlesen
             df_direkt = pd.read_excel(excel_file, sheet_name="Direkt 1 - 99")
             df_mk = pd.read_excel(excel_file, sheet_name="Hupa MK 882")
 
-            # Kunden einsammeln
             kunden_sammeln(df_direkt)
             kunden_sammeln(df_mk)
 
