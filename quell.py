@@ -4,7 +4,7 @@ import json
 
 st.title("🚛 Kunden nach Tournummer sortiert exportieren")
 
-excel_file = st.file_uploader("Excel-Datei mit Blättern 'Direkt' und 'MK'", type=["xlsx"])
+excel_file = st.file_uploader("Excel-Datei mit Blättern 'Direkt 1 - 99' und 'Hupa MK 882'", type=["xlsx"])
 
 if excel_file:
     if st.button("JSON erzeugen – nach Tournummer sortiert"):
