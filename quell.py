@@ -12,36 +12,38 @@ excel_file = st.file_uploader(
 if excel_file:
     if st.button("JSON erzeugen – nach Tournummer sortiert"):
         try:
-            # Liefertage: Spaltenindex (0-basiert)
+            # Wochentag → Spaltenname (wie in den Blättern)
             liefertage = {
-                "Montag": 6,
-                "Dienstag": 7,
-                "Mittwoch": 8,
-                "Donnerstag": 9,
-                "Freitag": 10,
-                "Samstag": 11
+                "Montag": "Mo",
+                "Dienstag": "Die",
+                "Mittwoch": "Mitt",
+                "Donnerstag": "Don",
+                "Freitag": "Fr",
+                "Samstag": "Sam"
             }
 
             tour_dict = {}
 
             def kunden_sammeln(df):
                 for _, row in df.iterrows():
-                    for tag, idx in liefertage.items():
-                        tournr = row[idx]
-                        if isinstance(tournr, (int, float)) and not pd.isna(tournr):
-                            tournr = str(int(tournr))
-                        else:
-                            continue  # Text oder leer → überspringen
+                    for tag, spaltenname in liefertage.items():
+                        if spaltenname not in df.columns:
+                            continue  # Spalte fehlt im Blatt
+                        tournr_raw = str(row[spaltenname]).strip()
+                        if not tournr_raw.replace('.', '').isdigit():
+                            continue  # kein gültiger Wert
+
+                        tournr = str(int(float(tournr_raw)))
 
                         eintrag = {
-                            "csb_nummer": str(row[0]).strip(),
-                            "sap_nummer": str(row[1]).strip(),
-                            "name": str(row[2]).strip(),
-                            "strasse": str(row[3]).strip(),
-                            "postleitzahl": str(row[4]).strip(),
-                            "ort": str(row[5]).strip(),
+                            "csb_nummer": str(row.get("Nr", "")).strip(),
+                            "sap_nummer": str(row.get("SAP-Nr.", "")).strip(),
+                            "name": str(row.get("Name", "")).strip(),
+                            "strasse": str(row.get("Strasse", "")).strip(),
+                            "postleitzahl": str(row.get("Plz", "")).strip(),
+                            "ort": str(row.get("Ort", "")).strip(),
                             "liefertag": tag,
-                            "fachberater": str(row[140]).strip() if len(row) > 140 else ""
+                            "fachberater": str(row.get("Fachberater", "")).strip()
                         }
 
                         if tournr not in tour_dict:
