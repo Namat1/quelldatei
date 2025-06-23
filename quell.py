@@ -38,13 +38,14 @@ if excel_file:
                                 tour_dict[tournr] = []
                             tour_dict[tournr].append(eintrag)
 
-            df_direkt = pd.read_excel(excel_file, sheet_name="Direkt")
-            df_mk = pd.read_excel(excel_file, sheet_name="MK")
+            # ❗ Hier neue Blattnamen verwenden
+            df_direkt = pd.read_excel(excel_file, sheet_name="Direkt 1 - 99")
+            df_mk = pd.read_excel(excel_file, sheet_name="Hupa MK 882")
 
             kunden_sammeln(df_direkt)
             kunden_sammeln(df_mk)
 
-            # Nach Tournummern numerisch sortieren
+            # Tournummern numerisch sortieren
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda item: int(item[0])))
 
             json_data = json.dumps(sorted_tours, indent=4, ensure_ascii=False)
