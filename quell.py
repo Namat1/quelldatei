@@ -605,4 +605,5 @@ if excel_file:
         except Exception as e:
             st.error(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
             st.exception(e)
+            
 
