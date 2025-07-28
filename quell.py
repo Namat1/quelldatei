@@ -319,14 +319,7 @@ const buildTourGrid = touren => {
     return box;
 };
 
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            $('#globalSearch').value = t.tournummer;
-            $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            $('#backBtn').style.display = 'inline-block';
-        });
-        tour.appendChild(link);
+       
 
         link.addEventListener('click', () => {
             $('#globalSearch').value = t.tournummer;
