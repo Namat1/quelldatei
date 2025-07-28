@@ -275,8 +275,18 @@ const buildTourGrid = touren => {
     touren.forEach(t => {
         const row = el('div');
         row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #dee2e6;';
-        const tour = el('div', null, t.tournummer);
-        tour.style.cssText = 'padding:6px 10px;color:#007bff;font-weight:600;';
+        const tour = el('div');
+        tour.style.cssText = 'padding:6px 10px;';
+        const link = el('span', null, t.tournummer);
+        link.style.cssText = 'cursor:pointer;color:#007bff;text-decoration:underline;';
+        link.addEventListener('click', () => {
+            $('#globalSearch').value = t.tournummer;
+            $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            $('#backBtn').style.display = 'inline-block';
+        });
+        tour.appendChild(link);
+
         const day = el('div', null, t.liefertag);
         day.style.cssText = 'padding:6px 10px;color:#6c757d;';
         row.append(tour, day);
