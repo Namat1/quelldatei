@@ -277,8 +277,18 @@ const buildTourGrid = touren => {
         row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #dee2e6;';
         const tour = el('div');
         tour.style.cssText = 'padding:6px 10px;';
-        const link = el('span', null, t.tournummer);
-        link.style.cssText = 'cursor:pointer;color:#007bff;text-decoration:underline;';
+        const link = el('a', null, t.tournummer);
+        link.href = "#";
+        link.style.cssText = 'color:#007bff;text-decoration:underline;cursor:pointer;';
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            $('#globalSearch').value = t.tournummer;
+            $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            $('#backBtn').style.display = 'inline-block';
+        });
+        tour.appendChild(link);
+
         link.addEventListener('click', () => {
             $('#globalSearch').value = t.tournummer;
             $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
