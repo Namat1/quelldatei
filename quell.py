@@ -266,6 +266,7 @@ const el = (tag, cls, txt) => {
 const buildTourGrid = touren => {
     const box = el('div');
     box.style.cssText = 'border:1px solid #dee2e6;border-radius:6px;overflow:hidden;font-size:.85rem;';
+
     const head = el('div');
     head.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;background:#f8f9fa;font-weight:600;color:#495057;';
     head.appendChild(el('div', null, '🚛 Tour'));
@@ -275,11 +276,49 @@ const buildTourGrid = touren => {
     touren.forEach(t => {
         const row = el('div');
         row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #dee2e6;';
+
         const tour = el('div');
-        tour.style.cssText = 'padding:6px 10px;';
+        tour.style.cssText = 'padding:6px 10px; font-weight:600; font-family:monospace;';
+
         const link = el('a', null, t.tournummer);
         link.href = "#";
-        link.style.cssText = 'color:#007bff;text-decoration:underline;cursor:pointer;';
+        link.style.cssText = `
+            display: inline-block;
+            color: #007bff;
+            font-weight: 600;
+            font-family: monospace;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s ease, text-decoration 0.2s ease;
+        `;
+
+        link.addEventListener('mouseover', () => {
+            link.style.textDecoration = 'underline';
+        });
+        link.addEventListener('mouseout', () => {
+            link.style.textDecoration = 'none';
+        });
+
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            $('#globalSearch').value = t.tournummer;
+            $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            $('#backBtn').style.display = 'inline-block';
+        });
+
+        tour.appendChild(link);
+
+        const day = el('div', null, t.liefertag);
+        day.style.cssText = 'padding:6px 10px;color:#6c757d;';
+
+        row.append(tour, day);
+        box.appendChild(row);
+    });
+
+    return box;
+};
+
         link.addEventListener('click', (e) => {
             e.preventDefault();
             $('#globalSearch').value = t.tournummer;
