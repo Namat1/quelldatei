@@ -641,8 +641,9 @@ if excel_file:
             # Ersetzt den Platzhalter im Template mit den tatsächlichen JSON-Daten.
             final_html = HTML_TEMPLATE.replace(
                 "const tourkundenData = {  }",
-                f"const tourkundenData = {json_data_string}"
+                f"const tourkundenData = {json_data_string};"
             )
+
 
             # --- ERGEBNISSE ANZEIGEN UND DOWNLOAD ANBIETEN ---
             st.success(f"✅ Erfolgreich! {len(sorted_tours)} Touren verarbeitet. Die HTML-Seite ist fertig.")
