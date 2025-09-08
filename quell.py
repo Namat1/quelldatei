@@ -228,8 +228,8 @@ HTML_TEMPLATE = """
             /* Mobile responsive für Tour/Fachberater Tabellen */
             .tour-entry div:first-child, 
             .fb-entry div:first-child {
-                grid-template-columns: 80px 1fr 70px !important;
-                gap: 8px !important;
+                grid-template-columns: 70px 1fr 60px !important;
+                gap: 5px !important;
                 font-size: .8rem !important;
             }
             
@@ -239,8 +239,6 @@ HTML_TEMPLATE = """
             .fb-entry div:first-child > div:nth-child(3) {
                 display: none;
             }
-        
-        
         }
     </style>
 </head>
