@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 
-# --- HTML-Vorlage mit modernem Design ---
+# --- Kompakte HTML-Vorlage mit RAL-Farben ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -10,28 +10,21 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Kunden-Suche</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
-            --secondary: #64748b;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --background: #f8fafc;
+            --ral-1021: #F3DA0B;      /* Rapsgelb */
+            --ral-5010: #0E294B;      /* Enzianblau */
+            --ral-1021-light: #F8E555; /* Aufgehelltes Rapsgelb */
+            --ral-5010-light: #1E3A5F; /* Aufgehelltes Enzianblau */
+            --background: #fafbfc;
             --surface: #ffffff;
-            --surface-hover: #f1f5f9;
-            --border: #e2e8f0;
-            --border-light: #f1f5f9;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #64748b;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --radius: 12px;
-            --radius-sm: 8px;
+            --surface-alt: #f8f9fa;
+            --border: #e1e5e9;
+            --text-primary: #2c3e50;
+            --text-secondary: #546e7a;
+            --text-muted: #78909c;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
 
         * { 
@@ -41,686 +34,540 @@ HTML_TEMPLATE = """
         }
 
         body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Inter', sans-serif; 
+            background: var(--background);
             color: var(--text-primary);
-            line-height: 1.6;
+            line-height: 1.4;
+            font-size: 14px;
         }
 
-        .main-wrapper { 
-            max-width: 1200px; 
-            width: 100%; 
+        .container { 
+            max-width: 1400px; 
             margin: 0 auto;
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
+            padding: 12px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            padding: 32px;
+            background: linear-gradient(135deg, var(--ral-5010) 0%, var(--ral-5010-light) 100%);
             color: white;
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin-bottom: 12px;
             text-align: center;
         }
 
         .header h1 { 
-            font-size: 2.5rem; 
+            font-size: 1.5rem; 
             font-weight: 700; 
-            margin-bottom: 8px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 4px;
         }
 
         .header p {
-            font-size: 1.1rem;
+            font-size: 0.9rem;
             opacity: 0.9;
-            font-weight: 400;
         }
 
-        .content {
-            padding: 32px;
-        }
-
-        .search-section {
+        .search-bar {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: var(--shadow-sm);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
         }
 
-        .search-container { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 16px; 
-        }
-
-        .search-input-wrapper {
-            position: relative;
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            font-size: 1.2rem;
+        .search-input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
         input[type="text"] { 
-            width: 100%;
-            padding: 16px 16px 16px 50px; 
-            font-size: 1.1rem; 
-            border: 2px solid var(--border); 
-            border-radius: var(--radius-sm); 
-            background: var(--surface); 
-            color: var(--text-primary); 
-            font-weight: 500; 
-            transition: all 0.2s ease;
+            flex: 1;
+            padding: 8px 12px; 
+            border: 1px solid var(--border); 
+            border-radius: 4px; 
+            font-size: 14px;
         }
 
         input[type="text"]:focus { 
             outline: none; 
-            border-color: var(--primary); 
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); 
+            border-color: var(--ral-5010); 
+            box-shadow: 0 0 0 2px rgba(14, 41, 75, 0.1); 
         }
 
-        .search-hint {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-top: -8px;
-        }
-
-        .button-group { 
-            display: flex; 
-            gap: 12px; 
-            flex-wrap: wrap; 
+        .btn-group {
+            display: flex;
+            gap: 6px;
         }
 
         button { 
-            padding: 12px 20px; 
-            font-size: 0.95rem; 
-            font-weight: 600; 
+            padding: 8px 12px; 
+            font-size: 13px; 
+            font-weight: 500; 
             border: none; 
-            border-radius: var(--radius-sm); 
+            border-radius: 4px; 
             cursor: pointer; 
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            transition: all 0.15s ease;
         }
 
         #resetBtn { 
-            background: var(--secondary); 
+            background: var(--text-muted); 
             color: white; 
         } 
         #resetBtn:hover { 
-            background: #475569; 
-            transform: translateY(-1px);
+            background: var(--text-secondary); 
         }
 
         #backBtn { 
             display: none; 
-            background: var(--success); 
-            color: white; 
+            background: var(--ral-1021); 
+            color: var(--ral-5010); 
+            font-weight: 600;
         } 
         #backBtn:hover { 
-            background: #059669; 
-            transform: translateY(-1px);
+            background: var(--ral-1021-light); 
         }
 
-        .stats-info { 
-            font-size: 0.9rem; 
+        .stats { 
+            font-size: 12px; 
             color: var(--text-secondary); 
-            font-weight: 500; 
-            padding: 12px 16px;
-            background: var(--surface-hover);
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-light);
+            margin-top: 4px;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            gap: 12px;
+            min-height: 0;
+        }
+
+        .sidebar {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .main-content {
+            flex: 1;
+            min-height: 0;
         }
 
         .info-box { 
-            margin-bottom: 24px; 
             background: var(--surface); 
             border: 1px solid var(--border); 
-            border-radius: var(--radius); 
+            border-radius: 6px; 
             overflow: hidden;
-            box-shadow: var(--shadow-sm);
+            box-shadow: var(--shadow);
             display: none;
-        }
-
-        .info-box-header { 
-            padding: 16px 20px; 
-            font-weight: 700; 
-            font-size: 1.1rem; 
-            background: var(--surface-hover); 
-            color: var(--text-primary); 
-            border-bottom: 1px solid var(--border);
-        }
-
-        .info-box-content {
             max-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-header { 
+            padding: 8px 12px; 
+            font-weight: 600; 
+            font-size: 13px; 
+            background: var(--surface-alt); 
+            border-bottom: 1px solid var(--border);
+            color: var(--ral-5010);
+        }
+
+        .info-content {
+            flex: 1;
             overflow-y: auto;
+            min-height: 0;
         }
 
-        .entry { 
-            padding: 12px 0; 
-            border-bottom: 1px solid var(--border-light); 
+        .list-item { 
+            padding: 4px 0; 
+            border-bottom: 1px solid #f0f0f0; 
         }
 
-        .entry:last-child {
+        .list-item:last-child {
             border-bottom: none;
         }
 
-        .entry-row { 
+        .list-row { 
             display: grid; 
-            grid-template-columns: 100px 160px 1fr 1.5fr 1.5fr auto; 
+            grid-template-columns: 70px 120px 1fr 1fr auto; 
             align-items: center; 
-            gap: 16px; 
-            padding: 12px 20px; 
-            transition: background-color 0.2s ease;
+            gap: 8px; 
+            padding: 4px 12px; 
+            font-size: 12px;
         }
 
-        .entry-row:hover {
-            background: var(--surface-hover);
+        .list-row:hover {
+            background: var(--surface-alt);
         }
 
-        .entry.alt .entry-row { 
-            background: #fafafa; 
-        }
-
-        .csb-col { 
-            font-weight: 700; 
-            color: var(--primary); 
+        .csb-link { 
+            font-weight: 600; 
+            color: var(--ral-5010); 
             cursor: pointer; 
             text-decoration: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: all 0.2s ease;
+            padding: 2px 4px;
+            border-radius: 3px;
         }
 
-        .csb-col:hover {
-            background: var(--primary);
+        .csb-link:hover {
+            background: var(--ral-5010);
             color: white;
-            transform: translateY(-1px);
         }
 
-        .key-col { 
-            font-weight: 600; 
-            color: var(--text-secondary); 
-            font-size: 0.9rem;
+        .key-info { 
+            font-size: 11px;
+            color: var(--text-muted); 
         }
 
-        .location-col { 
-            font-weight: 600; 
-            color: var(--text-primary); 
-        }
-
-        .street-col { 
+        .location { 
             font-weight: 500; 
-            color: var(--text-secondary); 
-        }
-
-        .name-col { 
-            font-weight: 600; 
             color: var(--text-primary); 
         }
 
-        .action-col a { 
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 6px 12px;
-            background: var(--primary);
-            color: white;
-            text-decoration: none;
-            border-radius: var(--radius-sm);
-            font-size: 0.8rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
+        .street { 
+            color: var(--text-secondary); 
         }
 
-        .action-col a:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
+        .maps-link { 
+            padding: 2px 6px;
+            background: var(--ral-1021);
+            color: var(--ral-5010);
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .maps-link:hover {
+            background: var(--ral-1021-light);
         }
 
         #results { 
+            height: calc(100vh - 140px);
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .customer-grid {
             display: grid;
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 8px;
+            padding: 4px;
         }
 
         .customer-card { 
             background: var(--surface); 
             border: 1px solid var(--border); 
-            border-radius: var(--radius); 
-            box-shadow: var(--shadow-sm); 
-            transition: all 0.3s ease;
-            overflow: hidden;
+            border-radius: 6px; 
+            box-shadow: var(--shadow); 
+            transition: all 0.15s ease;
+            height: fit-content;
         }
 
         .customer-card:hover { 
-            transform: translateY(-4px); 
-            box-shadow: var(--shadow-md); 
+            transform: translateY(-1px); 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12); 
         }
 
         .customer-card.highlighted { 
-            border-left: 4px solid var(--primary); 
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left: 3px solid var(--ral-1021); 
+            background: linear-gradient(135deg, #fffbf0 0%, #fff8e1 100%);
         }
 
         .card-header {
-            padding: 20px;
-            background: var(--surface-hover);
+            padding: 10px 12px;
             border-bottom: 1px solid var(--border);
+            background: var(--surface-alt);
         }
 
         .card-title { 
-            font-size: 1.3rem; 
-            font-weight: 700; 
-            color: var(--text-primary);
-            margin-bottom: 4px;
+            font-size: 14px; 
+            font-weight: 600; 
+            color: var(--ral-5010);
+            margin-bottom: 2px;
         }
 
         .card-subtitle {
-            font-size: 0.9rem;
+            font-size: 11px;
             color: var(--text-muted);
         }
 
-        .card-content {
-            padding: 20px;
+        .card-body {
+            padding: 10px 12px;
         }
 
-        .card-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-            gap: 20px; 
-        }
-
-        .info-panel { 
-            background: var(--surface-hover); 
-            padding: 16px; 
-            border-radius: var(--radius-sm); 
-            border: 1px solid var(--border); 
-        }
-
-        .info-panel h4 {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .info-panel .detail {
+        .card-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             margin-bottom: 8px;
-            color: var(--text-secondary);
+            font-size: 12px;
         }
 
-        .info-panel .detail:last-child {
+        .card-row:last-child {
             margin-bottom: 0;
         }
 
-        .maps-button { 
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            background: var(--primary);
-            color: white;
-            text-decoration: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-top: 12px;
-            transition: all 0.2s ease;
-        }
-
-        .maps-button:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-
-        .tours-panel {
-            grid-column: 1 / -1;
-        }
-
-        .tour-grid {
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            overflow: hidden;
-            margin-top: 12px;
-        }
-
-        .tour-grid-header {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            background: var(--surface-hover);
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .tour-grid-header > div {
-            padding: 12px 16px;
-            border-right: 1px solid var(--border);
-        }
-
-        .tour-grid-header > div:last-child {
-            border-right: none;
-        }
-
-        .tour-grid-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            border-top: 1px solid var(--border);
-        }
-
-        .tour-grid-cell {
-            padding: 12px 16px;
-            border-right: 1px solid var(--border);
-        }
-
-        .tour-grid-cell:last-child {
-            border-right: none;
+        .info-item {
             color: var(--text-secondary);
         }
 
-        .tour-link {
-            color: var(--primary);
-            font-weight: 600;
-            font-family: 'JetBrains Mono', monospace;
-            text-decoration: none;
-            transition: all 0.2s ease;
+        .info-label {
+            font-weight: 500;
+            color: var(--text-primary);
         }
 
-        .tour-link:hover {
-            color: var(--primary-dark);
-            text-decoration: underline;
+        .tours-section {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .tours-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--ral-5010);
+            margin-bottom: 4px;
+        }
+
+        .tour-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .tour-tag {
+            background: var(--ral-5010);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .tour-tag:hover {
+            background: var(--ral-5010-light);
+        }
+
+        .card-maps {
+            margin-top: 8px;
+        }
+
+        .card-maps-btn {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--ral-1021);
+            color: var(--ral-5010);
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .card-maps-btn:hover {
+            background: var(--ral-1021-light);
         }
 
         .hidden { 
             display: none !important; 
         }
 
-        /* Mobile Responsive */
-        @media(max-width: 768px) {
-            body { 
-                padding: 12px; 
-            }
-            
-            .header {
-                padding: 24px 20px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            .search-section {
-                padding: 20px;
-            }
-            
-            input[type="text"] { 
-                padding: 14px 14px 14px 45px;
-                font-size: 1rem;
-            }
-            
-            button { 
-                width: 100%; 
-                justify-content: center;
-            }
-            
-            .card-grid { 
-                grid-template-columns: 1fr; 
-            }
-            
-            .entry-row { 
-                grid-template-columns: 80px 120px 1fr 1fr 1fr auto; 
-                gap: 8px; 
-                font-size: 0.9rem; 
-            }
-        }
-
-        /* Scrollbar Styling */
+        /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         ::-webkit-scrollbar-track {
-            background: var(--border-light);
+            background: var(--surface-alt);
         }
 
         ::-webkit-scrollbar-thumb {
-            background: var(--text-muted);
-            border-radius: 4px;
+            background: var(--border);
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-secondary);
+            background: var(--text-muted);
+        }
+
+        /* Mobile */
+        @media(max-width: 768px) {
+            .container { 
+                padding: 8px; 
+            }
+            
+            .content-area {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                order: 2;
+            }
+            
+            .customer-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-input-row {
+                flex-direction: column;
+            }
+            
+            .btn-group {
+                flex-wrap: wrap;
+            }
+            
+            button {
+                flex: 1;
+                min-width: 120px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="main-wrapper">
+    <div class="container">
         <div class="header">
             <h1>🔍 Kunden-Suche</h1>
-            <p>Intelligente Suche nach Kunden, Touren und Fachberatern</p>
+            <p>Kompakte Übersicht aller Kunden und Touren</p>
         </div>
         
-        <div class="content">
-            <div class="search-section">
-                <div class="search-container">
-                    <div class="search-input-wrapper">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" id="globalSearch" placeholder="Name, Ort, Tour, CSB, SAP, Straße eingeben...">
+        <div class="search-bar">
+            <div class="search-input-row">
+                <input type="text" id="globalSearch" placeholder="Name, Ort, Tour, CSB, SAP, Straße...">
+                <div class="btn-group">
+                    <button id="resetBtn">🔄 Reset</button>
+                    <button id="backBtn">⬅️ Zurück</button>
+                </div>
+            </div>
+            <div class="stats" id="trefferInfo">🔎 0 Ergebnisse</div>
+        </div>
+
+        <div class="content-area">
+            <div class="sidebar">
+                <div id="tourBox" class="info-box">
+                    <div class="info-header">
+                        🚚 Tour <span id="tourNumSpan"></span>
                     </div>
-                    <p class="search-hint">💡 Suche nach Name, Ort, Straße, Tournummer, CSB, SAP, Liefertag oder Fachberater</p>
-                    
-                    <div class="button-group">
-                        <button id="resetBtn">
-                            <span>🔄</span>
-                            Suche zurücksetzen
-                        </button>
-                        <button id="backBtn">
-                            <span>⬅️</span>
-                            Zurück zur Tour-Übersicht
-                        </button>
+                    <div class="info-content" id="tourList"></div>
+                </div>
+                
+                <div id="fachberaterBox" class="info-box">
+                    <div class="info-header">
+                        👤 <span id="fachberaterNameSpan"></span> (<span id="fachberaterCountSpan"></span>)
                     </div>
-                    
-                    <div class="stats-info" id="trefferInfo">
-                        🔎 0 Ergebnisse gefunden
-                    </div>
+                    <div class="info-content" id="fachberaterList"></div>
                 </div>
             </div>
 
-            <div id="tourBox" class="info-box">
-                <div class="info-box-header">
-                    🚚 Tour <span id="tourNumSpan"></span>
+            <div class="main-content">
+                <div id="results">
+                    <div class="customer-grid" id="customerGrid"></div>
                 </div>
-                <div class="info-box-content" id="tourList"></div>
             </div>
-            
-            <div id="fachberaterBox" class="info-box">
-                <div class="info-box-header">
-                    👤 Fachberater: <span id="fachberaterNameSpan"></span> (<span id="fachberaterCountSpan"></span> Märkte)
-                </div>
-                <div class="info-box-content" id="fachberaterList"></div>
-            </div>
-
-            <div id="results"></div>
         </div>
     </div>
 
 <script>
-const tourkundenData = {  }; // <- wird von Python ersetzt, wichtig: Semikolon!
+const tourkundenData = {  }; // <- wird von Python ersetzt
 
-// Helpers
-const $  = sel => document.querySelector(sel);
+const $ = sel => document.querySelector(sel);
 const el = (tag, cls, txt) => { const n = document.createElement(tag); if (cls) n.className = cls; if (txt !== undefined) n.textContent = txt; return n; };
-
-const buildTourGrid = touren => {
-    const box = el('div', 'tour-grid');
-    
-    const head = el('div', 'tour-grid-header');
-    head.appendChild(el('div', null, '🚛 Tour'));
-    head.appendChild(el('div', null, '📦 Liefertag'));
-    box.appendChild(head);
-    
-    touren.forEach(t => {
-        const row = el('div', 'tour-grid-row');
-        
-        const tourCell = el('div', 'tour-grid-cell');
-        const link = el('a', 'tour-link', t.tournummer);
-        link.href = '#';
-        link.addEventListener('click', e => { 
-            e.preventDefault(); 
-            $('#globalSearch').value = t.tournummer; 
-            $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true })); 
-            window.scrollTo({ top: 0, behavior: 'smooth' }); 
-            $('#backBtn').style.display = 'inline-flex'; 
-        });
-        tourCell.appendChild(link);
-        
-        const dayCell = el('div', 'tour-grid-cell', t.liefertag);
-        
-        row.append(tourCell, dayCell); 
-        box.appendChild(row);
-    });
-    
-    return box;
-};
 
 const buildCustomerCard = kunde => {
     const card = el('div', 'customer-card hidden');
     const suchtext = `${kunde.name} ${kunde.strasse} ${kunde.postleitzahl} ${kunde.ort} ${kunde.csb_nummer} ${kunde.sap_nummer} ${kunde.fachberater} ${(kunde.schluessel||'')} ${kunde.touren.map(t => t.tournummer).join(' ')} ${kunde.touren.map(t => t.liefertag).join(' ')}`.toLowerCase();
     card.dataset.search = suchtext;
 
-    const cardHeader = el('div', 'card-header');
-    const cardTitle = el('div', 'card-title', '🏪 ' + kunde.name);
-    const cardSubtitle = el('div', 'card-subtitle', 
-        kunde.schluessel ? `Schlüssel: ${kunde.schluessel}` : 'Kein Schlüssel hinterlegt'
-    );
-    cardHeader.appendChild(cardTitle);
-    cardHeader.appendChild(cardSubtitle);
-    card.appendChild(cardHeader);
+    const header = el('div', 'card-header');
+    const title = el('div', 'card-title', '🏪 ' + kunde.name);
+    const subtitle = el('div', 'card-subtitle', kunde.schluessel ? `Schlüssel: ${kunde.schluessel}` : 'Kein Schlüssel');
+    header.append(title, subtitle);
 
-    const cardContent = el('div', 'card-content');
-    const grid = el('div', 'card-grid');
-
+    const body = el('div', 'card-body');
+    
     const csb = kunde.csb_nummer?.toString().replace(/\\.0$/, '') || '-';
     const sap = kunde.sap_nummer?.toString().replace(/\\.0$/, '') || '-';
     const plz = kunde.postleitzahl?.toString().replace(/\\.0$/, '') || '-';
+
+    const row1 = el('div', 'card-row');
+    row1.innerHTML = `<div class="info-item"><span class="info-label">CSB:</span> ${csb}</div><div class="info-item"><span class="info-label">SAP:</span> ${sap}</div>`;
+    
+    const row2 = el('div', 'card-row');
+    row2.innerHTML = `<div class="info-item"><span class="info-label">Ort:</span> ${kunde.ort}</div><div class="info-item"><span class="info-label">PLZ:</span> ${plz}</div>`;
+    
+    const row3 = el('div', 'card-row');
+    row3.innerHTML = `<div class="info-item" style="grid-column: 1/-1;"><span class="info-label">Straße:</span> ${kunde.strasse}</div>`;
+    
+    const row4 = el('div', 'card-row');
+    row4.innerHTML = `<div class="info-item" style="grid-column: 1/-1;"><span class="info-label">Fachberater:</span> ${kunde.fachberater}</div>`;
+
+    const toursSection = el('div', 'tours-section');
+    const toursTitle = el('div', 'tours-title', '🚛 Touren:');
+    const tourTags = el('div', 'tour-tags');
+    
+    kunde.touren.forEach(t => {
+        const tag = el('span', 'tour-tag', `${t.tournummer} (${t.liefertag})`);
+        tag.addEventListener('click', () => {
+            $('#globalSearch').value = t.tournummer;
+            $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
+            $('#backBtn').style.display = 'inline-block';
+        });
+        tourTags.appendChild(tag);
+    });
+    
+    toursSection.append(toursTitle, tourTags);
+
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(kunde.name + ', ' + kunde.strasse + ', ' + plz + ' ' + kunde.ort)}`;
+    const mapsDiv = el('div', 'card-maps');
+    const mapsBtn = el('a', 'card-maps-btn', '📍 Maps');
+    mapsBtn.href = mapsUrl;
+    mapsBtn.target = '_blank';
+    mapsDiv.appendChild(mapsBtn);
 
-    // Adresse Panel
-    const addrPanel = el('div', 'info-panel');
-    const addrTitle = el('h4', null, '📍 Adresse');
-    addrPanel.appendChild(addrTitle);
-    addrPanel.appendChild(el('div', 'detail', kunde.strasse));
-    addrPanel.appendChild(el('div', 'detail', `${plz} ${kunde.ort}`));
-    const mapBtn = el('a', 'maps-button', '🗺️ Google Maps öffnen'); 
-    mapBtn.href = mapsUrl; 
-    mapBtn.target = '_blank';
-    addrPanel.appendChild(mapBtn);
-    grid.appendChild(addrPanel);
-
-    // Stammdaten Panel
-    const dataPanel = el('div', 'info-panel');
-    const dataTitle = el('h4', null, '📊 Stammdaten');
-    dataPanel.appendChild(dataTitle);
-    dataPanel.appendChild(el('div', 'detail', `🆔 CSB: ${csb}`));
-    dataPanel.appendChild(el('div', 'detail', `🔢 SAP: ${sap}`));
-    dataPanel.appendChild(el('div', 'detail', `👤 Fachberater: ${kunde.fachberater}`));
-    dataPanel.appendChild(el('div', 'detail', `🔑 Schlüssel: ${kunde.schluessel || '-'}`));
-    grid.appendChild(dataPanel);
-
-    // Touren Panel
-    const toursPanel = el('div', 'info-panel tours-panel');
-    const toursTitle = el('h4', null, '🚛 Tourenübersicht');
-    toursPanel.appendChild(toursTitle);
-    toursPanel.appendChild(buildTourGrid(kunde.touren));
-    grid.appendChild(toursPanel);
-
-    cardContent.appendChild(grid);
-    card.appendChild(cardContent);
+    body.append(row1, row2, row3, row4, toursSection, mapsDiv);
+    card.append(header, body);
 
     return card;
 };
 
-const buildTourEntry = (ort, name, strasse, csbNummer, schluessel, mapsUrl, bgAlt) => {
-    const entry = el('div', 'entry' + (bgAlt ? ' alt' : ''));
-    const row = el('div', 'entry-row');
+const buildListEntry = (ort, name, strasse, csbNummer, schluessel, mapsUrl, isAlt) => {
+    const item = el('div', 'list-item' + (isAlt ? ' alt' : ''));
+    const row = el('div', 'list-row');
 
-    const csbDiv = el('div', 'csb-col', csbNummer);
-    csbDiv.title = `Kundenkarte für ${csbNummer} anzeigen`;
+    const csbDiv = el('div', 'csb-link', csbNummer);
     csbDiv.addEventListener('click', () => {
         $('#globalSearch').value = csbNummer;
         $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        $('#backBtn').style.display = 'inline-flex';
+        $('#backBtn').style.display = 'inline-block';
     });
 
-    const sklText = schluessel && schluessel.trim() !== '' ? `Schlüssel: ${schluessel}` : 'Schlüssel: -';
-    const sklDiv = el('div', 'key-col', sklText);
-
-    const ortDiv = el('div', 'location-col', ort);
-    const strDiv = el('div', 'street-col', strasse);
-    const nameDiv = el('div', 'name-col', name);
-
-    const btnDiv = el('div', 'action-col');
-    const link = el('a', null, '📍 Maps'); 
-    link.href = mapsUrl; 
+    const keyDiv = el('div', 'key-info', schluessel ? `S: ${schluessel}` : 'S: -');
+    const ortDiv = el('div', 'location', ort);
+    const nameDiv = el('div', 'street', name);
+    
+    const linkDiv = el('div');
+    const link = el('a', 'maps-link', '📍');
+    link.href = mapsUrl;
     link.target = '_blank';
-    btnDiv.appendChild(link);
+    linkDiv.appendChild(link);
 
-    row.append(csbDiv, sklDiv, ortDiv, strDiv, nameDiv, btnDiv);
-    entry.appendChild(row);
-    return entry;
-};
-
-const buildFachberaterEntry = (kunde, bgAlt) => {
-    const entry = el('div', 'entry' + (bgAlt ? ' alt' : ''));
-    const row = el('div', 'entry-row');
-
-    const csbDiv = el('div', 'csb-col', kunde.csb);
-    csbDiv.title = `Kundenkarte für CSB ${kunde.csb} anzeigen`;
-    csbDiv.addEventListener('click', () => {
-        $('#globalSearch').value = kunde.csb;
-        $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        $('#backBtn').style.display = 'inline-flex';
-    });
-
-    const sklText = kunde.schluessel && kunde.schluessel.trim() !== '' ? `Schlüssel: ${kunde.schluessel}` : 'Schlüssel: -';
-    const sklDiv = el('div', 'key-col', sklText);
-
-    const ortDiv = el('div', 'location-col', kunde.ort);
-    const strDiv = el('div', 'street-col', kunde.strasse);
-    const nameDiv = el('div', 'name-col', kunde.name);
-
-    const btnDiv = el('div', 'action-col');
-    const link = el('a', null, '📍 Maps'); 
-    link.href = kunde.mapsUrl; 
-    link.target = '_blank';
-    btnDiv.appendChild(link);
-
-    row.append(csbDiv, sklDiv, ortDiv, strDiv, nameDiv, btnDiv);
-    entry.appendChild(row);
-    return entry;
+    row.append(csbDiv, keyDiv, ortDiv, nameDiv, linkDiv);
+    item.appendChild(row);
+    return item;
 };
 
 // Main
 let lastTourSearchQuery = '';
 const results = $('#results');
+const customerGrid = $('#customerGrid');
 const treffer = $('#trefferInfo');
 const kundenMap = new Map();
 
@@ -734,11 +581,9 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
         });
     }
 
-    const allCards = [];
     kundenMap.forEach(k => {
         const card = buildCustomerCard(k);
-        results.appendChild(card);
-        allCards.push(card);
+        customerGrid.appendChild(card);
     });
 
     const input = $('#globalSearch');
@@ -774,11 +619,11 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
             if (list.length > 0) {
                 lastTourSearchQuery = tourN;
                 tourList.innerHTML = '';
-                tourNumLbl.textContent = `${tourN} - ${list.length} Kunde${list.length === 1 ? '' : 'n'}`;
+                tourNumLbl.textContent = `${tourN} (${list.length})`;
                 list.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach((kunde, i) => {
-                    tourList.appendChild(buildTourEntry(kunde.ort, kunde.name, kunde.strasse, kunde.csb, kunde.schluessel, kunde.mapsUrl, i % 2 !== 0));
+                    tourList.appendChild(buildListEntry(kunde.ort, kunde.name, kunde.strasse, kunde.csb, kunde.schluessel, kunde.mapsUrl, i % 2 !== 0));
                 });
-                tourBox.style.display = 'block';
+                tourBox.style.display = 'flex';
             }
         }
 
@@ -800,9 +645,9 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                 fachberaterCountSpan.textContent = kundenDesBeraters.length;
                 fachberaterList.innerHTML = '';
                 kundenDesBeraters.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach((kunde, i) => {
-                    fachberaterList.appendChild(buildFachberaterEntry(kunde, i % 2 !== 0));
+                    fachberaterList.appendChild(buildListEntry(kunde.ort, kunde.name, kunde.strasse, kunde.csb, kunde.schluessel, kunde.mapsUrl, i % 2 !== 0));
                 });
-                fachberaterBox.style.display = 'block';
+                fachberaterBox.style.display = 'flex';
             }
         }
 
@@ -813,24 +658,24 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
             else { c.classList.remove('highlighted'); }
         });
 
-        treffer.textContent = `🔎 ${hits} Ergebnis${hits === 1 ? '' : 'se'} gefunden`;
+        treffer.textContent = `🔎 ${hits} Ergebnis${hits === 1 ? '' : 'se'}`;
     });
 
-    document.querySelector('#backBtn').addEventListener('click', () => {
+    $('#backBtn').addEventListener('click', () => {
         if (lastTourSearchQuery) {
             input.value = lastTourSearchQuery;
             input.dispatchEvent(new Event('input', { bubbles: true }));
-            document.querySelector('#backBtn').style.display = 'none';
+            $('#backBtn').style.display = 'none';
         }
     });
 
-    document.querySelector('#resetBtn').addEventListener('click', () => {
+    $('#resetBtn').addEventListener('click', () => {
         input.value = '';
         input.dispatchEvent(new Event('input', { bubbles: true }));
-        document.querySelector('#backBtn').style.display = 'none';
+        $('#backBtn').style.display = 'none';
     });
 } else {
-    document.querySelector('#results').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><h3>❌ Keine Kundendaten gefunden</h3><p>Stellen Sie sicher, dass die "tourkundenData" korrekt geladen wird.</p></div>';
+    customerGrid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><h3>❌ Keine Daten</h3><p>Kundendaten konnten nicht geladen werden.</p></div>';
 }
 </script>
 
@@ -839,13 +684,13 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
 """
 
 # --- UI Setup ---
-st.title("🚛 Kunden-Datenbank als HTML-Seite exportieren")
+st.title("🚛 Kompakte Kunden-Suchseite")
 st.markdown("""
 Laden Sie **zwei** Excel-Dateien hoch:
 1) **Quelldatei** mit den Kundendaten (mehrere Blätter)  
 2) **Schlüsseldatei** mit *CSB in Spalte A* und *Schlüsselnummer in Spalte F*.
 
-Ich erstelle daraus eine interaktive **HTML-Suchseite** (`suche.html`) mit modernem Design und verbesserter Benutzerfreundlichkeit.
+Erstellt eine **kompakte HTML-Suchseite** in RAL 1021 (Rapsgelb) und RAL 5010 (Enzianblau).
 """)
 
 col1, col2 = st.columns(2)
@@ -878,7 +723,7 @@ def build_key_map(key_df: pd.DataFrame) -> dict:
     return mapping
 
 if excel_file and key_file:
-    if st.button("🎨 Moderne HTML-Seite erzeugen", type="primary"):
+    if st.button("🎨 Kompakte HTML-Seite erzeugen", type="primary"):
         BLATTNAMEN = ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]
         LIEFERTAGE_MAPPING = {"Montag": "Mo", "Dienstag": "Die", "Mittwoch": "Mitt", "Donnerstag": "Don", "Freitag": "Fr", "Samstag": "Sam"}
         SPALTEN_MAPPING = {"csb_nummer": "Nr", "sap_nummer": "SAP-Nr.", "name": "Name", "strasse": "Strasse", "postleitzahl": "Plz", "ort": "Ort", "fachberater": "Fachberater"}
@@ -890,7 +735,6 @@ if excel_file and key_file:
                     key_file.seek(0)
                     key_df = pd.read_excel(key_file, sheet_name=0, header=None)
                 key_map = build_key_map(key_df)
-                st.success(f"✅ {len(key_map)} Schlüsselzuordnungen geladen")
 
             tour_dict = {}
             def kunden_sammeln(df: pd.DataFrame):
@@ -906,17 +750,16 @@ if excel_file and key_file:
                         eintrag["liefertag"] = tag
                         tour_dict.setdefault(tournr, []).append(eintrag)
 
-            with st.spinner("📥 Lese und verarbeite Quelldatei..."):
+            with st.spinner("📥 Verarbeite Quelldatei..."):
                 for blatt in BLATTNAMEN:
                     try:
                         df = pd.read_excel(excel_file, sheet_name=blatt)
                         kunden_sammeln(df)
-                        st.info(f"✓ Blatt '{blatt}' verarbeitet")
                     except ValueError:
-                        st.warning(f"⚠️ Blatt '{blatt}' nicht in der Datei gefunden. Wird übersprungen.")
+                        st.warning(f"⚠️ Blatt '{blatt}' nicht gefunden.")
 
             if not tour_dict:
-                st.error("❌ Es konnten keine gültigen Kundendaten gefunden werden.")
+                st.error("❌ Keine gültigen Kundendaten gefunden.")
                 st.stop()
 
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda item: int(item[0])))
@@ -924,14 +767,13 @@ if excel_file and key_file:
 
             final_html = HTML_TEMPLATE.replace("const tourkundenData = {  }", f"const tourkundenData = {json_data_string};")
             
-            st.success(f"🎉 Erfolgreich! {len(sorted_tours)} Touren mit modernem Design verarbeitet.")
+            st.success(f"✅ Kompakte Seite erstellt! {len(sorted_tours)} Touren verarbeitet.")
             
-            # Statistiken anzeigen
             total_customers = sum(len(customers) for customers in sorted_tours.values())
-            st.info(f"📊 **Statistiken:** {len(sorted_tours)} Touren • {total_customers} Kundeneinträge • {len(key_map)} Schlüsselzuordnungen")
+            st.info(f"📊 {len(sorted_tours)} Touren • {total_customers} Kunden • {len(key_map)} Schlüssel")
             
             st.download_button(
-                "📥 Moderne `suche.html` herunterladen", 
+                "📥 Kompakte `suche.html` herunterladen", 
                 data=final_html.encode("utf-8"), 
                 file_name="suche.html", 
                 mime="text/html",
@@ -939,21 +781,21 @@ if excel_file and key_file:
             )
 
         except Exception as e:
-            st.error(f"❌ Ein unerwarteter Fehler ist aufgetreten: {e}")
+            st.error(f"❌ Fehler: {e}")
             st.exception(e)
 elif excel_file and not key_file:
-    st.info("📁 Bitte zusätzlich die **Schlüsseldatei** (A=CSB, F=Schlüssel) hochladen.")
+    st.info("📁 Bitte noch die **Schlüsseldatei** hochladen.")
 elif key_file and not excel_file:
-    st.info("📁 Bitte zusätzlich die **Quelldatei** (Kundendaten) hochladen.")
+    st.info("📁 Bitte noch die **Quelldatei** hochladen.")
 else:
-    st.info("📋 Bitte beide Dateien hochladen, um mit der Verarbeitung zu beginnen.")
+    st.info("📋 Bitte beide Dateien hochladen.")
     st.markdown("""
-    ### ✨ Neue Features des modernen Designs:
-    - **Gradient-Header** mit verbesserter Typografie
-    - **Glassmorphism-Effekte** und moderne Schatten
-    - **Verbesserte Farbpalette** mit CSS Custom Properties
-    - **Responsive Grid-Layout** für alle Bildschirmgrößen  
-    - **Micro-Animations** bei Hover-Effekten
-    - **Optimierte Benutzerführung** mit visuellen Cues
-    - **Bessere Zugänglichkeit** und Kontraste
+    ### ✨ Kompaktes Design Features:
+    - **RAL 1021 (Rapsgelb)** und **RAL 5010 (Enzianblau)** in dezenter Anwendung
+    - **Minimale Abstände** für maximale Informationsdichte
+    - **Sidebar-Layout** mit fester Höhe - kein vertikales Scrollen
+    - **Grid-basierte Kundenkarten** für optimale Raumnutzung
+    - **Kompakte Schriftgrößen** und reduzierte Paddings
+    - **Zweispalten-Layout** für Desktop-Ansichten
+    - **Mobile-optimiert** mit angepasstem Layout
     """)
