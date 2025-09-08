@@ -218,7 +218,7 @@ HTML_TEMPLATE = """
             font-weight: 600;
         }
 
-        @media(max-width: 768px) {
+        @media(max-width: 850px) {
             body { padding: 12px; }
             .main-wrapper { padding: 12px; box-shadow: none; border: 1px solid #d1d9e2; }
             input[type="text"], button { width: 100%; box-sizing: border-box; }
