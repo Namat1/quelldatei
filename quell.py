@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 
-# --- Kompakte HTML-Vorlage mit RAL-Farben ---
+# --- Fancy Minimal HTML mit fester Tour-Übersicht ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -13,10 +13,12 @@ HTML_TEMPLATE = """
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --ral-1021: #F3DA0B;      /* Rapsgelb */
-            --ral-5010: #0E294B;      /* Enzianblau */
-            --ral-1021-light: #F8E555; /* Aufgehelltes Rapsgelb */
-            --ral-5010-light: #1E3A5F; /* Aufgehelltes Enzianblau */
+            --ral-1021: #F3DA0B;
+            --ral-5010: #0E294B;
+            --ral-1021-light: #F8E555;
+            --ral-5010-light: #1E3A5F;
+            --ral-1021-soft: rgba(243, 218, 11, 0.1);
+            --ral-5010-soft: rgba(14, 41, 75, 0.05);
             --background: #fafbfc;
             --surface: #ffffff;
             --surface-alt: #f8f9fa;
@@ -25,6 +27,8 @@ HTML_TEMPLATE = """
             --text-secondary: #546e7a;
             --text-muted: #78909c;
             --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+            --glow: 0 0 20px rgba(243, 218, 11, 0.3);
         }
 
         * { 
@@ -35,16 +39,17 @@ HTML_TEMPLATE = """
 
         body { 
             font-family: 'Inter', sans-serif; 
-            background: var(--background);
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             color: var(--text-primary);
             line-height: 1.4;
             font-size: 14px;
+            overflow-x: hidden;
         }
 
         .container { 
-            max-width: 1400px; 
+            max-width: 1600px; 
             margin: 0 auto;
-            padding: 12px;
+            padding: 8px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -53,103 +58,158 @@ HTML_TEMPLATE = """
         .header {
             background: linear-gradient(135deg, var(--ral-5010) 0%, var(--ral-5010-light) 100%);
             color: white;
-            padding: 16px 20px;
-            border-radius: 6px;
-            margin-bottom: 12px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 8px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg); }
         }
 
         .header h1 { 
-            font-size: 1.5rem; 
+            font-size: 1.4rem; 
             font-weight: 700; 
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+            position: relative;
+            z-index: 1;
         }
 
         .header p {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             opacity: 0.9;
+            position: relative;
+            z-index: 1;
         }
 
         .search-bar {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 12px;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
             box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .search-bar:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-1px);
         }
 
         .search-input-row {
             display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
+            gap: 6px;
+            margin-bottom: 6px;
         }
 
         input[type="text"] { 
             flex: 1;
             padding: 8px 12px; 
-            border: 1px solid var(--border); 
-            border-radius: 4px; 
-            font-size: 14px;
+            border: 2px solid var(--border); 
+            border-radius: 6px; 
+            font-size: 13px;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface-alt) 100%);
         }
 
         input[type="text"]:focus { 
             outline: none; 
-            border-color: var(--ral-5010); 
-            box-shadow: 0 0 0 2px rgba(14, 41, 75, 0.1); 
+            border-color: var(--ral-1021); 
+            box-shadow: var(--glow);
+            transform: scale(1.01);
         }
 
         .btn-group {
             display: flex;
-            gap: 6px;
+            gap: 4px;
         }
 
         button { 
             padding: 8px 12px; 
-            font-size: 13px; 
-            font-weight: 500; 
+            font-size: 12px; 
+            font-weight: 600; 
             border: none; 
-            border-radius: 4px; 
+            border-radius: 6px; 
             cursor: pointer; 
-            transition: all 0.15s ease;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        button:hover::before {
+            width: 100px;
+            height: 100px;
         }
 
         #resetBtn { 
-            background: var(--text-muted); 
+            background: linear-gradient(135deg, var(--text-muted) 0%, var(--text-secondary) 100%); 
             color: white; 
         } 
         #resetBtn:hover { 
-            background: var(--text-secondary); 
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         #backBtn { 
             display: none; 
-            background: var(--ral-1021); 
+            background: linear-gradient(135deg, var(--ral-1021) 0%, var(--ral-1021-light) 100%); 
             color: var(--ral-5010); 
-            font-weight: 600;
+            font-weight: 700;
         } 
         #backBtn:hover { 
-            background: var(--ral-1021-light); 
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: var(--glow);
         }
 
         .stats { 
-            font-size: 12px; 
+            font-size: 11px; 
             color: var(--text-secondary); 
-            margin-top: 4px;
+            margin-top: 2px;
+            font-weight: 500;
         }
 
         .content-area {
             flex: 1;
             display: flex;
-            gap: 12px;
+            gap: 8px;
             min-height: 0;
         }
 
         .sidebar {
-            width: 350px;
+            width: 320px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .main-content {
@@ -160,33 +220,113 @@ HTML_TEMPLATE = """
         .info-box { 
             background: var(--surface); 
             border: 1px solid var(--border); 
-            border-radius: 6px; 
+            border-radius: 8px; 
             overflow: hidden;
             box-shadow: var(--shadow);
             display: none;
-            max-height: 400px;
-            display: flex;
             flex-direction: column;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .info-box:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-1px);
+        }
+
+        .info-box.show {
+            display: flex;
         }
 
         .info-header { 
             padding: 8px 12px; 
-            font-weight: 600; 
-            font-size: 13px; 
-            background: var(--surface-alt); 
+            font-weight: 700; 
+            font-size: 12px; 
+            background: linear-gradient(135deg, var(--ral-5010-soft) 0%, var(--surface-alt) 100%); 
             border-bottom: 1px solid var(--border);
             color: var(--ral-5010);
+            position: relative;
         }
 
-        .info-content {
-            flex: 1;
+        .info-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ral-1021) 0%, transparent 100%);
+        }
+
+        .tour-overview {
+            height: 280px;
+            overflow: hidden;
+            padding: 8px;
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface-alt) 100%);
+        }
+
+        .tour-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 4px;
+            height: 100%;
+        }
+
+        .tour-item {
+            background: linear-gradient(135deg, var(--surface) 0%, var(--ral-5010-soft) 100%);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tour-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(243, 218, 11, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .tour-item:hover::before {
+            left: 100%;
+        }
+
+        .tour-item:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: var(--glow);
+            border-color: var(--ral-1021);
+        }
+
+        .tour-number {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--ral-5010);
+            margin-bottom: 2px;
+        }
+
+        .tour-day {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .fachberater-content {
+            max-height: 300px;
             overflow-y: auto;
-            min-height: 0;
+            padding: 4px;
         }
 
         .list-item { 
-            padding: 4px 0; 
-            border-bottom: 1px solid #f0f0f0; 
+            padding: 3px 0; 
+            border-bottom: 1px solid #f5f5f5; 
         }
 
         .list-item:last-child {
@@ -195,119 +335,147 @@ HTML_TEMPLATE = """
 
         .list-row { 
             display: grid; 
-            grid-template-columns: 70px 120px 1fr 1fr auto; 
+            grid-template-columns: 60px 100px 1fr auto; 
             align-items: center; 
-            gap: 8px; 
-            padding: 4px 12px; 
-            font-size: 12px;
+            gap: 6px; 
+            padding: 4px 8px; 
+            font-size: 11px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
         }
 
         .list-row:hover {
-            background: var(--surface-alt);
+            background: linear-gradient(135deg, var(--ral-1021-soft) 0%, var(--surface-alt) 100%);
+            transform: translateX(2px);
         }
 
         .csb-link { 
-            font-weight: 600; 
+            font-weight: 700; 
             color: var(--ral-5010); 
             cursor: pointer; 
             text-decoration: none;
             padding: 2px 4px;
             border-radius: 3px;
+            transition: all 0.2s ease;
         }
 
         .csb-link:hover {
             background: var(--ral-5010);
             color: white;
+            transform: scale(1.1);
         }
 
         .key-info { 
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-muted); 
+            font-weight: 500;
         }
 
         .location { 
-            font-weight: 500; 
+            font-weight: 600; 
             color: var(--text-primary); 
-        }
-
-        .street { 
-            color: var(--text-secondary); 
         }
 
         .maps-link { 
             padding: 2px 6px;
-            background: var(--ral-1021);
+            background: linear-gradient(135deg, var(--ral-1021) 0%, var(--ral-1021-light) 100%);
             color: var(--ral-5010);
             text-decoration: none;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: 600;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            transition: all 0.2s ease;
         }
 
         .maps-link:hover {
-            background: var(--ral-1021-light);
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(243, 218, 11, 0.4);
         }
 
         #results { 
-            height: calc(100vh - 140px);
+            height: calc(100vh - 120px);
             overflow-y: auto;
             padding-right: 4px;
         }
 
         .customer-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 8px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 6px;
             padding: 4px;
         }
 
         .customer-card { 
-            background: var(--surface); 
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface-alt) 100%); 
             border: 1px solid var(--border); 
-            border-radius: 6px; 
+            border-radius: 8px; 
             box-shadow: var(--shadow); 
-            transition: all 0.15s ease;
+            transition: all 0.3s ease;
             height: fit-content;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .customer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--ral-1021) 0%, var(--ral-5010) 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .customer-card:hover::before {
+            transform: scaleX(1);
         }
 
         .customer-card:hover { 
-            transform: translateY(-1px); 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12); 
+            transform: translateY(-3px) scale(1.02); 
+            box-shadow: var(--shadow-hover); 
         }
 
         .customer-card.highlighted { 
-            border-left: 3px solid var(--ral-1021); 
-            background: linear-gradient(135deg, #fffbf0 0%, #fff8e1 100%);
+            border-color: var(--ral-1021); 
+            background: linear-gradient(135deg, var(--ral-1021-soft) 0%, var(--surface) 100%);
+            box-shadow: var(--glow);
+        }
+
+        .customer-card.highlighted::before {
+            transform: scaleX(1);
         }
 
         .card-header {
-            padding: 10px 12px;
+            padding: 8px 10px;
             border-bottom: 1px solid var(--border);
-            background: var(--surface-alt);
+            background: linear-gradient(135deg, var(--surface-alt) 0%, var(--surface) 100%);
         }
 
         .card-title { 
-            font-size: 14px; 
-            font-weight: 600; 
+            font-size: 13px; 
+            font-weight: 700; 
             color: var(--ral-5010);
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
         .card-subtitle {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-muted);
+            font-weight: 500;
         }
 
         .card-body {
-            padding: 10px 12px;
+            padding: 8px 10px;
         }
 
         .card-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 8px;
-            font-size: 12px;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
         }
 
         .card-row:last-child {
@@ -319,19 +487,19 @@ HTML_TEMPLATE = """
         }
 
         .info-label {
-            font-weight: 500;
-            color: var(--text-primary);
+            font-weight: 600;
+            color: var(--ral-5010);
         }
 
         .tours-section {
-            margin-top: 8px;
-            padding-top: 8px;
+            margin-top: 6px;
+            padding-top: 6px;
             border-top: 1px solid var(--border);
         }
 
         .tours-title {
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 10px;
+            font-weight: 700;
             color: var(--ral-5010);
             margin-bottom: 4px;
         }
@@ -339,69 +507,92 @@ HTML_TEMPLATE = """
         .tour-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 4px;
+            gap: 3px;
         }
 
         .tour-tag {
-            background: var(--ral-5010);
+            background: linear-gradient(135deg, var(--ral-5010) 0%, var(--ral-5010-light) 100%);
             color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: 500;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tour-tag::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.3s ease;
+        }
+
+        .tour-tag:hover::before {
+            left: 100%;
         }
 
         .tour-tag:hover {
-            background: var(--ral-5010-light);
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(14, 41, 75, 0.3);
         }
 
         .card-maps {
-            margin-top: 8px;
+            margin-top: 6px;
         }
 
         .card-maps-btn {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             padding: 4px 8px;
-            background: var(--ral-1021);
+            background: linear-gradient(135deg, var(--ral-1021) 0%, var(--ral-1021-light) 100%);
             color: var(--ral-5010);
             text-decoration: none;
             border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 10px;
+            font-weight: 700;
+            transition: all 0.3s ease;
         }
 
         .card-maps-btn:hover {
-            background: var(--ral-1021-light);
+            transform: scale(1.05);
+            box-shadow: var(--glow);
         }
 
         .hidden { 
             display: none !important; 
         }
 
-        /* Scrollbar */
+        /* Scrollbar Styling */
         ::-webkit-scrollbar {
-            width: 6px;
+            width: 4px;
         }
 
         ::-webkit-scrollbar-track {
             background: var(--surface-alt);
+            border-radius: 2px;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 3px;
+            background: linear-gradient(135deg, var(--ral-1021) 0%, var(--ral-5010) 100%);
+            border-radius: 2px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
+            background: linear-gradient(135deg, var(--ral-5010) 0%, var(--ral-1021) 100%);
         }
 
         /* Mobile */
         @media(max-width: 768px) {
             .container { 
-                padding: 8px; 
+                padding: 6px; 
             }
             
             .content-area {
@@ -427,7 +618,11 @@ HTML_TEMPLATE = """
             
             button {
                 flex: 1;
-                min-width: 120px;
+                min-width: 100px;
+            }
+
+            .tour-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             }
         }
     </style>
@@ -436,7 +631,7 @@ HTML_TEMPLATE = """
     <div class="container">
         <div class="header">
             <h1>🔍 Kunden-Suche</h1>
-            <p>Kompakte Übersicht aller Kunden und Touren</p>
+            <p>Intelligente Übersicht mit Stil</p>
         </div>
         
         <div class="search-bar">
@@ -456,14 +651,14 @@ HTML_TEMPLATE = """
                     <div class="info-header">
                         🚚 Tour <span id="tourNumSpan"></span>
                     </div>
-                    <div class="info-content" id="tourList"></div>
+                    <div class="tour-overview" id="tourOverview"></div>
                 </div>
                 
                 <div id="fachberaterBox" class="info-box">
                     <div class="info-header">
                         👤 <span id="fachberaterNameSpan"></span> (<span id="fachberaterCountSpan"></span>)
                     </div>
-                    <div class="info-content" id="fachberaterList"></div>
+                    <div class="fachberater-content" id="fachberaterList"></div>
                 </div>
             </div>
 
@@ -538,6 +733,27 @@ const buildCustomerCard = kunde => {
     return card;
 };
 
+const buildTourGrid = touren => {
+    const grid = el('div', 'tour-grid');
+    
+    touren.forEach(t => {
+        const item = el('div', 'tour-item');
+        const number = el('div', 'tour-number', t.tournummer);
+        const day = el('div', 'tour-day', t.liefertag);
+        
+        item.addEventListener('click', () => {
+            $('#globalSearch').value = t.tournummer;
+            $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
+            $('#backBtn').style.display = 'inline-block';
+        });
+        
+        item.append(number, day);
+        grid.appendChild(item);
+    });
+    
+    return grid;
+};
+
 const buildListEntry = (ort, name, strasse, csbNummer, schluessel, mapsUrl, isAlt) => {
     const item = el('div', 'list-item' + (isAlt ? ' alt' : ''));
     const row = el('div', 'list-row');
@@ -550,8 +766,7 @@ const buildListEntry = (ort, name, strasse, csbNummer, schluessel, mapsUrl, isAl
     });
 
     const keyDiv = el('div', 'key-info', schluessel ? `S: ${schluessel}` : 'S: -');
-    const ortDiv = el('div', 'location', ort);
-    const nameDiv = el('div', 'street', name);
+    const nameDiv = el('div', 'location', name.substring(0, 20) + (name.length > 20 ? '...' : ''));
     
     const linkDiv = el('div');
     const link = el('a', 'maps-link', '📍');
@@ -559,7 +774,7 @@ const buildListEntry = (ort, name, strasse, csbNummer, schluessel, mapsUrl, isAl
     link.target = '_blank';
     linkDiv.appendChild(link);
 
-    row.append(csbDiv, keyDiv, ortDiv, nameDiv, linkDiv);
+    row.append(csbDiv, keyDiv, nameDiv, linkDiv);
     item.appendChild(row);
     return item;
 };
@@ -588,7 +803,7 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
 
     const input = $('#globalSearch');
     const tourBox = $('#tourBox');
-    const tourList = $('#tourList');
+    const tourOverview = $('#tourOverview');
     const tourNumLbl = $('#tourNumSpan');
     const fachberaterBox = $('#fachberaterBox');
     const fachberaterList = $('#fachberaterList');
@@ -601,29 +816,35 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
         const q = input.value.trim().toLowerCase();
         let hits = 0;
 
-        tourBox.style.display = 'none';
-        fachberaterBox.style.display = 'none';
+        tourBox.classList.remove('show');
+        fachberaterBox.classList.remove('show');
 
         const tourMatch = q.match(/^\\d{4}$/);
         if (tourMatch) {
             const tourN = tourMatch[0];
             const list = [];
+            const tourData = [];
+            
             kundenMap.forEach(k => {
                 if (k.touren.some(t => t.tournummer === tourN)) {
                     const plz = k.postleitzahl?.toString().replace(/\\.0$/, '') || '';
                     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(k.name + ', ' + k.strasse + ', ' + plz + ' ' + k.ort)}`;
                     list.push({ ort: k.ort, name: k.name, strasse: k.strasse, csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-', schluessel: k.schluessel || '', mapsUrl });
+                    
+                    k.touren.forEach(t => {
+                        if (t.tournummer === tourN && !tourData.some(td => td.tournummer === t.tournummer && td.liefertag === t.liefertag)) {
+                            tourData.push({ tournummer: t.tournummer, liefertag: t.liefertag });
+                        }
+                    });
                 }
             });
 
             if (list.length > 0) {
                 lastTourSearchQuery = tourN;
-                tourList.innerHTML = '';
-                tourNumLbl.textContent = `${tourN} (${list.length})`;
-                list.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach((kunde, i) => {
-                    tourList.appendChild(buildListEntry(kunde.ort, kunde.name, kunde.strasse, kunde.csb, kunde.schluessel, kunde.mapsUrl, i % 2 !== 0));
-                });
-                tourBox.style.display = 'flex';
+                tourOverview.innerHTML = '';
+                tourNumLbl.textContent = `${tourN} (${list.length} Kunden)`;
+                tourOverview.appendChild(buildTourGrid(tourData));
+                tourBox.classList.add('show');
             }
         }
 
@@ -647,7 +868,7 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                 kundenDesBeraters.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach((kunde, i) => {
                     fachberaterList.appendChild(buildListEntry(kunde.ort, kunde.name, kunde.strasse, kunde.csb, kunde.schluessel, kunde.mapsUrl, i % 2 !== 0));
                 });
-                fachberaterBox.style.display = 'flex';
+                fachberaterBox.classList.add('show');
             }
         }
 
@@ -673,6 +894,8 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
         input.value = '';
         input.dispatchEvent(new Event('input', { bubbles: true }));
         $('#backBtn').style.display = 'none';
+        tourBox.classList.remove('show');
+        fachberaterBox.classList.remove('show');
     });
 } else {
     customerGrid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><h3>❌ Keine Daten</h3><p>Kundendaten konnten nicht geladen werden.</p></div>';
@@ -684,13 +907,13 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
 """
 
 # --- UI Setup ---
-st.title("🚛 Kompakte Kunden-Suchseite")
+st.title("🚛 Fancy Minimale Kunden-Suchseite")
 st.markdown("""
 Laden Sie **zwei** Excel-Dateien hoch:
 1) **Quelldatei** mit den Kundendaten (mehrere Blätter)  
 2) **Schlüsseldatei** mit *CSB in Spalte A* und *Schlüsselnummer in Spalte F*.
 
-Erstellt eine **kompakte HTML-Suchseite** in RAL 1021 (Rapsgelb) und RAL 5010 (Enzianblau).
+Erstellt eine **fancy-minimale HTML-Suchseite** mit fester Tour-Übersicht und eleganten Animationen.
 """)
 
 col1, col2 = st.columns(2)
@@ -723,7 +946,7 @@ def build_key_map(key_df: pd.DataFrame) -> dict:
     return mapping
 
 if excel_file and key_file:
-    if st.button("🎨 Kompakte HTML-Seite erzeugen", type="primary"):
+    if st.button("✨ Fancy Minimale HTML-Seite erzeugen", type="primary"):
         BLATTNAMEN = ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]
         LIEFERTAGE_MAPPING = {"Montag": "Mo", "Dienstag": "Die", "Mittwoch": "Mitt", "Donnerstag": "Don", "Freitag": "Fr", "Samstag": "Sam"}
         SPALTEN_MAPPING = {"csb_nummer": "Nr", "sap_nummer": "SAP-Nr.", "name": "Name", "strasse": "Strasse", "postleitzahl": "Plz", "ort": "Ort", "fachberater": "Fachberater"}
@@ -767,13 +990,13 @@ if excel_file and key_file:
 
             final_html = HTML_TEMPLATE.replace("const tourkundenData = {  }", f"const tourkundenData = {json_data_string};")
             
-            st.success(f"✅ Kompakte Seite erstellt! {len(sorted_tours)} Touren verarbeitet.")
+            st.success(f"✨ Fancy minimale Seite erstellt! {len(sorted_tours)} Touren verarbeitet.")
             
             total_customers = sum(len(customers) for customers in sorted_tours.values())
             st.info(f"📊 {len(sorted_tours)} Touren • {total_customers} Kunden • {len(key_map)} Schlüssel")
             
             st.download_button(
-                "📥 Kompakte `suche.html` herunterladen", 
+                "📥 Fancy Minimale `suche.html` herunterladen", 
                 data=final_html.encode("utf-8"), 
                 file_name="suche.html", 
                 mime="text/html",
@@ -790,12 +1013,13 @@ elif key_file and not excel_file:
 else:
     st.info("📋 Bitte beide Dateien hochladen.")
     st.markdown("""
-    ### ✨ Kompaktes Design Features:
-    - **RAL 1021 (Rapsgelb)** und **RAL 5010 (Enzianblau)** in dezenter Anwendung
-    - **Minimale Abstände** für maximale Informationsdichte
-    - **Sidebar-Layout** mit fester Höhe - kein vertikales Scrollen
-    - **Grid-basierte Kundenkarten** für optimale Raumnutzung
-    - **Kompakte Schriftgrößen** und reduzierte Paddings
-    - **Zweispalten-Layout** für Desktop-Ansichten
-    - **Mobile-optimiert** mit angepasstem Layout
+    ### ✨ Fancy Minimale Features:
+    - **RAL 1021 & 5010** in dezenten Gradienten und Glows
+    - **Feste Tour-Übersicht** (280px, kein Scrollen) mit Grid-Layout
+    - **Animierte Hover-Effekte** und Micro-Interactions
+    - **Shimmer-Animationen** im Header und bei Buttons
+    - **Gradient-Scrollbars** in Firmenfarben
+    - **Glassmorphism-Effekte** mit Backdrop-Filter
+    - **Glow-Schatten** für highlighted Elemente
+    - **Smooth Transitions** für alle Interaktionen
     """)
