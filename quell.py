@@ -239,6 +239,7 @@ HTML_TEMPLATE = """
             .fb-entry div:first-child > div:nth-child(3) {
                 display: none;
             }
+        
         }
     </style>
 </head>
