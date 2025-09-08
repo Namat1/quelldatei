@@ -932,7 +932,7 @@ st.title("🚛 Tour-Übersicht Kunden-Suchseite")
 st.markdown("""
 Laden Sie **zwei** Excel-Dateien hoch:
 1) **Quelldatei** mit den Kundendaten (mehrere Blätter)  
-2) **Schlüsseldatei** mit *CSB in Spalte A* und *Schlüsselnummer in Spalte F*.
+2) **Schlüsseldatei** mit *CSB in Spalte A* und *Schlüsselnummer in Spalte F*
 
 Erstellt eine **Tour-fokussierte HTML-Suchseite** mit zentraler Übersicht bei Tour-Eingabe.
 """)
