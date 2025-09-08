@@ -1028,21 +1028,21 @@ if excel_file and key_file:
             st.error(f"❌ Fehler: {e}")
             st.exception(e)
 elif excel_file and not key_file:
-    st.info("📁 Bitte noch die **Schlüsseldatei** hochladen.")
+    st.info("📁 Bitte noch die Schlüsseldatei hochladen.")
 elif key_file and not excel_file:
-    st.info("📁 Bitte noch die **Quelldatei** hochladen.")
+    st.info("📁 Bitte noch die Quelldatei hochladen.")
 else:
     st.info("📋 Bitte beide Dateien hochladen.")
     st.markdown("""
     ### 🎯 Tour-Übersicht Features:
-    - **Zentrale Tour-Anzeige** bei Eingabe einer 4-stelligen Tournummer
-    - **Vollbild-Overlay** mit scrollbarem Inhalt über allem anderen
-    - **Detaillierte Kundenkarten** mit allen wichtigen Informationen
-    - **Tour-Statistiken** mit Aufschlüsselung nach Liefertagen
-    - **Direkte Aktionen** pro Kunde (Google Maps, Details anzeigen)
-    - **Sortierte Darstellung** nach CSB-Nummern
-    - **Responsive Design** mit eleganten Animationen
-    - **ESC-Taste** oder Klick außerhalb schließt die Übersicht
+    - Zentrale Tour-Anzeige bei Eingabe einer 4-stelligen Tournummer
+    - Vollbild-Overlay mit scrollbarem Inhalt über allem anderen
+    - Detaillierte Kundenkarten mit allen wichtigen Informationen
+    - Tour-Statistiken mit Aufschlüsselung nach Liefertagen
+    - Direkte Aktionen pro Kunde (Google Maps, Details anzeigen)
+    - Sortierte Darstellung nach CSB-Nummern
+    - Responsive Design mit eleganten Animationen
+    - ESC-Taste oder Klick außerhalb schließt die Übersicht
     """)
 
 } else {
