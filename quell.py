@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 import json
-import io
 
-# --- HTML-Vorlage (mit Schlüsselnummer in Karten + Übersichten) ---
+# --- HTML-Vorlage ---
+# Der Platzhalter "const tourkundenData = {  }" wird später ersetzt.
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -26,7 +26,7 @@ HTML_TEMPLATE = """
         }
 
         .main-wrapper {
-            max-width: 1200px;
+            max-width: 900px;
             width: 100%;
             background: #ffffff;
             border-radius: 8px;
@@ -136,36 +136,30 @@ HTML_TEMPLATE = """
             border-top: 1px solid #dee2e6;
         }
 
+        /* ===== Grid-Layout für klare Spalten (Farben wie im Original bleiben) ===== */
         .tour-entry {
             padding: 6px 0;
             border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+            font-family: monospace;
+            color: #343a40;
         }
-
         .tour-entry > div {
             display: grid;
-            grid-template-columns: 80px 1fr auto; /* Schlüssel, Name, Buttons */
+            grid-template-columns: 80px 1fr 1.5fr 1.5fr auto; /* CSB | Ort | Straße | Name | Button */
             align-items: center;
-            gap: 12px;
+            gap: .75rem;
             background: #ffffff;
             padding: 4px 6px;
             border-radius: 4px;
         }
+        .tour-entry.alt > div { background: #f8f9fa; }
 
-        .tour-entry .name-field {
-            font-weight: 600;
-            color: #343a40;
-            display: flex;
-            align-items: center;
-            gap: .5rem;
-        }
-
-        .tour-entry .key-field {
-            font-family: monospace;
-            color: #6c757d;
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: underline;
-        }
+        .key-col   { font-weight: 700; color: #990033; cursor: pointer; text-decoration: underline; }
+        .name-col  { font-weight: 600; color: #343a40; font-family: inherit; }
+        .ort-col   { font-weight: 700; color: #343a40; font-family: inherit; }
+        .str-col   { font-weight: 500; color: #343a40; font-family: inherit; }
+        .btn-col a { display:inline-block;padding:1px 4px;background:#007bff;color:#ffffff;text-decoration:none;border-radius:4px;font-size:.70rem;font-weight:600; }
 
         #results {
             display: flex;
@@ -227,67 +221,30 @@ HTML_TEMPLATE = """
             padding: 6px 0;
             border-bottom: 1px solid #e9ecef;
         }
-
         .fb-entry > div {
             display: grid;
-            grid-template-columns: 80px 1fr auto; /* Schlüssel, Name, Buttons */
+            grid-template-columns: 80px 1fr 1.5fr 1.5fr auto; /* CSB | Ort | Straße | Name | Button */
             align-items: center;
-            gap: 12px;
+            gap: .75rem;
             background: #ffffff;
             padding: 4px 6px;
             border-radius: 4px;
         }
+        .fb-entry.alt > div { background: #f8f9fa; }
 
-        .fb-entry .name-field {
-            font-weight: 600;
-            color: #343a40;
-            display: flex;
-            align-items: center;
-            gap: .5rem;
-        }
+        .hidden { display: none; }
 
-        .fb-entry .key-field {
-            font-family: monospace;
-            color: #6c757d;
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .badge {
-            font-size: .72rem;
-            padding: 2px 6px;
-            border: 1px solid #d0d7de;
-            border-radius: 999px;
-            background: #f6f8fa;
-            color: #57606a;
-            font-weight: 600;
-        }
-
-        @media(max-width: 850px) {
+        @media(max-width: 768px) {
             body { padding: 12px; }
             .main-wrapper { padding: 12px; box-shadow: none; border: 1px solid #d1d9e2; }
             input[type="text"], button { width: 100%; box-sizing: border-box; }
             h1 { font-size: 1.2rem; }
             .kunde { font-size: .85rem; padding: 10px; }
-
             .tour-entry > div,
             .fb-entry > div {
-                grid-template-columns: 70px 1fr auto !important;
-                gap: 8px !important;
-                font-size: .8rem !important;
-            }
-
-            /* Sichtbar lassen (Name + Schlüssel + Buttons) */
-            .tour-entry div:first-child > div:nth-child(2),
-            .tour-entry div:first-child > div:nth-child(3),
-            .fb-entry div:first-child > div:nth-child(2),
-            .fb-entry div:first-child > div:nth-child(3) {
-                display: initial;
+                grid-template-columns: 70px 1fr 1fr 1fr auto; /* etwas kompakter mobil */
+                gap: 8px;
+                font-size: .8rem;
             }
         }
     </style>
@@ -296,14 +253,14 @@ HTML_TEMPLATE = """
     <div class="main-wrapper">
         <h1>🔍 Suche</h1>
         <div class="suche-container">
-            <input type="text" id="globalSearch" placeholder="Name, Ort, Tour, CSB, SAP, Straße, Schlüssel...">
-            <p style="font-size:.8rem;color:#6c757d;margin:-2px 0 8px 0;">🔤 Suche nach Name, Ort, Straße, Tournummer, CSB, SAP, Schlüssel, Liefertag oder Fachberater</p>
-
+            <input type="text" id="globalSearch" placeholder="Name, Ort, Tour, CSB, SAP, Straße...">
+            <p style="font-size:.8rem;color:#6c757d;margin:-2px 0 8px 0;">🔤 Suche nach Name, Ort, Straße, Tournummer, CSB, SAP, Liefertag oder Fachberater</p>
+            
             <div class="button-group">
                 <button id="resetBtn">Suche zurücksetzen</button>
                 <button id="backBtn">Zurück zur Tour-Übersicht</button>
             </div>
-
+            
             <p id="trefferInfo">🔎 0 Ergebnisse</p>
         </div>
 
@@ -311,7 +268,7 @@ HTML_TEMPLATE = """
             <div id="tourBoxTitle">🚚 Tour <span id="tourNumSpan"></span></div>
             <div id="tourList"></div>
         </div>
-
+        
         <div id="fachberaterBox">
             <div id="fachberaterBoxTitle">👤 Fachberater: <span id="fachberaterNameSpan"></span> (<span id="fachberaterCountSpan"></span> Märkte)</div>
             <div id="fachberaterList"></div>
@@ -385,12 +342,10 @@ const buildTourGrid = touren => {
 
 const buildCustomerCard = kunde => {
     const card = el('div', 'kunde hidden');
-
-    const suchtext = `${kunde.name} ${kunde.strasse} ${kunde.postleitzahl} ${kunde.ort} ${kunde.csb_nummer} ${kunde.sap_nummer} ${kunde.fachberater} ${kunde.schluessel||''} ${kunde.touren.map(t => t.tournummer).join(' ')} ${kunde.touren.map(t => t.liefertag).join(' ')}`.toLowerCase();
+    const suchtext = `${kunde.name} ${kunde.strasse} ${kunde.postleitzahl} ${kunde.ort} ${kunde.csb_nummer} ${kunde.sap_nummer} ${kunde.fachberater} ${kunde.touren.map(t => t.tournummer).join(' ')} ${kunde.touren.map(t => t.liefertag).join(' ')}`.toLowerCase();
     card.dataset.search = suchtext;
 
-    const nameLine = '🏪 ' + kunde.name + (kunde.schluessel ? ' — Schlüssel: ' + kunde.schluessel : '');
-    card.appendChild(el('div', 'row1', nameLine));
+    card.appendChild(el('div', 'row1', '🏪 ' + kunde.name));
 
     const grid = el('div');
     grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:8px;font-size:.85rem;';
@@ -430,66 +385,60 @@ const buildCustomerCard = kunde => {
     return card;
 };
 
-// Tour-Übersicht: Schlüssel (CSB) | Name(+Schlüssel-Badge) | Buttons
-const buildTourEntry = (csbNummer, name, mapsUrl, schluessel) => {
-    const entry = el('div', 'tour-entry');
+/* ==== Tour-Übersicht: CSB | Ort | Straße | Name | Button ==== */
+const buildTourEntry = (ort, name, strasse, csbNummer, mapsUrl, bgAlt) => {
+    const entry = el('div', 'tour-entry' + (bgAlt ? ' alt' : ''));
     const row = el('div');
 
-    const keyDiv = el('div', 'key-field', csbNummer);
-    keyDiv.title = `Kundenkarte für ${csbNummer} anzeigen`;
-    keyDiv.addEventListener('click', () => {
+    const csbDiv  = el('div', 'key-col', csbNummer);
+    csbDiv.title = `Kundenkarte für ${csbNummer} anzeigen`;
+    csbDiv.addEventListener('click', () => {
         $('#globalSearch').value = csbNummer;
         $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
         window.scrollTo({ top: 0, behavior: 'smooth' });
         $('#backBtn').style.display = 'inline-block';
     });
 
-    const nameWrap = el('div', 'name-field');
-    nameWrap.appendChild(el('span', null, name));
-    if (schluessel && schluessel.trim() !== '') {
-        nameWrap.appendChild(el('span', 'badge', `Schlüssel: ${schluessel}`));
-    }
+    const ortDiv  = el('div', 'ort-col', ort);
+    const strDiv  = el('div', 'str-col', strasse);
+    const nameDiv = el('div', 'name-col', name);
 
-    const btnWrap = el('div');
+    const btnDiv = el('div', 'btn-col');
     const link = el('a', null, '📍 Maps');
     link.href = mapsUrl;
     link.target = '_blank';
-    link.style.cssText = 'display:inline-block;padding:2px 8px;background:#007bff;color:#ffffff;text-decoration:none;border-radius:4px;font-size:.80rem;font-weight:600;';
-    btnWrap.appendChild(link);
+    btnDiv.appendChild(link);
 
-    row.append(keyDiv, nameWrap, btnWrap);
+    row.append(csbDiv, ortDiv, strDiv, nameDiv, btnDiv);
     entry.appendChild(row);
     return entry;
 };
 
-// Fachberater-Übersicht: Schlüssel (CSB) | Name(+Schlüssel-Badge) | Buttons
-const buildFachberaterEntry = (kunde) => {
-    const entry = el('div', 'fb-entry');
+/* ==== Fachberater-Übersicht: CSB | Ort | Straße | Name | Button ==== */
+const buildFachberaterEntry = (kunde, bgAlt) => {
+    const entry = el('div', 'fb-entry' + (bgAlt ? ' alt' : ''));
     const row = el('div');
 
-    const keyDiv = el('div', 'key-field', kunde.csb);
-    keyDiv.title = `Kundenkarte für CSB ${kunde.csb} anzeigen`;
-    keyDiv.addEventListener('click', () => {
+    const csbDiv  = el('div', 'key-col', kunde.csb);
+    csbDiv.title = `Kundenkarte für CSB ${kunde.csb} anzeigen`;
+    csbDiv.addEventListener('click', () => {
         $('#globalSearch').value = kunde.csb;
         $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
         window.scrollTo({ top: 0, behavior: 'smooth' });
         $('#backBtn').style.display = 'inline-block';
     });
 
-    const nameWrap = el('div', 'name-field');
-    nameWrap.appendChild(el('span', null, kunde.name));
-    if (kunde.schluessel && kunde.schluessel.trim() !== '') {
-        nameWrap.appendChild(el('span', 'badge', `Schlüssel: ${kunde.schluessel}`));
-    }
+    const ortDiv  = el('div', 'ort-col', kunde.ort);
+    const strDiv  = el('div', 'str-col', kunde.strasse);
+    const nameDiv = el('div', 'name-col', kunde.name);
 
-    const btnWrap = el('div');
+    const btnDiv = el('div', 'btn-col');
     const link = el('a', null, '📍 Maps');
     link.href = kunde.mapsUrl;
     link.target = '_blank';
-    link.style.cssText = 'display:inline-block;padding:2px 8px;background:#007bff;color:#ffffff;text-decoration:none;border-radius:4px;font-size:.80rem;font-weight:600;';
-    btnWrap.appendChild(link);
+    btnDiv.appendChild(link);
 
-    row.append(keyDiv, nameWrap, btnWrap);
+    row.append(csbDiv, ortDiv, strDiv, nameDiv, btnDiv);
     entry.appendChild(row);
     return entry;
 };
@@ -501,7 +450,6 @@ const treffer  = $('#trefferInfo');
 const kundenMap = new Map();
 
 if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length > 0) {
-    // Kunden zusammenführen: CSB = Schlüssel
     for (const [tour, klist] of Object.entries(tourkundenData)) {
         klist.forEach(k => {
             const key = k.csb_nummer;
@@ -546,10 +494,11 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                     const plz = k.postleitzahl?.toString().replace(/\\.0$/, '') || '';
                     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(k.name + ', ' + k.strasse + ', ' + plz + ' ' + k.ort)}`;
                     list.push({
-                        csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-',
+                        ort: k.ort,
                         name: k.name,
-                        mapsUrl,
-                        schluessel: k.schluessel || ''
+                        strasse: k.strasse,
+                        csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-',
+                        mapsUrl
                     });
                 }
             });
@@ -558,16 +507,14 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                 lastTourSearchQuery = tourN;
                 tourList.innerHTML = '';
                 tourNumLbl.textContent = `${tourN} - ${list.length} Kunde${list.length === 1 ? '' : 'n'}`;
-                list.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach(kunde => {
-                    tourList.appendChild(
-                        buildTourEntry(kunde.csb, kunde.name, kunde.mapsUrl, kunde.schluessel)
-                    );
+                list.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach((kunde, i) => {
+                    tourList.appendChild(buildTourEntry(kunde.ort, kunde.name, kunde.strasse, kunde.csb, kunde.mapsUrl, i % 2 !== 0));
                 });
                 tourBox.style.display = 'block';
             }
         }
 
-        // Fachberater-Suche (ab 3 Zeichen, contains)
+        // Fachberater-Suche (ab 3 Zeichen)
         const matchedFachberater = q.length > 2 ? alleFachberater.find(fb => fb.includes(q)) : null;
         if (matchedFachberater) {
             const kundenDesBeraters = [];
@@ -580,8 +527,9 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                     kundenDesBeraters.push({
                         csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-',
                         name: k.name,
-                        mapsUrl,
-                        schluessel: k.schluessel || ''
+                        ort: k.ort,
+                        strasse: k.strasse,
+                        mapsUrl
                     });
                 }
             });
@@ -590,17 +538,16 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                 fachberaterNameSpan.textContent = beraterName;
                 fachberaterCountSpan.textContent = kundenDesBeraters.length;
                 fachberaterList.innerHTML = '';
-                kundenDesBeraters.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach(kunde => {
-                    fachberaterList.appendChild(buildFachberaterEntry(kunde));
+                kundenDesBeraters.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach((kunde, i) => {
+                    fachberaterList.appendChild(buildFachberaterEntry(kunde, i % 2 !== 0));
                 });
                 fachberaterBox.style.display = 'block';
             }
         }
 
         // Karten filtern
-        const anyQuery = q !== '';
         allCards.forEach(c => {
-            const match = anyQuery && c.dataset.search.includes(q);
+            const match = q !== '' && c.dataset.search.includes(q);
             c.classList.toggle('hidden', !match);
             if (match) {
                 c.classList.add('highlighted');
@@ -627,7 +574,7 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
         input.dispatchEvent(new Event('input', { bubbles: true }));
     });
 } else {
-    document.querySelector('#results').textContent = 'Keine Kundendaten gefunden. Stellen Sie sicher, dass die "tourkundenData" korrekt geladen wird.';
+    results.textContent = 'Keine Kundendaten gefunden. Stellen Sie sicher, dass die "tourkundenData" korrekt geladen wird.';
 }
 </script>
 
@@ -635,86 +582,31 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
 </html>
 """
 
-# ---------- UI ----------
+# --- UI Setup ---
 st.title("🚛 Kunden-Datenbank als HTML-Seite exportieren")
 st.markdown("""
-Laden Sie **zwei** Excel-Dateien hoch:
-1) **Quelldatei** mit den Kundendaten (mehrere Blätter)  
-2) **Schlüsseldatei** mit *CSB-Nummer in Spalte A* und *Schlüsselnummer in Spalte F*
-
-Ich erstelle daraus eine interaktive **`suche.html`**, in der die Schlüsselnummer hinter dem Kundennamen angezeigt wird.
+Laden Sie eine Excel-Datei hoch, um eine **interaktive HTML-Suchseite** (`suche.html`) zu erstellen.
+Die Seite enthält alle Kundendaten, gruppiert nach Touren und durchsuchbar.
 """)
 
-col1, col2 = st.columns(2)
-with col1:
-    excel_file = st.file_uploader("📄 Quelldatei (Kundendaten)", type=["xlsx"])
-with col2:
-    key_file = st.file_uploader("🔑 Schlüsseldatei (A=CSB, F=Schlüssel)", type=["xlsx"])
+excel_file = st.file_uploader(
+    "Wählen Sie Ihre Excel-Datei",
+    type=["xlsx"]
+)
 
-# ---------- Helpers ----------
-def norm_str_num(x):
-    """Normalisiert Nummern (auch aus float/str) auf saubere String-Darstellung ohne '.0'."""
-    if pd.isna(x):
-        return ""
-    s = str(x).strip()
-    try:
-        f = float(s.replace(",", "."))
-        i = int(f)
-        return str(i) if f == i else s
-    except Exception:
-        return s
-
-def build_key_map(key_df: pd.DataFrame) -> dict:
-    """
-    Erzeugt Mapping: CSB -> Schlüsselnummer
-    Erwartung: CSB in Spalte A (Index 0), Schlüssel in Spalte F (Index 5).
-    Robust: nimmt erste und sechste Spalte der Datei, Header egal.
-    """
-    if key_df.shape[1] < 6:
-        st.warning("⚠️ Schlüsseldatei hat weniger als 6 Spalten. Es werden vorhandene Spalten verwendet.")
-    csb_col = 0
-    key_col = 5 if key_df.shape[1] > 5 else key_df.shape[1] - 1
-
-    mapping = {}
-    for _, row in key_df.iterrows():
-        csb_raw = row.iloc[csb_col] if key_df.shape[1] > 0 else None
-        key_raw = row.iloc[key_col] if key_df.shape[1] > 0 else None
-        csb = norm_str_num(csb_raw)
-        key = "" if pd.isna(key_raw) else str(key_raw).strip()
-        if csb:
-            mapping[csb] = key
-    return mapping
-
-if excel_file and key_file:
-    if st.button("🛠️ Interaktive HTML-Seite erzeugen"):
-        # --- KONFIGURATION ---
+if excel_file:
+    if st.button("Interaktive HTML-Seite erzeugen"):
+        
+        # --- KONFIGURATION (unverändert) ---
         BLATTNAMEN = ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]
-        LIEFERTAGE_MAPPING = {
-            "Montag": "Mo", "Dienstag": "Die", "Mittwoch": "Mitt",
-            "Donnerstag": "Don", "Freitag": "Fr", "Samstag": "Sam"
-        }
-        SPALTEN_MAPPING = {
-            "csb_nummer": "Nr",
-            "sap_nummer": "SAP-Nr.",
-            "name": "Name",
-            "strasse": "Strasse",
-            "postleitzahl": "Plz",
-            "ort": "Ort",
-            "fachberater": "Fachberater"
-        }
-
+        LIEFERTAGE_MAPPING = {"Montag": "Mo", "Dienstag": "Die", "Mittwoch": "Mitt", "Donnerstag": "Don", "Freitag": "Fr", "Samstag": "Sam"}
+        SPALTEN_MAPPING = {"csb_nummer": "Nr", "sap_nummer": "SAP-Nr.", "name": "Name", "strasse": "Strasse", "postleitzahl": "Plz", "ort": "Ort", "fachberater": "Fachberater"}
+        
         try:
-            # Schlüsseldatei lesen (erstes Blatt)
-            with st.spinner("🔑 Lese Schlüsseldatei..."):
-                key_df = pd.read_excel(key_file, sheet_name=0, header=0)
-                if key_df.shape[1] < 2:
-                    key_file.seek(0)
-                    key_df = pd.read_excel(key_file, sheet_name=0, header=None)
-                key_map = build_key_map(key_df)
-
             tour_dict = {}
+            verarbeitete_blaetter = []
 
-            def kunden_sammeln(df: pd.DataFrame):
+            def kunden_sammeln(df):
                 for _, row in df.iterrows():
                     for tag, spaltenname in LIEFERTAGE_MAPPING.items():
                         if spaltenname not in df.columns:
@@ -723,22 +615,13 @@ if excel_file and key_file:
                         if not tournr_raw or not tournr_raw.replace('.', '', 1).isdigit():
                             continue
                         tournr = str(int(float(tournr_raw)))
-
-                        # Eintrag füllen
-                        eintrag = {
-                            json_key: str(row.get(excel_col, "")).strip()
-                            for json_key, excel_col in SPALTEN_MAPPING.items()
-                        }
-
-                        # CSB normalisieren und Schlüssel ergänzen
-                        csb_clean = norm_str_num(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
-                        eintrag["schluessel"] = key_map.get(csb_clean, "")
-
+                        eintrag = {json_key: str(row.get(excel_col, "")).strip() for json_key, excel_col in SPALTEN_MAPPING.items()}
                         eintrag["liefertag"] = tag
-                        tour_dict.setdefault(tournr, []).append(eintrag)
+                        if tournr not in tour_dict:
+                            tour_dict[tournr] = []
+                        tour_dict[tournr].append(eintrag)
 
-            with st.spinner("📥 Lese und verarbeite Quelldatei..."):
-                verarbeitete_blaetter = []
+            with st.spinner("Lese und verarbeite Excel-Datei..."):
                 for blatt in BLATTNAMEN:
                     try:
                         df = pd.read_excel(excel_file, sheet_name=blatt)
@@ -747,7 +630,7 @@ if excel_file and key_file:
                     except ValueError:
                         st.warning(f"⚠️ Blatt '{blatt}' nicht in der Datei gefunden. Wird übersprungen.")
                         continue
-
+            
             if not tour_dict:
                 st.error("Es konnten keine gültigen Kundendaten gefunden werden.")
                 st.stop()
@@ -756,13 +639,13 @@ if excel_file and key_file:
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda item: int(item[0])))
             json_data_string = json.dumps(sorted_tours, indent=4, ensure_ascii=False)
 
-            # --- HTML erzeugen ---
+            # --- HTML-DATEI ERZEUGEN ---
             final_html = HTML_TEMPLATE.replace(
                 "const tourkundenData = {  }",
                 f"const tourkundenData = {json_data_string};"
             )
 
-            # --- Download ---
+            # --- ERGEBNISSE ANZEIGEN UND DOWNLOAD ANBIETEN ---
             st.success(f"✅ Erfolgreich! {len(sorted_tours)} Touren verarbeitet. Die HTML-Seite ist fertig.")
             st.download_button(
                 label="📥 Interaktive `suche.html` herunterladen",
@@ -774,10 +657,3 @@ if excel_file and key_file:
         except Exception as e:
             st.error(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
             st.exception(e)
-
-elif excel_file and not key_file:
-    st.info("Bitte zusätzlich die **Schlüsseldatei** (A=CSB, F=Schlüssel) hochladen.")
-elif key_file and not excel_file:
-    st.info("Bitte zusätzlich die **Quelldatei** (Kundendaten) hochladen.")
-else:
-    st.warning("Bitte beide Dateien hochladen, um fortzufahren.")
