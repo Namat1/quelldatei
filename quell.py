@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import io
 
-# --- HTML-Vorlage ---
+# --- HTML-Vorlage (mit Schlüsselnummer in Karten + Übersichten) ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -208,6 +208,16 @@ HTML_TEMPLATE = """
             display: none;
         }
 
+        .badge {
+            font-size: .72rem;
+            padding: 2px 6px;
+            border: 1px solid #d0d7de;
+            border-radius: 999px;
+            background: #f6f8fa;
+            color: #57606a;
+            font-weight: 600;
+        }
+
         @media(max-width: 768px) {
             body { padding: 12px; }
             .main-wrapper { padding: 12px; box-shadow: none; border: 1px solid #d1d9e2; }
@@ -355,7 +365,8 @@ const buildCustomerCard = kunde => {
     return card;
 };
 
-const buildTourEntry = (ort, name, strasse, csbNummer, mapsUrl, bgAlt) => {
+// Tour-Übersicht: Name inkl. Schlüssel-Badge
+const buildTourEntry = (ort, name, strasse, csbNummer, mapsUrl, schluessel, bgAlt) => {
     const entry = el('div', 'tour-entry');
     const row = el('div');
     row.style.cssText = `display:flex;align-items:center;gap:.75rem;background:${bgAlt ? '#f8f9fa' : '#ffffff'};padding:4px 6px;border-radius:4px;font-size:.85rem;color:#343a40;`;
@@ -372,8 +383,16 @@ const buildTourEntry = (ort, name, strasse, csbNummer, mapsUrl, bgAlt) => {
     });
 
     const ortDiv  = el('div', null, ort);    ortDiv.style.cssText  = 'flex:1;font-weight:700;';
-    const nameDiv = el('div', null, name);   nameDiv.style.cssText = 'flex:1.5;';
     const strDiv  = el('div', null, strasse);strDiv.style.cssText  = 'flex:1.5;';
+
+    const nameWrap = el('div'); nameWrap.style.cssText = 'flex:1.5; display:flex; align-items:center; gap:.5rem;';
+    const nameDiv  = el('span', null, name);
+    nameWrap.appendChild(nameDiv);
+
+    if (schluessel && schluessel.trim() !== '') {
+        const badge = el('span', 'badge', `Schlüssel: ${schluessel}`);
+        nameWrap.appendChild(badge);
+    }
 
     const linkDiv = el('div');
     const link = el('a', null, '📍 Maps');
@@ -382,11 +401,12 @@ const buildTourEntry = (ort, name, strasse, csbNummer, mapsUrl, bgAlt) => {
     link.style.cssText = 'display:inline-block;padding:1px 4px;background:#007bff;color:#ffffff;text-decoration:none;border-radius:4px;font-size:.70rem;font-weight:600;';
     linkDiv.appendChild(link);
 
-    row.append(csbDiv, ortDiv, strDiv, nameDiv, linkDiv);
+    row.append(csbDiv, ortDiv, strDiv, nameWrap, linkDiv);
     entry.appendChild(row);
     return entry;
 };
 
+// Fachberater-Übersicht: Name inkl. Schlüssel-Badge
 const buildFachberaterEntry = (kunde, bgAlt) => {
     const entry = el('div', 'fb-entry');
     const row = el('div');
@@ -402,7 +422,14 @@ const buildFachberaterEntry = (kunde, bgAlt) => {
 
     const ortDiv  = el('div', null, kunde.ort);     ortDiv.style.cssText  = 'flex:1;font-weight:700;';
     const strDiv  = el('div', null, kunde.strasse); strDiv.style.cssText  = 'flex:1.5;';
-    const nameDiv = el('div', null, kunde.name);    nameDiv.style.cssText = 'flex:1.5;';
+
+    const nameWrap = el('div'); nameWrap.style.cssText = 'flex:1.5; display:flex; align-items:center; gap:.5rem;';
+    const nameDiv  = el('span', null, kunde.name);
+    nameWrap.appendChild(nameDiv);
+    if (kunde.schluessel && kunde.schluessel.trim() !== '') {
+        const badge = el('span', 'badge', `Schlüssel: ${kunde.schluessel}`);
+        nameWrap.appendChild(badge);
+    }
 
     const linkDiv = el('div');
     const link = el('a', null, '📍 Maps');
@@ -411,7 +438,7 @@ const buildFachberaterEntry = (kunde, bgAlt) => {
     link.style.cssText = 'display:inline-block;padding:1px 4px;background:#007bff;color:#ffffff;text-decoration:none;border-radius:4px;font-size:.70rem;font-weight:600;';
     linkDiv.appendChild(link);
 
-    row.append(csbDiv, ortDiv, strDiv, nameDiv, linkDiv);
+    row.append(csbDiv, ortDiv, strDiv, nameWrap, linkDiv);
     entry.appendChild(row);
     return entry;
 };
@@ -466,7 +493,14 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                 if (k.touren.some(t => t.tournummer === tourN)) {
                     const plz = k.postleitzahl?.toString().replace(/\\.0$/, '') || '';
                     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(k.name + ', ' + k.strasse + ', ' + plz + ' ' + k.ort)}`;
-                    list.push({ ort: k.ort, name: k.name, strasse: k.strasse, csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-', mapsUrl });
+                    list.push({
+                        ort: k.ort,
+                        name: k.name,
+                        strasse: k.strasse,
+                        csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-',
+                        mapsUrl,
+                        schluessel: k.schluessel || ''
+                    });
                 }
             });
 
@@ -475,7 +509,9 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                 tourList.innerHTML = '';
                 tourNumLbl.textContent = `${tourN} - ${list.length} Kunde${list.length === 1 ? '' : 'n'}`;
                 list.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach((kunde, i) => {
-                    tourList.appendChild(buildTourEntry(kunde.ort, kunde.name, kunde.strasse, kunde.csb, kunde.mapsUrl, i % 2 !== 0));
+                    tourList.appendChild(
+                        buildTourEntry(kunde.ort, kunde.name, kunde.strasse, kunde.csb, kunde.mapsUrl, kunde.schluessel, i % 2 !== 0)
+                    );
                 });
                 tourBox.style.display = 'block';
             }
@@ -491,7 +527,14 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                     if (!beraterName) beraterName = k.fachberater;
                     const plz = k.postleitzahl?.toString().replace(/\\.0$/, '') || '';
                     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(k.name + ', ' + k.strasse + ', ' + plz + ' ' + k.ort)}`;
-                    kundenDesBeraters.push({ csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-', name: k.name, ort: k.ort, strasse: k.strasse, mapsUrl });
+                    kundenDesBeraters.push({
+                        csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-',
+                        name: k.name,
+                        ort: k.ort,
+                        strasse: k.strasse,
+                        mapsUrl,
+                        schluessel: k.schluessel || ''
+                    });
                 }
             });
 
@@ -565,37 +608,30 @@ def norm_str_num(x):
     if pd.isna(x):
         return ""
     s = str(x).strip()
-    # Entferne tausenderpunkte/kommas nicht, nur .0
     try:
-        # Falls reine Zahl (inkl. floats wie '1234.0')
         f = float(s.replace(",", "."))
         i = int(f)
-        if f == i:
-            return str(i)
-        else:
-            return str(s)
+        return str(i) if f == i else s
     except Exception:
-        # Wenn keine reine Zahl, einfach den String zurück
         return s
 
 def build_key_map(key_df: pd.DataFrame) -> dict:
     """
     Erzeugt Mapping: CSB -> Schlüsselnummer
-    Erwartung: CSB in Spalte A (Index 0), Schlüssel in Spalte F (Index 5)
-    Robust: nimmt einfach erste und sechste Spalte der Datei.
+    Erwartung: CSB in Spalte A (Index 0), Schlüssel in Spalte F (Index 5).
+    Robust: nimmt erste und sechste Spalte der Datei, Header egal.
     """
     if key_df.shape[1] < 6:
-        # Falls weniger Spalten, trotzdem defensiv arbeiten
         st.warning("⚠️ Schlüsseldatei hat weniger als 6 Spalten. Es werden vorhandene Spalten verwendet.")
     csb_col = 0
-    key_col = 5 if key_df.shape[1] > 5 else key_df.shape[1]-1
+    key_col = 5 if key_df.shape[1] > 5 else key_df.shape[1] - 1
 
     mapping = {}
     for _, row in key_df.iterrows():
         csb_raw = row.iloc[csb_col] if key_df.shape[1] > 0 else None
         key_raw = row.iloc[key_col] if key_df.shape[1] > 0 else None
         csb = norm_str_num(csb_raw)
-        key = str(key_raw).strip() if not pd.isna(key_raw) else ""
+        key = "" if pd.isna(key_raw) else str(key_raw).strip()
         if csb:
             mapping[csb] = key
     return mapping
@@ -604,7 +640,10 @@ if excel_file and key_file:
     if st.button("🛠️ Interaktive HTML-Seite erzeugen"):
         # --- KONFIGURATION ---
         BLATTNAMEN = ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]
-        LIEFERTAGE_MAPPING = {"Montag": "Mo", "Dienstag": "Die", "Mittwoch": "Mitt", "Donnerstag": "Don", "Freitag": "Fr", "Samstag": "Sam"}
+        LIEFERTAGE_MAPPING = {
+            "Montag": "Mo", "Dienstag": "Die", "Mittwoch": "Mitt",
+            "Donnerstag": "Don", "Freitag": "Fr", "Samstag": "Sam"
+        }
         SPALTEN_MAPPING = {
             "csb_nummer": "Nr",
             "sap_nummer": "SAP-Nr.",
@@ -619,7 +658,6 @@ if excel_file and key_file:
             # Schlüsseldatei lesen (erstes Blatt)
             with st.spinner("🔑 Lese Schlüsseldatei..."):
                 key_df = pd.read_excel(key_file, sheet_name=0, header=0)
-                # Falls sehr „roh“, nochmal ohne Header probieren
                 if key_df.shape[1] < 2:
                     key_file.seek(0)
                     key_df = pd.read_excel(key_file, sheet_name=0, header=None)
@@ -627,8 +665,7 @@ if excel_file and key_file:
 
             tour_dict = {}
 
-            def kunden_sammeln(df):
-                # Sicherstellen, dass die erwarteten Spalten existieren
+            def kunden_sammeln(df: pd.DataFrame):
                 for _, row in df.iterrows():
                     for tag, spaltenname in LIEFERTAGE_MAPPING.items():
                         if spaltenname not in df.columns:
@@ -639,17 +676,17 @@ if excel_file and key_file:
                         tournr = str(int(float(tournr_raw)))
 
                         # Eintrag füllen
-                        eintrag = {json_key: str(row.get(excel_col, "")).strip() for json_key, excel_col in SPALTEN_MAPPING.items()}
+                        eintrag = {
+                            json_key: str(row.get(excel_col, "")).strip()
+                            for json_key, excel_col in SPALTEN_MAPPING.items()
+                        }
 
-                        # CSB normalisiert für Mapping
+                        # CSB normalisieren und Schlüssel ergänzen
                         csb_clean = norm_str_num(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
-                        # Schlüssel zuordnen (kann leer sein)
                         eintrag["schluessel"] = key_map.get(csb_clean, "")
 
                         eintrag["liefertag"] = tag
-                        if tournr not in tour_dict:
-                            tour_dict[tournr] = []
-                        tour_dict[tournr].append(eintrag)
+                        tour_dict.setdefault(tournr, []).append(eintrag)
 
             with st.spinner("📥 Lese und verarbeite Quelldatei..."):
                 verarbeitete_blaetter = []
@@ -670,7 +707,7 @@ if excel_file and key_file:
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda item: int(item[0])))
             json_data_string = json.dumps(sorted_tours, indent=4, ensure_ascii=False)
 
-            # --- HTML erzeugen (Schlüssel wird im Template angezeigt) ---
+            # --- HTML erzeugen ---
             final_html = HTML_TEMPLATE.replace(
                 "const tourkundenData = {  }",
                 f"const tourkundenData = {json_data_string};"
@@ -688,6 +725,7 @@ if excel_file and key_file:
         except Exception as e:
             st.error(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
             st.exception(e)
+
 elif excel_file and not key_file:
     st.info("Bitte zusätzlich die **Schlüsseldatei** (A=CSB, F=Schlüssel) hochladen.")
 elif key_file and not excel_file:
