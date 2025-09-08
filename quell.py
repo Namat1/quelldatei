@@ -26,7 +26,7 @@ HTML_TEMPLATE = """
         }
 
         .main-wrapper {
-            max-width: 900px;
+            max-width: 1200px;
             width: 100%;
             background: #ffffff;
             border-radius: 8px;
@@ -139,9 +139,32 @@ HTML_TEMPLATE = """
         .tour-entry {
             padding: 6px 0;
             border-bottom: 1px solid #e9ecef;
+        }
+
+        .tour-entry > div {
+            display: grid;
+            grid-template-columns: 80px 1fr auto; /* Schlüssel, Name, Buttons */
+            align-items: center;
+            gap: 12px;
+            background: #ffffff;
+            padding: 4px 6px;
+            border-radius: 4px;
+        }
+
+        .tour-entry .name-field {
             font-weight: 600;
-            font-family: monospace;
             color: #343a40;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .tour-entry .key-field {
+            font-family: monospace;
+            color: #6c757d;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: underline;
         }
 
         #results {
@@ -183,6 +206,7 @@ HTML_TEMPLATE = """
             border-radius: 6px;
             padding: 10px 14px;
             border: 1px solid #e9ecef;
+            display: none;
         }
 
         #fachberaterBoxTitle {
@@ -202,6 +226,32 @@ HTML_TEMPLATE = """
         .fb-entry {
             padding: 6px 0;
             border-bottom: 1px solid #e9ecef;
+        }
+
+        .fb-entry > div {
+            display: grid;
+            grid-template-columns: 80px 1fr auto; /* Schlüssel, Name, Buttons */
+            align-items: center;
+            gap: 12px;
+            background: #ffffff;
+            padding: 4px 6px;
+            border-radius: 4px;
+        }
+
+        .fb-entry .name-field {
+            font-weight: 600;
+            color: #343a40;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .fb-entry .key-field {
+            font-family: monospace;
+            color: #6c757d;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: underline;
         }
 
         .hidden {
@@ -224,20 +274,20 @@ HTML_TEMPLATE = """
             input[type="text"], button { width: 100%; box-sizing: border-box; }
             h1 { font-size: 1.2rem; }
             .kunde { font-size: .85rem; padding: 10px; }
-            
-            /* Mobile responsive für Tour/Fachberater Tabellen */
-            .tour-entry div:first-child, 
-            .fb-entry div:first-child {
-                grid-template-columns: 80px 1fr 70px !important;
+
+            .tour-entry > div,
+            .fb-entry > div {
+                grid-template-columns: 70px 1fr auto !important;
                 gap: 8px !important;
                 font-size: .8rem !important;
             }
-            
+
+            /* Sichtbar lassen (Name + Schlüssel + Buttons) */
             .tour-entry div:first-child > div:nth-child(2),
             .tour-entry div:first-child > div:nth-child(3),
             .fb-entry div:first-child > div:nth-child(2),
             .fb-entry div:first-child > div:nth-child(3) {
-                display: none;
+                display: initial;
             }
         }
     </style>
@@ -248,12 +298,12 @@ HTML_TEMPLATE = """
         <div class="suche-container">
             <input type="text" id="globalSearch" placeholder="Name, Ort, Tour, CSB, SAP, Straße, Schlüssel...">
             <p style="font-size:.8rem;color:#6c757d;margin:-2px 0 8px 0;">🔤 Suche nach Name, Ort, Straße, Tournummer, CSB, SAP, Schlüssel, Liefertag oder Fachberater</p>
-            
+
             <div class="button-group">
                 <button id="resetBtn">Suche zurücksetzen</button>
                 <button id="backBtn">Zurück zur Tour-Übersicht</button>
             </div>
-            
+
             <p id="trefferInfo">🔎 0 Ergebnisse</p>
         </div>
 
@@ -261,8 +311,8 @@ HTML_TEMPLATE = """
             <div id="tourBoxTitle">🚚 Tour <span id="tourNumSpan"></span></div>
             <div id="tourList"></div>
         </div>
-        
-        <div id="fachberaterBox" style="display: none;">
+
+        <div id="fachberaterBox">
             <div id="fachberaterBoxTitle">👤 Fachberater: <span id="fachberaterNameSpan"></span> (<span id="fachberaterCountSpan"></span> Märkte)</div>
             <div id="fachberaterList"></div>
         </div>
@@ -380,80 +430,66 @@ const buildCustomerCard = kunde => {
     return card;
 };
 
-// Tour-Übersicht: Name inkl. Schlüssel-Badge
-const buildTourEntry = (ort, name, strasse, csbNummer, mapsUrl, schluessel, bgAlt) => {
+// Tour-Übersicht: Schlüssel (CSB) | Name(+Schlüssel-Badge) | Buttons
+const buildTourEntry = (csbNummer, name, mapsUrl, schluessel) => {
     const entry = el('div', 'tour-entry');
     const row = el('div');
-    row.style.cssText = `display:flex;align-items:center;gap:.75rem;background:${bgAlt ? '#f8f9fa' : '#ffffff'};padding:4px 6px;border-radius:4px;font-size:.85rem;color:#343a40;`;
 
-    const csbDiv = el('div');
-    csbDiv.style.cssText = 'flex:0 0 70px;font-weight:700;color:#990033;cursor:pointer;text-decoration:underline;';
-    csbDiv.textContent = csbNummer;
-    csbDiv.title = `Kundenkarte für ${csbNummer} anzeigen`;
-    csbDiv.addEventListener('click', () => {
+    const keyDiv = el('div', 'key-field', csbNummer);
+    keyDiv.title = `Kundenkarte für ${csbNummer} anzeigen`;
+    keyDiv.addEventListener('click', () => {
         $('#globalSearch').value = csbNummer;
         $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
         window.scrollTo({ top: 0, behavior: 'smooth' });
         $('#backBtn').style.display = 'inline-block';
     });
 
-    const ortDiv  = el('div', null, ort);    ortDiv.style.cssText  = 'flex:1;font-weight:700;';
-    const strDiv  = el('div', null, strasse);strDiv.style.cssText  = 'flex:1.5;';
-
-    const nameWrap = el('div'); nameWrap.style.cssText = 'flex:1.5; display:flex; align-items:center; gap:.5rem;';
-    const nameDiv  = el('span', null, name);
-    nameWrap.appendChild(nameDiv);
-
+    const nameWrap = el('div', 'name-field');
+    nameWrap.appendChild(el('span', null, name));
     if (schluessel && schluessel.trim() !== '') {
-        const badge = el('span', 'badge', `Schlüssel: ${schluessel}`);
-        nameWrap.appendChild(badge);
+        nameWrap.appendChild(el('span', 'badge', `Schlüssel: ${schluessel}`));
     }
 
-    const linkDiv = el('div');
+    const btnWrap = el('div');
     const link = el('a', null, '📍 Maps');
     link.href = mapsUrl;
     link.target = '_blank';
-    link.style.cssText = 'display:inline-block;padding:1px 4px;background:#007bff;color:#ffffff;text-decoration:none;border-radius:4px;font-size:.70rem;font-weight:600;';
-    linkDiv.appendChild(link);
+    link.style.cssText = 'display:inline-block;padding:2px 8px;background:#007bff;color:#ffffff;text-decoration:none;border-radius:4px;font-size:.80rem;font-weight:600;';
+    btnWrap.appendChild(link);
 
-    row.append(csbDiv, ortDiv, strDiv, nameWrap, linkDiv);
+    row.append(keyDiv, nameWrap, btnWrap);
     entry.appendChild(row);
     return entry;
 };
 
-// Fachberater-Übersicht: Name inkl. Schlüssel-Badge
-const buildFachberaterEntry = (kunde, bgAlt) => {
+// Fachberater-Übersicht: Schlüssel (CSB) | Name(+Schlüssel-Badge) | Buttons
+const buildFachberaterEntry = (kunde) => {
     const entry = el('div', 'fb-entry');
     const row = el('div');
-    row.style.cssText = `display:flex;align-items:center;gap:.75rem;background:${bgAlt ? '#f8f9fa' : '#ffffff'};padding:4px 6px;border-radius:4px;font-size:.85rem;color:#343a40;`;
 
-    const csbDiv = el('div', null, kunde.csb);
-    csbDiv.style.cssText = 'flex:0 0 70px;font-weight:700;color:#990033;cursor:pointer;text-decoration:underline;';
-    csbDiv.title = `Kundenkarte für CSB ${kunde.csb} anzeigen`;
-    csbDiv.addEventListener('click', () => {
+    const keyDiv = el('div', 'key-field', kunde.csb);
+    keyDiv.title = `Kundenkarte für CSB ${kunde.csb} anzeigen`;
+    keyDiv.addEventListener('click', () => {
         $('#globalSearch').value = kunde.csb;
         $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        $('#backBtn').style.display = 'inline-block';
     });
 
-    const ortDiv  = el('div', null, kunde.ort);     ortDiv.style.cssText  = 'flex:1;font-weight:700;';
-    const strDiv  = el('div', null, kunde.strasse); strDiv.style.cssText  = 'flex:1.5;';
-
-    const nameWrap = el('div'); nameWrap.style.cssText = 'flex:1.5; display:flex; align-items:center; gap:.5rem;';
-    const nameDiv  = el('span', null, kunde.name);
-    nameWrap.appendChild(nameDiv);
+    const nameWrap = el('div', 'name-field');
+    nameWrap.appendChild(el('span', null, kunde.name));
     if (kunde.schluessel && kunde.schluessel.trim() !== '') {
-        const badge = el('span', 'badge', `Schlüssel: ${kunde.schluessel}`);
-        nameWrap.appendChild(badge);
+        nameWrap.appendChild(el('span', 'badge', `Schlüssel: ${kunde.schluessel}`));
     }
 
-    const linkDiv = el('div');
+    const btnWrap = el('div');
     const link = el('a', null, '📍 Maps');
     link.href = kunde.mapsUrl;
     link.target = '_blank';
-    link.style.cssText = 'display:inline-block;padding:1px 4px;background:#007bff;color:#ffffff;text-decoration:none;border-radius:4px;font-size:.70rem;font-weight:600;';
-    linkDiv.appendChild(link);
+    link.style.cssText = 'display:inline-block;padding:2px 8px;background:#007bff;color:#ffffff;text-decoration:none;border-radius:4px;font-size:.80rem;font-weight:600;';
+    btnWrap.appendChild(link);
 
-    row.append(csbDiv, ortDiv, strDiv, nameWrap, linkDiv);
+    row.append(keyDiv, nameWrap, btnWrap);
     entry.appendChild(row);
     return entry;
 };
@@ -465,6 +501,7 @@ const treffer  = $('#trefferInfo');
 const kundenMap = new Map();
 
 if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length > 0) {
+    // Kunden zusammenführen: CSB = Schlüssel
     for (const [tour, klist] of Object.entries(tourkundenData)) {
         klist.forEach(k => {
             const key = k.csb_nummer;
@@ -509,10 +546,8 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                     const plz = k.postleitzahl?.toString().replace(/\\.0$/, '') || '';
                     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(k.name + ', ' + k.strasse + ', ' + plz + ' ' + k.ort)}`;
                     list.push({
-                        ort: k.ort,
-                        name: k.name,
-                        strasse: k.strasse,
                         csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-',
+                        name: k.name,
                         mapsUrl,
                         schluessel: k.schluessel || ''
                     });
@@ -523,16 +558,16 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                 lastTourSearchQuery = tourN;
                 tourList.innerHTML = '';
                 tourNumLbl.textContent = `${tourN} - ${list.length} Kunde${list.length === 1 ? '' : 'n'}`;
-                list.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach((kunde, i) => {
+                list.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach(kunde => {
                     tourList.appendChild(
-                        buildTourEntry(kunde.ort, kunde.name, kunde.strasse, kunde.csb, kunde.mapsUrl, kunde.schluessel, i % 2 !== 0)
+                        buildTourEntry(kunde.csb, kunde.name, kunde.mapsUrl, kunde.schluessel)
                     );
                 });
                 tourBox.style.display = 'block';
             }
         }
 
-        // Fachberater-Suche (ab 3 Zeichen)
+        // Fachberater-Suche (ab 3 Zeichen, contains)
         const matchedFachberater = q.length > 2 ? alleFachberater.find(fb => fb.includes(q)) : null;
         if (matchedFachberater) {
             const kundenDesBeraters = [];
@@ -545,8 +580,6 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                     kundenDesBeraters.push({
                         csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-',
                         name: k.name,
-                        ort: k.ort,
-                        strasse: k.strasse,
                         mapsUrl,
                         schluessel: k.schluessel || ''
                     });
@@ -557,16 +590,17 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
                 fachberaterNameSpan.textContent = beraterName;
                 fachberaterCountSpan.textContent = kundenDesBeraters.length;
                 fachberaterList.innerHTML = '';
-                kundenDesBeraters.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach((kunde, i) => {
-                    fachberaterList.appendChild(buildFachberaterEntry(kunde, i % 2 !== 0));
+                kundenDesBeraters.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach(kunde => {
+                    fachberaterList.appendChild(buildFachberaterEntry(kunde));
                 });
                 fachberaterBox.style.display = 'block';
             }
         }
 
         // Karten filtern
+        const anyQuery = q !== '';
         allCards.forEach(c => {
-            const match = q !== '' && c.dataset.search.includes(q);
+            const match = anyQuery && c.dataset.search.includes(q);
             c.classList.toggle('hidden', !match);
             if (match) {
                 c.classList.add('highlighted');
@@ -593,7 +627,7 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
         input.dispatchEvent(new Event('input', { bubbles: true }));
     });
 } else {
-    results.textContent = 'Keine Kundendaten gefunden. Stellen Sie sicher, dass die "tourkundenData" korrekt geladen wird.';
+    document.querySelector('#results').textContent = 'Keine Kundendaten gefunden. Stellen Sie sicher, dass die "tourkundenData" korrekt geladen wird.';
 }
 </script>
 
