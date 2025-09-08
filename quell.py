@@ -1,14 +1,4 @@
-// Modal Event Listeners
-    closeTourResult.addEventListener('click', () => {
-        tourResultOverlay.classList.remove('show');
-        document.body.style.overflow = 'auto';
-    });
-
-    tourResultOverlay.addEventListener('click', (e) => {
-        if (e.target === tourResultOverlay) {
-            tourResultOverlay.classList.remove('show');
-            document.body.style.overflow = 'auto';
-        }import streamlit as st
+import streamlit as st
 import pandas as pd
 import json
 
@@ -208,6 +198,268 @@ HTML_TEMPLATE = """
             font-weight: 500;
         }
 
+        .tour-result-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(14, 41, 75, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tour-result-overlay.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tour-result-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--surface);
+            border: 3px solid var(--ral-1021);
+            border-radius: 16px;
+            box-shadow: var(--glow), 0 25px 50px rgba(0,0,0,0.4);
+            overflow: hidden;
+            animation: slideInScale 0.5s ease;
+            position: relative;
+        }
+
+        @keyframes slideInScale {
+            from { transform: scale(0.85) translateY(-30px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .tour-result-header {
+            padding: 20px 24px;
+            background: linear-gradient(135deg, var(--ral-5010) 0%, var(--ral-5010-light) 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tour-result-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(243, 218, 11, 0.2) 0%, transparent 70%);
+            animation: shimmer 4s ease-in-out infinite;
+        }
+
+        .tour-result-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tour-result-close {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tour-result-close:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1) rotate(90deg);
+            border-color: var(--ral-1021);
+        }
+
+        .tour-result-content {
+            padding: 24px;
+        }
+
+        .tour-customers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .tour-customer-card {
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tour-customer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--ral-1021) 0%, var(--ral-5010) 100%);
+        }
+
+        .tour-customer-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: var(--glow);
+            border-color: var(--ral-1021);
+        }
+
+        .tour-customer-header {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, var(--ral-5010-soft) 0%, var(--surface-alt) 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tour-customer-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--ral-5010);
+            margin-bottom: 4px;
+        }
+
+        .tour-customer-key {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .tour-customer-body {
+            padding: 12px 16px;
+        }
+
+        .tour-customer-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+
+        .tour-info-item {
+            color: var(--text-secondary);
+        }
+
+        .tour-info-label {
+            font-weight: 600;
+            color: var(--ral-5010);
+        }
+
+        .tour-customer-address {
+            background: var(--ral-1021-soft);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .tour-customer-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .tour-action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tour-maps-btn {
+            background: linear-gradient(135deg, var(--ral-1021) 0%, var(--ral-1021-light) 100%);
+            color: var(--ral-5010);
+        }
+
+        .tour-maps-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(243, 218, 11, 0.4);
+        }
+
+        .tour-details-btn {
+            background: linear-gradient(135deg, var(--ral-5010) 0%, var(--ral-5010-light) 100%);
+            color: white;
+        }
+
+        .tour-details-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(14, 41, 75, 0.4);
+        }
+
+        .tour-summary {
+            background: linear-gradient(135deg, var(--ral-1021-soft) 0%, var(--surface-alt) 100%);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid var(--ral-1021);
+        }
+
+        .tour-summary-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--ral-5010);
+            margin-bottom: 8px;
+        }
+
+        .tour-summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .tour-stat {
+            text-align: center;
+            padding: 8px;
+            background: var(--surface);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .tour-stat-number {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--ral-5010);
+        }
+
+        .tour-stat-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
         .content-area {
             flex: 1;
             display: flex;
@@ -266,66 +518,6 @@ HTML_TEMPLATE = """
             width: 100%;
             height: 2px;
             background: linear-gradient(90deg, var(--ral-1021) 0%, transparent 100%);
-        }
-
-        .tour-overview {
-            height: 280px;
-            overflow: hidden;
-            padding: 8px;
-            background: linear-gradient(135deg, var(--surface) 0%, var(--surface-alt) 100%);
-        }
-
-        .tour-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 4px;
-            height: 100%;
-        }
-
-        .tour-item {
-            background: linear-gradient(135deg, var(--surface) 0%, var(--ral-5010-soft) 100%);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 6px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .tour-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(243, 218, 11, 0.3), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .tour-item:hover::before {
-            left: 100%;
-        }
-
-        .tour-item:hover {
-            transform: translateY(-3px) scale(1.03);
-            box-shadow: var(--glow);
-            border-color: var(--ral-1021);
-        }
-
-        .tour-number {
-            font-weight: 700;
-            font-size: 13px;
-            color: var(--ral-5010);
-            margin-bottom: 2px;
-        }
-
-        .tour-day {
-            font-size: 10px;
-            color: var(--text-muted);
-            font-weight: 500;
         }
 
         .fachberater-content {
@@ -630,10 +822,6 @@ HTML_TEMPLATE = """
                 flex: 1;
                 min-width: 100px;
             }
-
-            .tour-grid {
-                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            }
         }
     </style>
 </head>
@@ -657,13 +845,6 @@ HTML_TEMPLATE = """
 
         <div class="content-area">
             <div class="sidebar">
-                <div id="tourBox" class="info-box">
-                    <div class="info-header">
-                        🚚 Tour <span id="tourNumSpan"></span>
-                    </div>
-                    <div class="tour-overview" id="tourOverview"></div>
-                </div>
-                
                 <div id="fachberaterBox" class="info-box">
                     <div class="info-header">
                         👤 <span id="fachberaterNameSpan"></span> (<span id="fachberaterCountSpan"></span>)
@@ -675,6 +856,22 @@ HTML_TEMPLATE = """
             <div class="main-content">
                 <div id="results">
                     <div class="customer-grid" id="customerGrid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tour Result Overlay -->
+        <div id="tourResultOverlay" class="tour-result-overlay">
+            <div class="tour-result-container">
+                <div class="tour-result-header">
+                    <div class="tour-result-title">
+                        🚚 <span id="tourResultTitle"></span>
+                    </div>
+                    <button class="tour-result-close" id="closeTourResult">✕</button>
+                </div>
+                <div class="tour-result-content">
+                    <div class="tour-summary" id="tourSummary"></div>
+                    <div class="tour-customers-grid" id="tourCustomersGrid"></div>
                 </div>
             </div>
         </div>
@@ -743,25 +940,89 @@ const buildCustomerCard = kunde => {
     return card;
 };
 
-const buildTourGrid = touren => {
-    const grid = el('div', 'tour-grid');
+const buildTourResultView = (tourNumber, kunden) => {
+    // Summary erstellen
+    const summary = el('div');
+    const summaryTitle = el('div', 'tour-summary-title', `Tour ${tourNumber} - Übersicht`);
+    const summaryStats = el('div', 'tour-summary-stats');
     
-    touren.forEach(t => {
-        const item = el('div', 'tour-item');
-        const number = el('div', 'tour-number', t.tournummer);
-        const day = el('div', 'tour-day', t.liefertag);
+    const totalStat = el('div', 'tour-stat');
+    totalStat.innerHTML = `<div class="tour-stat-number">${kunden.length}</div><div class="tour-stat-label">Gesamt Kunden</div>`;
+    
+    const dayGroups = {};
+    kunden.forEach(k => {
+        k.touren.forEach(t => {
+            if (t.tournummer === tourNumber) {
+                dayGroups[t.liefertag] = (dayGroups[t.liefertag] || 0) + 1;
+            }
+        });
+    });
+    
+    Object.entries(dayGroups).forEach(([day, count]) => {
+        const dayStat = el('div', 'tour-stat');
+        dayStat.innerHTML = `<div class="tour-stat-number">${count}</div><div class="tour-stat-label">${day}</div>`;
+        summaryStats.appendChild(dayStat);
+    });
+    
+    summaryStats.appendChild(totalStat);
+    summary.append(summaryTitle, summaryStats);
+    
+    // Kunden-Grid erstellen
+    const grid = el('div', 'tour-customers-grid');
+    
+    kunden.sort((a, b) => {
+        const csbA = parseInt(a.csb_nummer?.toString().replace(/\\.0$/, '') || '0');
+        const csbB = parseInt(b.csb_nummer?.toString().replace(/\\.0$/, '') || '0');
+        return csbA - csbB;
+    }).forEach(kunde => {
+        const card = el('div', 'tour-customer-card');
         
-        item.addEventListener('click', () => {
-            $('#globalSearch').value = t.tournummer;
+        // Header
+        const header = el('div', 'tour-customer-header');
+        const name = el('div', 'tour-customer-name', '🏪 ' + kunde.name);
+        const key = el('div', 'tour-customer-key', kunde.schluessel ? `Schlüssel: ${kunde.schluessel}` : 'Kein Schlüssel hinterlegt');
+        header.append(name, key);
+        
+        // Body
+        const body = el('div', 'tour-customer-body');
+        
+        const csb = kunde.csb_nummer?.toString().replace(/\\.0$/, '') || '-';
+        const sap = kunde.sap_nummer?.toString().replace(/\\.0$/, '') || '-';
+        const plz = kunde.postleitzahl?.toString().replace(/\\.0$/, '') || '-';
+        
+        const info = el('div', 'tour-customer-info');
+        info.innerHTML = `
+            <div class="tour-info-item"><span class="tour-info-label">CSB:</span> ${csb}</div>
+            <div class="tour-info-item"><span class="tour-info-label">SAP:</span> ${sap}</div>
+            <div class="tour-info-item"><span class="tour-info-label">PLZ:</span> ${plz}</div>
+            <div class="tour-info-item"><span class="tour-info-label">Fachberater:</span> ${kunde.fachberater}</div>
+        `;
+        
+        const address = el('div', 'tour-customer-address');
+        address.innerHTML = `📍 ${kunde.strasse}, ${plz} ${kunde.ort}`;
+        
+        const actions = el('div', 'tour-customer-actions');
+        
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(kunde.name + ', ' + kunde.strasse + ', ' + plz + ' ' + kunde.ort)}`;
+        const mapsBtn = el('a', 'tour-action-btn tour-maps-btn', '📍 Google Maps');
+        mapsBtn.href = mapsUrl;
+        mapsBtn.target = '_blank';
+        
+        const detailsBtn = el('button', 'tour-action-btn tour-details-btn', '🔍 Details anzeigen');
+        detailsBtn.addEventListener('click', () => {
+            $('#globalSearch').value = csb;
             $('#globalSearch').dispatchEvent(new Event('input', { bubbles: true }));
+            $('#tourResultOverlay').classList.remove('show');
             $('#backBtn').style.display = 'inline-block';
         });
         
-        item.append(number, day);
-        grid.appendChild(item);
+        actions.append(mapsBtn, detailsBtn);
+        body.append(info, address, actions);
+        card.append(header, body);
+        grid.appendChild(card);
     });
     
-    return grid;
+    return { summary, grid };
 };
 
 const buildListEntry = (ort, name, strasse, csbNummer, schluessel, mapsUrl, isAlt) => {
@@ -812,13 +1073,15 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
     });
 
     const input = $('#globalSearch');
-    const tourBox = $('#tourBox');
-    const tourOverview = $('#tourOverview');
-    const tourNumLbl = $('#tourNumSpan');
     const fachberaterBox = $('#fachberaterBox');
     const fachberaterList = $('#fachberaterList');
     const fachberaterNameSpan = $('#fachberaterNameSpan');
     const fachberaterCountSpan = $('#fachberaterCountSpan');
+    const tourResultOverlay = $('#tourResultOverlay');
+    const tourResultTitle = $('#tourResultTitle');
+    const tourSummary = $('#tourSummary');
+    const tourCustomersGrid = $('#tourCustomersGrid');
+    const closeTourResult = $('#closeTourResult');
 
     const alleFachberater = [...new Set(Array.from(kundenMap.values()).map(k => k.fachberater?.toLowerCase()))].filter(Boolean);
 
@@ -826,37 +1089,37 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
         const q = input.value.trim().toLowerCase();
         let hits = 0;
 
-        tourBox.classList.remove('show');
         fachberaterBox.classList.remove('show');
+        tourResultOverlay.classList.remove('show');
 
         const tourMatch = q.match(/^\\d{4}$/);
         if (tourMatch) {
             const tourN = tourMatch[0];
-            const list = [];
-            const tourData = [];
+            const tourKunden = [];
             
             kundenMap.forEach(k => {
                 if (k.touren.some(t => t.tournummer === tourN)) {
-                    const plz = k.postleitzahl?.toString().replace(/\\.0$/, '') || '';
-                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(k.name + ', ' + k.strasse + ', ' + plz + ' ' + k.ort)}`;
-                    list.push({ ort: k.ort, name: k.name, strasse: k.strasse, csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-', schluessel: k.schluessel || '', mapsUrl });
-                    
-                    k.touren.forEach(t => {
-                        if (t.tournummer === tourN && !tourData.some(td => td.tournummer === t.tournummer && td.liefertag === t.liefertag)) {
-                            tourData.push({ tournummer: t.tournummer, liefertag: t.liefertag });
-                        }
-                    });
+                    tourKunden.push(k);
                 }
             });
 
-            if (list.length > 0) {
+            if (tourKunden.length > 0) {
                 lastTourSearchQuery = tourN;
-                tourOverview.innerHTML = '';
-                tourNumLbl.textContent = `${tourN} (${list.length} Kunden)`;
-                tourOverview.appendChild(buildTourGrid(tourData));
-                tourBox.classList.add('show');
+                tourResultTitle.textContent = `Tour ${tourN} (${tourKunden.length} Kunden)`;
+                
+                const { summary, grid } = buildTourResultView(tourN, tourKunden);
+                tourSummary.innerHTML = '';
+                tourCustomersGrid.innerHTML = '';
+                tourSummary.appendChild(summary);
+                tourCustomersGrid.appendChild(grid);
+                
+                tourResultOverlay.classList.add('show');
+                document.body.style.overflow = 'hidden';
+                return;
             }
         }
+
+        document.body.style.overflow = 'auto';
 
         const matchedFachberater = q.length > 2 ? alleFachberater.find(fb => fb.includes(q)) : null;
         if (matchedFachberater) {
@@ -892,9 +1155,18 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
         treffer.textContent = `🔎 ${hits} Ergebnis${hits === 1 ? '' : 'se'}`;
     });
 
+    closeTourResult.addEventListener('click', () => {
+        tourResultOverlay.classList.remove('show');
+        document.body.style.overflow = 'auto';
     });
 
-    // Escape key to close modal
+    tourResultOverlay.addEventListener('click', (e) => {
+        if (e.target === tourResultOverlay) {
+            tourResultOverlay.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+    });
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && tourResultOverlay.classList.contains('show')) {
             tourResultOverlay.classList.remove('show');
@@ -927,14 +1199,13 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
 </html>
 """
 
-# --- UI Setup ---
 st.title("🚛 Tour-Übersicht Kunden-Suchseite")
 st.markdown("""
-Laden Sie **zwei** Excel-Dateien hoch:
-1) **Quelldatei** mit den Kundendaten (mehrere Blätter)  
-2) **Schlüsseldatei** mit *CSB in Spalte A* und *Schlüsselnummer in Spalte F*
+Laden Sie zwei Excel-Dateien hoch:
+1. Quelldatei mit den Kundendaten (mehrere Blätter)
+2. Schlüsseldatei mit CSB in Spalte A und Schlüsselnummer in Spalte F
 
-Erstellt eine **Tour-fokussierte HTML-Suchseite** mit zentraler Übersicht bei Tour-Eingabe.
+Erstellt eine Tour-fokussierte HTML-Suchseite mit zentraler Übersicht bei Tour-Eingabe.
 """)
 
 col1, col2 = st.columns(2)
@@ -952,7 +1223,7 @@ def norm_str_num(x):
     except Exception:
         return s
 
-def build_key_map(key_df: pd.DataFrame) -> dict:
+def build_key_map(key_df):
     if key_df.shape[1] < 6:
         st.warning("⚠️ Schlüsseldatei hat weniger als 6 Spalten. Es werden die vorhandenen Spalten genutzt.")
     csb_col = 0
@@ -981,7 +1252,7 @@ if excel_file and key_file:
                 key_map = build_key_map(key_df)
 
             tour_dict = {}
-            def kunden_sammeln(df: pd.DataFrame):
+            def kunden_sammeln(df):
                 for _, row in df.iterrows():
                     for tag, spaltenname in LIEFERTAGE_MAPPING.items():
                         if spaltenname not in df.columns: continue
@@ -1017,7 +1288,7 @@ if excel_file and key_file:
             st.info(f"📊 {len(sorted_tours)} Touren • {total_customers} Kunden • {len(key_map)} Schlüssel")
             
             st.download_button(
-                "📥 Tour-Übersicht `suche.html` herunterladen", 
+                "📥 Tour-Übersicht suche.html herunterladen", 
                 data=final_html.encode("utf-8"), 
                 file_name="suche.html", 
                 mime="text/html",
@@ -1043,131 +1314,4 @@ else:
     - Sortierte Darstellung nach CSB-Nummern
     - Responsive Design mit eleganten Animationen
     - ESC-Taste oder Klick außerhalb schließt die Übersicht
-    """)
-
-} else {
-    customerGrid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><h3>❌ Keine Daten</h3><p>Kundendaten konnten nicht geladen werden.</p></div>';
-}
-</script>
-
-</body>
-</html>
-"""
-
-# --- UI Setup ---
-st.title("🚛 Fancy Minimale Kunden-Suchseite")
-st.markdown("""
-Laden Sie **zwei** Excel-Dateien hoch:
-1) **Quelldatei** mit den Kundendaten (mehrere Blätter)  
-2) **Schlüsseldatei** mit *CSB in Spalte A* und *Schlüsselnummer in Spalte F*.
-
-Erstellt eine **fancy-minimale HTML-Suchseite** mit fester Tour-Übersicht und eleganten Animationen.
-""")
-
-col1, col2 = st.columns(2)
-with col1:
-    excel_file = st.file_uploader("📄 Quelldatei (Kundendaten)", type=["xlsx"])
-with col2:
-    key_file = st.file_uploader("🔑 Schlüsseldatei (A=CSB, F=Schlüssel)", type=["xlsx"])
-
-def norm_str_num(x):
-    if pd.isna(x): return ""
-    s = str(x).strip()
-    try:
-        f = float(s.replace(",", ".")); i = int(f)
-        return str(i) if f == i else s
-    except Exception:
-        return s
-
-def build_key_map(key_df: pd.DataFrame) -> dict:
-    if key_df.shape[1] < 6:
-        st.warning("⚠️ Schlüsseldatei hat weniger als 6 Spalten. Es werden die vorhandenen Spalten genutzt.")
-    csb_col = 0
-    key_col = 5 if key_df.shape[1] > 5 else key_df.shape[1] - 1
-    mapping = {}
-    for _, row in key_df.iterrows():
-        csb = norm_str_num(row.iloc[csb_col] if key_df.shape[1] > 0 else "")
-        schluessel_raw = row.iloc[key_col] if key_df.shape[1] > 0 else ""
-        schluessel = "" if pd.isna(schluessel_raw) else str(schluessel_raw).strip()
-        if csb:
-            mapping[csb] = schluessel
-    return mapping
-
-if excel_file and key_file:
-    if st.button("✨ Fancy Minimale HTML-Seite erzeugen", type="primary"):
-        BLATTNAMEN = ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]
-        LIEFERTAGE_MAPPING = {"Montag": "Mo", "Dienstag": "Die", "Mittwoch": "Mitt", "Donnerstag": "Don", "Freitag": "Fr", "Samstag": "Sam"}
-        SPALTEN_MAPPING = {"csb_nummer": "Nr", "sap_nummer": "SAP-Nr.", "name": "Name", "strasse": "Strasse", "postleitzahl": "Plz", "ort": "Ort", "fachberater": "Fachberater"}
-
-        try:
-            with st.spinner("🔑 Lese Schlüsseldatei..."):
-                key_df = pd.read_excel(key_file, sheet_name=0, header=0)
-                if key_df.shape[1] < 2:
-                    key_file.seek(0)
-                    key_df = pd.read_excel(key_file, sheet_name=0, header=None)
-                key_map = build_key_map(key_df)
-
-            tour_dict = {}
-            def kunden_sammeln(df: pd.DataFrame):
-                for _, row in df.iterrows():
-                    for tag, spaltenname in LIEFERTAGE_MAPPING.items():
-                        if spaltenname not in df.columns: continue
-                        tournr_raw = str(row[spaltenname]).strip()
-                        if not tournr_raw or not tournr_raw.replace('.', '', 1).isdigit(): continue
-                        tournr = str(int(float(tournr_raw)))
-                        eintrag = {k: str(row.get(v, "")).strip() for k, v in SPALTEN_MAPPING.items()}
-                        csb_clean = norm_str_num(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
-                        eintrag["schluessel"] = key_map.get(csb_clean, "")
-                        eintrag["liefertag"] = tag
-                        tour_dict.setdefault(tournr, []).append(eintrag)
-
-            with st.spinner("📥 Verarbeite Quelldatei..."):
-                for blatt in BLATTNAMEN:
-                    try:
-                        df = pd.read_excel(excel_file, sheet_name=blatt)
-                        kunden_sammeln(df)
-                    except ValueError:
-                        st.warning(f"⚠️ Blatt '{blatt}' nicht gefunden.")
-
-            if not tour_dict:
-                st.error("❌ Keine gültigen Kundendaten gefunden.")
-                st.stop()
-
-            sorted_tours = dict(sorted(tour_dict.items(), key=lambda item: int(item[0])))
-            json_data_string = json.dumps(sorted_tours, indent=4, ensure_ascii=False)
-
-            final_html = HTML_TEMPLATE.replace("const tourkundenData = {  }", f"const tourkundenData = {json_data_string};")
-            
-            st.success(f"✨ Fancy minimale Seite erstellt! {len(sorted_tours)} Touren verarbeitet.")
-            
-            total_customers = sum(len(customers) for customers in sorted_tours.values())
-            st.info(f"📊 {len(sorted_tours)} Touren • {total_customers} Kunden • {len(key_map)} Schlüssel")
-            
-            st.download_button(
-                "📥 Fancy Minimale `suche.html` herunterladen", 
-                data=final_html.encode("utf-8"), 
-                file_name="suche.html", 
-                mime="text/html",
-                type="primary"
-            )
-
-        except Exception as e:
-            st.error(f"❌ Fehler: {e}")
-            st.exception(e)
-elif excel_file and not key_file:
-    st.info("📁 Bitte noch die **Schlüsseldatei** hochladen.")
-elif key_file and not excel_file:
-    st.info("📁 Bitte noch die **Quelldatei** hochladen.")
-else:
-    st.info("📋 Bitte beide Dateien hochladen.")
-    st.markdown("""
-    ### ✨ Fancy Minimale Features:
-    - **RAL 1021 & 5010** in dezenten Gradienten und Glows
-    - **Feste Tour-Übersicht** (280px, kein Scrollen) mit Grid-Layout
-    - **Animierte Hover-Effekte** und Micro-Interactions
-    - **Shimmer-Animationen** im Header und bei Buttons
-    - **Gradient-Scrollbars** in Firmenfarben
-    - **Glassmorphism-Effekte** mit Backdrop-Filter
-    - **Glow-Schatten** für highlighted Elemente
-    - **Smooth Transitions** für alle Interaktionen
     """)
