@@ -882,6 +882,24 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
         treffer.textContent = `🔎 ${hits} Ergebnis${hits === 1 ? '' : 'se'}`;
     });
 
+    // Modal Event Listeners
+    closeTourModal.addEventListener('click', () => {
+        tourOverlay.classList.remove('show');
+    });
+
+    tourOverlay.addEventListener('click', (e) => {
+        if (e.target === tourOverlay) {
+            tourOverlay.classList.remove('show');
+        }
+    });
+
+    // Escape key to close modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && tourOverlay.classList.contains('show')) {
+            tourOverlay.classList.remove('show');
+        }
+    });
+
     $('#backBtn').addEventListener('click', () => {
         if (lastTourSearchQuery) {
             input.value = lastTourSearchQuery;
@@ -894,8 +912,8 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
         input.value = '';
         input.dispatchEvent(new Event('input', { bubbles: true }));
         $('#backBtn').style.display = 'none';
-        tourBox.classList.remove('show');
         fachberaterBox.classList.remove('show');
+        tourOverlay.classList.remove('show');
     });
 } else {
     customerGrid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><h3>❌ Keine Daten</h3><p>Kundendaten konnten nicht geladen werden.</p></div>';
