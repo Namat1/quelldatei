@@ -1,4 +1,14 @@
-import streamlit as st
+// Modal Event Listeners
+    closeTourResult.addEventListener('click', () => {
+        tourResultOverlay.classList.remove('show');
+        document.body.style.overflow = 'auto';
+    });
+
+    tourResultOverlay.addEventListener('click', (e) => {
+        if (e.target === tourResultOverlay) {
+            tourResultOverlay.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }import streamlit as st
 import pandas as pd
 import json
 
@@ -882,21 +892,13 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
         treffer.textContent = `🔎 ${hits} Ergebnis${hits === 1 ? '' : 'se'}`;
     });
 
-    // Modal Event Listeners
-    closeTourModal.addEventListener('click', () => {
-        tourOverlay.classList.remove('show');
-    });
-
-    tourOverlay.addEventListener('click', (e) => {
-        if (e.target === tourOverlay) {
-            tourOverlay.classList.remove('show');
-        }
     });
 
     // Escape key to close modal
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && tourOverlay.classList.contains('show')) {
-            tourOverlay.classList.remove('show');
+        if (e.key === 'Escape' && tourResultOverlay.classList.contains('show')) {
+            tourResultOverlay.classList.remove('show');
+            document.body.style.overflow = 'auto';
         }
     });
 
@@ -913,8 +915,136 @@ if (typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length 
         input.dispatchEvent(new Event('input', { bubbles: true }));
         $('#backBtn').style.display = 'none';
         fachberaterBox.classList.remove('show');
-        tourOverlay.classList.remove('show');
+        tourResultOverlay.classList.remove('show');
+        document.body.style.overflow = 'auto';
     });
+} else {
+    customerGrid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><h3>❌ Keine Daten</h3><p>Kundendaten konnten nicht geladen werden.</p></div>';
+}
+</script>
+
+</body>
+</html>
+"""
+
+# --- UI Setup ---
+st.title("🚛 Tour-Übersicht Kunden-Suchseite")
+st.markdown("""
+Laden Sie **zwei** Excel-Dateien hoch:
+1) **Quelldatei** mit den Kundendaten (mehrere Blätter)  
+2) **Schlüsseldatei** mit *CSB in Spalte A* und *Schlüsselnummer in Spalte F*.
+
+Erstellt eine **Tour-fokussierte HTML-Suchseite** mit zentraler Übersicht bei Tour-Eingabe.
+""")
+
+col1, col2 = st.columns(2)
+with col1:
+    excel_file = st.file_uploader("📄 Quelldatei (Kundendaten)", type=["xlsx"])
+with col2:
+    key_file = st.file_uploader("🔑 Schlüsseldatei (A=CSB, F=Schlüssel)", type=["xlsx"])
+
+def norm_str_num(x):
+    if pd.isna(x): return ""
+    s = str(x).strip()
+    try:
+        f = float(s.replace(",", ".")); i = int(f)
+        return str(i) if f == i else s
+    except Exception:
+        return s
+
+def build_key_map(key_df: pd.DataFrame) -> dict:
+    if key_df.shape[1] < 6:
+        st.warning("⚠️ Schlüsseldatei hat weniger als 6 Spalten. Es werden die vorhandenen Spalten genutzt.")
+    csb_col = 0
+    key_col = 5 if key_df.shape[1] > 5 else key_df.shape[1] - 1
+    mapping = {}
+    for _, row in key_df.iterrows():
+        csb = norm_str_num(row.iloc[csb_col] if key_df.shape[1] > 0 else "")
+        schluessel_raw = row.iloc[key_col] if key_df.shape[1] > 0 else ""
+        schluessel = "" if pd.isna(schluessel_raw) else str(schluessel_raw).strip()
+        if csb:
+            mapping[csb] = schluessel
+    return mapping
+
+if excel_file and key_file:
+    if st.button("🎯 Tour-Übersicht HTML-Seite erzeugen", type="primary"):
+        BLATTNAMEN = ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]
+        LIEFERTAGE_MAPPING = {"Montag": "Mo", "Dienstag": "Die", "Mittwoch": "Mitt", "Donnerstag": "Don", "Freitag": "Fr", "Samstag": "Sam"}
+        SPALTEN_MAPPING = {"csb_nummer": "Nr", "sap_nummer": "SAP-Nr.", "name": "Name", "strasse": "Strasse", "postleitzahl": "Plz", "ort": "Ort", "fachberater": "Fachberater"}
+
+        try:
+            with st.spinner("🔑 Lese Schlüsseldatei..."):
+                key_df = pd.read_excel(key_file, sheet_name=0, header=0)
+                if key_df.shape[1] < 2:
+                    key_file.seek(0)
+                    key_df = pd.read_excel(key_file, sheet_name=0, header=None)
+                key_map = build_key_map(key_df)
+
+            tour_dict = {}
+            def kunden_sammeln(df: pd.DataFrame):
+                for _, row in df.iterrows():
+                    for tag, spaltenname in LIEFERTAGE_MAPPING.items():
+                        if spaltenname not in df.columns: continue
+                        tournr_raw = str(row[spaltenname]).strip()
+                        if not tournr_raw or not tournr_raw.replace('.', '', 1).isdigit(): continue
+                        tournr = str(int(float(tournr_raw)))
+                        eintrag = {k: str(row.get(v, "")).strip() for k, v in SPALTEN_MAPPING.items()}
+                        csb_clean = norm_str_num(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
+                        eintrag["schluessel"] = key_map.get(csb_clean, "")
+                        eintrag["liefertag"] = tag
+                        tour_dict.setdefault(tournr, []).append(eintrag)
+
+            with st.spinner("📥 Verarbeite Quelldatei..."):
+                for blatt in BLATTNAMEN:
+                    try:
+                        df = pd.read_excel(excel_file, sheet_name=blatt)
+                        kunden_sammeln(df)
+                    except ValueError:
+                        st.warning(f"⚠️ Blatt '{blatt}' nicht gefunden.")
+
+            if not tour_dict:
+                st.error("❌ Keine gültigen Kundendaten gefunden.")
+                st.stop()
+
+            sorted_tours = dict(sorted(tour_dict.items(), key=lambda item: int(item[0])))
+            json_data_string = json.dumps(sorted_tours, indent=4, ensure_ascii=False)
+
+            final_html = HTML_TEMPLATE.replace("const tourkundenData = {  }", f"const tourkundenData = {json_data_string};")
+            
+            st.success(f"🎯 Tour-Übersicht Seite erstellt! {len(sorted_tours)} Touren verarbeitet.")
+            
+            total_customers = sum(len(customers) for customers in sorted_tours.values())
+            st.info(f"📊 {len(sorted_tours)} Touren • {total_customers} Kunden • {len(key_map)} Schlüssel")
+            
+            st.download_button(
+                "📥 Tour-Übersicht `suche.html` herunterladen", 
+                data=final_html.encode("utf-8"), 
+                file_name="suche.html", 
+                mime="text/html",
+                type="primary"
+            )
+
+        except Exception as e:
+            st.error(f"❌ Fehler: {e}")
+            st.exception(e)
+elif excel_file and not key_file:
+    st.info("📁 Bitte noch die **Schlüsseldatei** hochladen.")
+elif key_file and not excel_file:
+    st.info("📁 Bitte noch die **Quelldatei** hochladen.")
+else:
+    st.info("📋 Bitte beide Dateien hochladen.")
+    st.markdown("""
+    ### 🎯 Tour-Übersicht Features:
+    - **Zentrale Tour-Anzeige** bei Eingabe einer 4-stelligen Tournummer
+    - **Vollbild-Overlay** mit scrollbarem Inhalt über allem anderen
+    - **Detaillierte Kundenkarten** mit allen wichtigen Informationen
+    - **Tour-Statistiken** mit Aufschlüsselung nach Liefertagen
+    - **Direkte Aktionen** pro Kunde (Google Maps, Details anzeigen)
+    - **Sortierte Darstellung** nach CSB-Nummern
+    - **Responsive Design** mit eleganten Animationen
+    - **ESC-Taste** oder Klick außerhalb schließt die Übersicht
+    """)
+
 } else {
     customerGrid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><h3>❌ Keine Daten</h3><p>Kundendaten konnten nicht geladen werden.</p></div>';
 }
