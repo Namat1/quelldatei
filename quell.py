@@ -232,13 +232,13 @@ HTML_TEMPLATE = """
     });
 } else {
     document.querySelector('#results').textContent = 'Keine Kundendaten gefunden. Stellen Sie sicher, dass die "tourkundenData" korrekt geladen wird.';
-}
 </script>
 
 </body>
 </html>
 """
 
+# --- UI Setup ---
 st.title("🚛 Kunden-Datenbank als HTML-Seite exportieren")
 st.markdown("""
 Laden Sie zwei Excel-Dateien hoch:
@@ -322,7 +322,7 @@ if excel_file and key_file:
 
             final_html = HTML_TEMPLATE.replace("const tourkundenData = {  }", f"const tourkundenData = {json_data_string};")
             st.success(f"✅ Erfolgreich! {len(sorted_tours)} Touren verarbeitet. Die robuste HTML-Seite ist fertig.")
-            st.download_button("📥 Robuste suche.html herunterladen", data=final_html.encode("utf-8"), file_name="suche.html", mime="text/html")
+            st.download_button("📥 Robuste suche.html herunterladen", data=final_html.encode("utf-8"), file_name="suche.html", mime="text/html", type="primary")
 
         except Exception as e:
             st.error(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
