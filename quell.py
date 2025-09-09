@@ -12,12 +12,13 @@ HTML_TEMPLATE = """
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f7f9; --surface:#ffffff; --alt:#f9fafb; --border:#e6eaf0;
-  --txt:#1f2937; --muted:#6b7280; --head:#0f172a;
+  --bg:#f6f7f9; --surface:#ffffff; --alt:#fafbfd; --border:#d9e2ef; /* dunkler */
+  --row-border:#e6edf5; --stripe:#f5f8fc;
+  --txt:#1f2937; --muted:#667085; --head:#0f172a;
   --accent:#2563eb; --accent-weak:rgba(37,99,235,.12);
   --ok:#16a34a; --ok-weak:rgba(22,163,74,.12);
-  --warn:#f59e0b; --warn-weak:rgba(245,158,11,.15);
-  --radius:10px; --shadow:0 1px 4px rgba(0,0,0,.06);
+  --warn:#f59e0b; --warn-weak:rgba(245,158,11,.18);
+  --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
   --fs-12:12px; --fs-13:13px; --fs-14:14px;
 }
 *{box-sizing:border-box}
@@ -25,84 +26,99 @@ html,body{height:100%}
 body{
   margin:0; background:var(--bg);
   font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  color:var(--txt); font-size:var(--fs-14); line-height:1.45;
+  color:var(--txt); font-size:var(--fs-13); line-height:1.45;  /* kleiner */
 }
 
 /* Frame */
-.page{min-height:100vh; display:flex; justify-content:center; padding:16px}
+.page{min-height:100vh; display:flex; justify-content:center; padding:12px}
 .container{width:100%; max-width:1400px}
 .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
 
 /* Header */
-.header{padding:14px 16px; border-bottom:1px solid var(--border); background:#0b1d3a; color:#fff}
-.title{font-size:16px; font-weight:700; text-align:center}
+.header{padding:10px 12px; border-bottom:1px solid var(--border); background:#0b1d3a; color:#fff}
+.title{font-size:15px; font-weight:700; text-align:center}
 
 /* Searchbar */
 .searchbar{
-  padding:12px 16px; display:grid; grid-template-columns:1fr 280px auto; gap:10px; align-items:center;
+  padding:8px 12px; display:grid; grid-template-columns:1fr 260px auto; gap:8px; align-items:center;
   border-bottom:1px solid var(--border); background:var(--surface);
 }
 @media(max-width:960px){ .searchbar{grid-template-columns:1fr} }
-.field{display:grid; grid-template-columns:86px 1fr; gap:8px; align-items:center}
-.label{font-weight:600; color:#334155}
+.field{display:grid; grid-template-columns:72px 1fr; gap:6px; align-items:center}
+.label{font-weight:600; color:#344054}
 .input{
-  width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius);
+  width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:7px;
   background:linear-gradient(180deg, var(--surface), var(--alt));
   transition:border-color .15s, box-shadow .15s, background .15s;
 }
-.input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak); background:#fff}
-.btn{padding:10px 12px; border:1px solid var(--border); background:#fff; border-radius:var(--radius); cursor:pointer; font-weight:600}
+.input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-weak); background:#fff}
+.btn{padding:8px 10px; border:1px solid var(--border); background:#fff; border-radius:7px; cursor:pointer; font-weight:600}
 .btn:hover{background:#f3f4f6}
 .btn-danger{background:#ef4444; border-color:#ef4444; color:#fff}
 .btn-danger:hover{background:#dc2626}
 
 /* Content (single column) */
-.content{padding:12px 16px}
+.content{padding:10px 12px}
+
+/* Section chrome: klare Abgrenzung */
+.section{
+  background:var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:var(--shadow); position:relative;
+}
+.section::before{
+  content:""; position:absolute; left:0; right:0; top:0; height:3px;
+  background:linear-gradient(90deg, rgba(37,99,235,.35), rgba(37,99,235,.0));
+  border-top-left-radius:8px; border-top-right-radius:8px;
+}
 
 /* Tour summary (top list) */
-.tour-wrap{display:none; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px; box-shadow:var(--shadow); margin-bottom:12px}
-.tour-header{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:4px 2px 8px}
-.tour-title{font-weight:700; color:var(--head)}
-.tour-stats{display:flex; gap:14px; flex-wrap:wrap; font-size:var(--fs-13); color:var(--muted)}
-.tour-list{border:1px solid var(--border); border-radius:8px; overflow:hidden}
-.tour-row{display:grid; grid-template-columns:90px 110px 1fr 60px; gap:8px; padding:8px 10px; border-bottom:1px solid #f1f5f9; align-items:center; font-size:var(--fs-13)}
-.tour-row:nth-child(odd){background:#fbfdff}
-.tour-row:hover{background:#f3f7ff}
+.tour-wrap{display:none; margin-bottom:10px}
+.tour-inner{padding:8px}
+.tour-header{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:2px 0 6px}
+.tour-title{font-weight:700; color:var(--head); font-size:var(--fs-13)}
+.tour-stats{display:flex; gap:10px; flex-wrap:wrap; font-size:var(--fs-12); color:var(--muted)}
+.tour-list{border:1px solid var(--row-border); border-radius:6px; overflow:hidden; background:#fff}
+.tour-row{
+  display:grid; grid-template-columns:90px 110px 1fr 56px; gap:8px;
+  padding:6px 8px; border-bottom:1px solid var(--row-border); align-items:center; font-size:var(--fs-13)
+}
+.tour-row:nth-child(odd){background:var(--stripe)}
+.tour-row:hover{background:#eef4ff}
 .csb-link{font-weight:700; color:#0b3a8a; cursor:pointer}
 .csb-link:hover{text-decoration:underline}
-.key-badge{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:2px 8px; font-weight:700; font-size:var(--fs-12); display:inline-block}
+.key-badge{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:1px 8px; font-weight:700; font-size:11px; display:inline-block}
 .map-pill{
-  justify-self:end; text-decoration:none; font-weight:700; font-size:var(--fs-12);
-  padding:4px 10px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; color:#374151;
+  justify-self:end; text-decoration:none; font-weight:700; font-size:11px;
+  padding:4px 8px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; color:#374151;
 }
 .map-pill:hover{background:#f3f4f6}
 
 /* Table */
-.table-wrap{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden}
-.scroller{max-height:68vh; overflow:auto}
+.table-wrap{margin-top:10px}
+.table-section{padding:6px 8px}
+.scroller{max-height:68vh; overflow:auto; border:1px solid var(--row-border); border-radius:6px; background:#fff}
 table{width:100%; border-collapse:separate; border-spacing:0; font-size:var(--fs-13)}
 thead th{
-  position:sticky; top:0; background:#f8fafc; color:#334155; font-weight:700;
-  border-bottom:1px solid var(--border); padding:11px 10px; white-space:nowrap; z-index:1
+  position:sticky; top:0; background:#f2f5fa; color:#344054; font-weight:700;
+  border-bottom:1px solid var(--row-border); padding:8px 8px; white-space:nowrap; z-index:1
 }
-tbody td{padding:9px 10px; border-bottom:1px solid #f1f5f9; vertical-align:middle}
-tbody tr:nth-child(odd){background:#fcfdff}
-tbody tr:hover{background:#f3f7ff}
+tbody td{padding:7px 8px; border-bottom:1px solid var(--row-border); vertical-align:middle}
+tbody tr:nth-child(odd){background:var(--stripe)}
+tbody tr:hover{background:#eef4ff}
 .tour-btn{
   display:inline-block; background:#fff; border:1px solid #bbf7d0; color:#065f46;
-  padding:2px 8px; margin:2px 4px 2px 0; border-radius:999px; font-weight:700; font-size:var(--fs-12); cursor:pointer
+  padding:1px 7px; margin:1px 4px 1px 0; border-radius:999px; font-weight:700; font-size:11px; cursor:pointer
 }
 .tour-btn:hover{background:var(--ok-weak)}
-.badge-key{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:2px 8px; font-weight:700; font-size:var(--fs-12); display:inline-block}
+.badge-key{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:1px 7px; font-weight:700; font-size:11px; display:inline-block}
 .table-map{
-  text-decoration:none; font-weight:700; font-size:var(--fs-12);
-  padding:4px 10px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; color:#374151;
+  text-decoration:none; font-weight:700; font-size:11px;
+  padding:4px 8px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; color:#374151;
 }
 .table-map:hover{background:#f3f4f6}
 
 /* Welcome */
-#welcome{padding:40px 16px; text-align:center; color:var(--muted)}
-#welcome h3{margin:0 0 6px; color:#334155}
+#welcome{padding:24px 12px; text-align:center; color:var(--muted)}
+#welcome h3{margin:0 0 4px; color:#334155; font-size:14px}
 
 /* Scrollbar */
 ::-webkit-scrollbar{width:10px; height:10px}
@@ -131,41 +147,45 @@ tbody tr:hover{background:#f3f7ff}
         </div>
       </div>
 
-      <!-- Content (no sidebar) -->
+      <!-- Content -->
       <div class="content">
         <!-- Tour-Top -->
-        <div class="tour-wrap" id="tourWrap">
-          <div class="tour-header">
-            <div class="tour-title" id="tourTitle"></div>
-            <div class="tour-stats" id="tourStats"></div>
+        <div class="section tour-wrap" id="tourWrap">
+          <div class="tour-inner">
+            <div class="tour-header">
+              <div class="tour-title" id="tourTitle"></div>
+              <div class="tour-stats" id="tourStats"></div>
+            </div>
+            <div class="tour-list" id="tourList"></div>
           </div>
-          <div class="tour-list" id="tourList"></div>
         </div>
 
         <!-- Table -->
-        <div class="table-wrap">
-          <div class="scroller" id="tableScroller" style="display:none;">
-            <table>
-              <thead>
-                <tr>
-                  <th>CSB</th>
-                  <th>SAP</th>
-                  <th>Name</th>
-                  <th>Strasse</th>
-                  <th>PLZ</th>
-                  <th>Ort</th>
-                  <th>Schluessel</th>
-                  <th>Touren</th>
-                  <th>Fachberater</th>
-                  <th>Aktion</th>
-                </tr>
-              </thead>
-              <tbody id="tableBody"></tbody>
-            </table>
-          </div>
-          <div id="welcome">
-            <h3>Willkommen</h3>
-            <div>Tippe Tour (1-4 Ziffern) oder Text. Rechts: exakte Schluesselsuche.</div>
+        <div class="section table-wrap">
+          <div class="table-section">
+            <div class="scroller" id="tableScroller" style="display:none;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>CSB</th>
+                    <th>SAP</th>
+                    <th>Name</th>
+                    <th>Strasse</th>
+                    <th>PLZ</th>
+                    <th>Ort</th>
+                    <th>Schluessel</th>
+                    <th>Touren</th>
+                    <th>Fachberater</th>
+                    <th>Aktion</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+            <div id="welcome">
+              <h3>Willkommen</h3>
+              <div>Tippe Tour (1-4 Ziffern) oder Text. Rechts: exakte Schluesselsuche.</div>
+            </div>
           </div>
         </div>
       </div> <!-- content -->
@@ -307,12 +327,12 @@ function onKey(){
   renderTable(results, 'Kein Kunde mit Schluessel "'+q+'" gefunden');
 }
 
-function debounce(fn, d=180){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
+function debounce(fn, d=160){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
 
 document.addEventListener('DOMContentLoaded', ()=>{
   if(typeof tourkundenData!=='undefined' && Object.keys(tourkundenData).length>0){ buildData(); }
-  document.getElementById('smartSearch').addEventListener('input', debounce(onSmart, 180));
-  document.getElementById('keySearch').addEventListener('input', debounce(onKey, 180));
+  document.getElementById('smartSearch').addEventListener('input', debounce(onSmart, 160));
+  document.getElementById('keySearch').addEventListener('input', debounce(onKey, 160));
   document.getElementById('btnReset').addEventListener('click', ()=>{
     document.getElementById('smartSearch').value=''; document.getElementById('keySearch').value='';
     closeTourTop(); renderTable([], '');
@@ -322,6 +342,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </body>
 </html>
 """
+
 
 
 
