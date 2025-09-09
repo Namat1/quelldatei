@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 import json
+import base64
 
 # ===== Vollständige App: Listenansicht, Tour-Banner, Umlaut-Suche
-# ===== 4-stellig = Tour ODER CSB, robuste Schlüsselanzeige per eingebettetem keyIndex =====
+# ===== Logo fest im Header (Base64 aus fixem Pfad)
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -38,8 +39,12 @@ body{
 .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
 
 /* Header */
-.header{padding:8px 12px; border-bottom:1px solid var(--border); background:#0b1d3a; color:#fff}
-.title{font-size:13px; font-weight:700; text-align:center}
+.header{
+  padding:8px 12px; border-bottom:1px solid var(--border);
+  background:#0b1d3a; color:#fff; display:flex; align-items:center; gap:12px;
+}
+.brand-logo{height:42px; width:auto; display:block}
+.title{font-size:13px; font-weight:700}
 
 /* Searchbar */
 .searchbar{
@@ -124,7 +129,10 @@ tbody tr:hover{background:#eef4ff}
 <div class="page">
   <div class="container">
     <div class="card">
-      <div class="header"><div class="title">Kunden-Suche</div></div>
+      <div class="header">
+        <img class="brand-logo" alt="EDEKA Nord Fleischwerk" src="__LOGO_DATA_URL__">
+        <div class="title">Kunden-Suche</div>
+      </div>
 
       <!-- Search -->
       <div class="searchbar">
@@ -183,7 +191,7 @@ tbody tr:hover{background:#eef4ff}
 <script>
 /* Data injection */
 const tourkundenData = {  };      // wird durch Python ersetzt
-const keyIndex       = {  };      // NEU: CSB -> Schlüssel (bereinigt)
+const keyIndex       = {  };      // CSB -> Schlüssel (bereinigt)
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
 
@@ -202,12 +210,12 @@ function normDE(s){
 function normalizeDigits(v){
   if(v == null) return '';
   let s = String(v).trim().replace(/\\.0$/,'');
-  s = s.replace(/[^0-9]/g,'');      // nur Ziffern
-  s = s.replace(/^0+(\\d)/,'$1');   // führende Nullen weg
+  s = s.replace(/[^0-9]/g,'');
+  s = s.replace(/^0+(\\d)/,'$1');
   return s;
 }
 
-/* Dedupliziere Kunden anhand CSB (nach Normalisierung) */
+/* Dedupliziere Kunden anhand CSB */
 function dedupByCSB(list){
   const seen = new Set(); const out = [];
   for (const k of list){
@@ -231,7 +239,6 @@ function buildData(){
         rec.sap_nummer  = normalizeDigits(rec.sap_nummer);
         rec.postleitzahl= normalizeDigits(rec.postleitzahl);
         rec.touren      = [];
-        // WICHTIG: Schlüssel IMMER nachziehen, falls leer
         const keyFromIndex = keyIndex[csb] || "";
         rec.schluessel  = normalizeDigits(rec.schluessel) || keyFromIndex;
         map.set(csb, rec);
@@ -337,7 +344,6 @@ function onSmart(){
   closeTourTop();
   if(!qRaw){ renderTable([]); return; }
 
-  // 1–3 Ziffern => Tour-Prefix
   if (/^\\d{1,3}$/.test(qRaw)){
     const qN = normalizeDigits(qRaw);
     const results = allCustomers.filter(k => (k.touren||[]).some(t => normalizeDigits(t.tournummer).startsWith(qN)));
@@ -346,7 +352,6 @@ function onSmart(){
     return;
   }
 
-  // GENAU 4 Ziffern => KANN Tour ODER CSB sein
   if (/^\\d{4}$/.test(qRaw)){
     const qN = normalizeDigits(qRaw);
     const tourResults = allCustomers.filter(k => (k.touren||[]).some(t => normalizeDigits(t.tournummer) === qN));
@@ -354,7 +359,7 @@ function onSmart(){
     const results = dedupByCSB([...tourResults, ...csbResults]);
 
     if (tourResults.length) {
-      renderTourTop(tourResults, qN, true);   // Banner nur für Tour
+      renderTourTop(tourResults, qN, true);
     } else {
       closeTourTop();
     }
@@ -362,7 +367,6 @@ function onSmart(){
     return;
   }
 
-  // Textsuche mit deutscher Normalisierung
   const qN = normDE(qRaw);
   const results = allCustomers.filter(k=>{
     const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+k.fachberater+' '+(k.schluessel||''));
@@ -381,7 +385,7 @@ function onKey(){
   for (const k of allCustomers){
     const keyForRow = normalizeDigits(k.schluessel) || keyIndex[normalizeDigits(k.csb_nummer)] || '';
     if (keyForRow === qClean){
-      matches.push(k); // ALLE sammeln
+      matches.push(k);
     }
   }
 
@@ -408,7 +412,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # ===== Streamlit-Rahmen =====
 
 st.title("Kunden-Suchseite (Listenansicht, Tour-Banner)")
-st.caption("Ein Feld fuer Text/Tour (1–4 Ziffern, 4-stellig = Tour ODER CSB) und ein Feld fuer exakte Schluesselnummer.")
+st.caption("4-stellig = Tour ODER CSB. Schluessel-Suche ist exakt.")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -417,7 +421,6 @@ with col2:
     key_file = st.file_uploader("Schluesseldatei (A=CSB, F=Schluessel)", type=["xlsx"])
 
 def normalize_digits_py(v) -> str:
-    """Nur Ziffern behalten, '.0' und führende Nullen entfernen."""
     if pd.isna(v):
         return ""
     s = str(v).strip().replace(".0", "")
@@ -428,9 +431,6 @@ def normalize_digits_py(v) -> str:
     return s if s else "0"
 
 def build_key_map(key_df: pd.DataFrame) -> dict:
-    """
-    Erzeugt CSB->Schlüssel Mapping mit harter Normalisierung (CSB & Schlüssel nur Ziffern).
-    """
     if key_df.shape[1] < 6:
         st.warning("Schluesseldatei hat weniger als 6 Spalten – letzte vorhandene Spalte als Schluessel verwendet.")
     csb_col = 0
@@ -442,6 +442,21 @@ def build_key_map(key_df: pd.DataFrame) -> dict:
         if csb:
             mapping[csb] = schluessel
     return mapping
+
+def to_data_url(data: bytes, mime: str = "image/png") -> str:
+    return f"data:{mime};base64," + base64.b64encode(data).decode("utf-8")
+
+def get_fixed_logo_data_url() -> str:
+    path = "/mnt/data/Fleischwerk-EDEKA-Nord_Logo_Zusatz EDEKA NORD_2023-02aa5e4d.png"
+    try:
+        with open(path, "rb") as f:
+            return to_data_url(f.read(), "image/png")
+    except FileNotFoundError:
+        st.error(f"Logo-Datei nicht gefunden: {path}")
+        st.stop()
+    except Exception as e:
+        st.error(f"Logo konnte nicht geladen werden: {e}")
+        st.stop()
 
 if excel_file and key_file:
     if st.button("HTML erzeugen", type="primary"):
@@ -463,7 +478,7 @@ if excel_file and key_file:
                 if key_df.shape[1] < 2:
                     key_file.seek(0)
                     key_df = pd.read_excel(key_file, sheet_name=0, header=None)
-                key_map = build_key_map(key_df)  # CSB -> KEY (bereinigt)
+                key_map = build_key_map(key_df)
 
             tour_dict = {}
             def kunden_sammeln(df: pd.DataFrame):
@@ -476,15 +491,11 @@ if excel_file and key_file:
                             continue
                         tournr = normalize_digits_py(tournr_raw)
 
-                        # Kundeneintrag aufbauen
                         eintrag = {k: str(row.get(v, "")).strip() for k, v in SPALTEN_MAPPING.items()}
-
-                        # CSB & Felder normalisieren
                         csb_clean = normalize_digits_py(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
                         eintrag["csb_nummer"]   = csb_clean
                         eintrag["sap_nummer"]   = normalize_digits_py(eintrag.get("sap_nummer", ""))
                         eintrag["postleitzahl"] = normalize_digits_py(eintrag.get("postleitzahl", ""))
-                        # Schlüssel aus Mapping (bereinigt). Kann leer sein – wird im Frontend aus keyIndex ergänzt.
                         eintrag["schluessel"]   = key_map.get(csb_clean, "")
                         eintrag["liefertag"]    = tag
 
@@ -502,21 +513,21 @@ if excel_file and key_file:
                 st.error("Keine gueltigen Kundendaten gefunden.")
                 st.stop()
 
-            # Touren sortieren
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0]) if str(kv[0]).isdigit() else 0))
-
-            # WICHTIG: keyIndex zusätzlich ins HTML geben (damit der Client fehlende Keys nachziehen kann)
             key_index_json = json.dumps(key_map, ensure_ascii=False)
             tours_json     = json.dumps(sorted_tours, ensure_ascii=False)
 
+            logo_data_url  = get_fixed_logo_data_url()
+
             final_html = HTML_TEMPLATE.replace("const tourkundenData = {  }", f"const tourkundenData = {tours_json}")
             final_html = final_html.replace("const keyIndex       = {  }", f"const keyIndex = {key_index_json}")
+            final_html = final_html.replace("__LOGO_DATA_URL__", logo_data_url)
 
             total_customers = sum(len(v) for v in sorted_tours.values())
-            c1,c2,c3 = st.columns(3)
-            with c1: st.metric("Touren", len(sorted_tours))
-            with c2: st.metric("Kunden", total_customers)
-            with c3: st.metric("Schluessel (Mapping)", len(key_map))
+            m1,m2,m3 = st.columns(3)
+            with m1: st.metric("Touren", len(sorted_tours))
+            with m2: st.metric("Kunden", total_customers)
+            with m3: st.metric("Schluessel (Mapping)", len(key_map))
 
             st.download_button(
                 "Download HTML",
