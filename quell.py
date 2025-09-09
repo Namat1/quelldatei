@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import json
 
-# ===== Full Streamlit app with compact tour banner (no top list), clean list view =====
-
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -17,18 +15,18 @@ HTML_TEMPLATE = """
   --bg:#f6f7f9; --surface:#ffffff; --alt:#fafbfd; --border:#d9e2ef;
   --row-border:#e6edf5; --stripe:#f5f8fc;
   --txt:#1f2937; --muted:#667085; --head:#0f172a;
-  --accent:#2563eb; --accent-weak:rgba(37,99,235,.12);
+  --accent:#2563eb; --accent-weak:rgba(37,99,235,.12); --accent-strong:#1d4ed8;
   --ok:#16a34a; --ok-weak:rgba(22,163,74,.12);
   --warn:#f59e0b; --warn-weak:rgba(245,158,11,.18);
   --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
-  --fs-12:12px; --fs-13:13px; --fs-14:14px;
+  --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0; background:var(--bg);
   font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  color:var(--txt); font-size:var(--fs-13); line-height:1.45;
+  color:var(--txt); font-size:var(--fs-12); line-height:1.45; /* kleiner */
 }
 
 /* Frame */
@@ -37,24 +35,24 @@ body{
 .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
 
 /* Header */
-.header{padding:10px 12px; border-bottom:1px solid var(--border); background:#0b1d3a; color:#fff}
-.title{font-size:15px; font-weight:700; text-align:center}
+.header{padding:8px 12px; border-bottom:1px solid var(--border); background:#0b1d3a; color:#fff}
+.title{font-size:var(--fs-14); font-weight:700; text-align:center}
 
 /* Searchbar */
 .searchbar{
-  padding:8px 12px; display:grid; grid-template-columns:1fr 260px auto; gap:8px; align-items:center;
+  padding:8px 12px; display:grid; grid-template-columns:1fr 250px auto; gap:8px; align-items:center;
   border-bottom:1px solid var(--border); background:var(--surface);
 }
 @media(max-width:960px){ .searchbar{grid-template-columns:1fr} }
-.field{display:grid; grid-template-columns:72px 1fr; gap:6px; align-items:center}
-.label{font-weight:600; color:#344054}
+.field{display:grid; grid-template-columns:70px 1fr; gap:6px; align-items:center}
+.label{font-weight:600; color:#344054; font-size:var(--fs-12)}
 .input{
-  width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:7px;
+  width:100%; padding:7px 9px; border:1px solid var(--border); border-radius:7px;
   background:linear-gradient(180deg, var(--surface), var(--alt));
-  transition:border-color .15s, box-shadow .15s, background .15s;
+  transition:border-color .15s, box-shadow .15s, background .15s; font-size:var(--fs-12)
 }
 .input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-weak); background:#fff}
-.btn{padding:8px 10px; border:1px solid var(--border); background:#fff; border-radius:7px; cursor:pointer; font-weight:600}
+.btn{padding:7px 9px; border:1px solid var(--border); background:#fff; border-radius:7px; cursor:pointer; font-weight:600; font-size:var(--fs-12)}
 .btn:hover{background:#f3f4f6}
 .btn-danger{background:#ef4444; border-color:#ef4444; color:#fff}
 .btn-danger:hover{background:#dc2626}
@@ -77,39 +75,45 @@ body{
 .tour-banner{
   display:flex; align-items:center; justify-content:space-between;
   padding:6px 10px; border:1px solid var(--border); border-radius:6px;
-  background:#f2f5fa; color:#344054; font-weight:700; font-size:13px;
+  background:#f2f5fa; color:#344054; font-weight:700; font-size:var(--fs-12);
 }
-.tour-banner small{font-weight:600; color:#667085}
+.tour-banner small{font-weight:600; color:#667085; font-size:var(--fs-11)}
 
 /* Table */
-.table-wrap{margin-top:10px}
+.table-wrap{margin-top:8px}
 .table-section{padding:6px 8px}
 .scroller{max-height:68vh; overflow:auto; border:1px solid var(--row-border); border-radius:6px; background:#fff}
-table{width:100%; border-collapse:separate; border-spacing:0; font-size:var(--fs-13)}
+table{width:100%; border-collapse:separate; border-spacing:0; font-size:var(--fs-12)}
 thead th{
   position:sticky; top:0; background:#f2f5fa; color:#344054; font-weight:700;
-  border-bottom:1px solid var(--row-border); padding:8px 8px; white-space:nowrap; z-index:1
+  border-bottom:1px solid var(--row-border); padding:7px 8px; white-space:nowrap; z-index:1; font-size:var(--fs-12)
 }
-tbody td{padding:7px 8px; border-bottom:1px solid var(--row-border); vertical-align:middle}
+tbody td{padding:6px 8px; border-bottom:1px solid var(--row-border); vertical-align:middle}
 tbody tr:nth-child(odd){background:var(--stripe)}
 tbody tr:hover{background:#eef4ff}
 .csb-link{font-weight:700; color:#0b3a8a; cursor:pointer}
 .csb-link:hover{text-decoration:underline}
+
+/* small pills */
 .tour-btn{
   display:inline-block; background:#fff; border:1px solid #bbf7d0; color:#065f46;
-  padding:1px 7px; margin:1px 4px 1px 0; border-radius:999px; font-weight:700; font-size:11px; cursor:pointer
+  padding:1px 7px; margin:1px 4px 1px 0; border-radius:999px; font-weight:700; font-size:var(--fs-11); cursor:pointer
 }
 .tour-btn:hover{background:var(--ok-weak)}
-.badge-key{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:1px 7px; font-weight:700; font-size:11px; display:inline-block}
-.table-map{
-  text-decoration:none; font-weight:700; font-size:11px;
-  padding:4px 8px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; color:#374151;
+.badge-key{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:1px 7px; font-weight:700; font-size:var(--fs-11); display:inline-block}
+
+/* MAP buttons: now colored */
+.table-map,
+.map-pill{
+  text-decoration:none; font-weight:700; font-size:var(--fs-11);
+  padding:5px 10px; border-radius:999px; border:1px solid var(--accent);
+  background:var(--accent); color:#fff; display:inline-block; text-align:center;
 }
-.table-map:hover{background:#f3f4f6}
+.table-map:hover, .map-pill:hover{background:var(--accent-strong); border-color:var(--accent-strong)}
 
 /* Welcome */
-#welcome{padding:24px 12px; text-align:center; color:var(--muted)}
-#welcome h3{margin:0 0 4px; color:#334155; font-size:14px}
+#welcome{padding:20px 12px; text-align:center; color:var(--muted); font-size:var(--fs-12)}
+#welcome h3{margin:0 0 4px; color:#334155; font-size:var(--fs-13)}
 
 /* Scrollbar */
 ::-webkit-scrollbar{width:10px; height:10px}
@@ -260,7 +264,7 @@ function renderTourTop(list, query, isExact){
   const label = isExact ? ('Tour ' + query) : ('Tour-Prefix ' + query + '*');
   title.textContent = label + ' - ' + list.length + ' Kunden';
 
-  // Optional compact day distribution on the right
+  // compact day distribution (right)
   const dayCount = {};
   list.forEach(k => (k.touren||[]).forEach(t=>{
     const cond = isExact ? (t.tournummer === query) : t.tournummer.startsWith(query);
@@ -324,6 +328,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </body>
 </html>
 """
+
 
 # ===== Streamlit UI (unchanged logic) =====
 
