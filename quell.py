@@ -7,7 +7,7 @@ import base64
 # ===== Logo per Upload (Base64)
 # ===== Schlüssel-Mapping
 # ===== OPTIONAL: Berater-Telefonliste (A=Vorname, B=Nachname, C=Nummer) -> Telefon des Fachberaters
-# ===== NEU: CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon) -> Markt-Telefonnummer pro CSB (separate Spalte)
+# ===== CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt) -> Markt-Telefonnummer pro CSB (separate Spalte)
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -122,9 +122,10 @@ tbody tr:hover{background:#eef4ff}
 }
 .table-map:hover, .map-pill:hover{background:var(--accent-strong); border-color:var(--accent-strong)}
 
-/* Fachberater Zelle */
+/* Fachberater & Markt Telefon */
 .fb-name{ font-weight:600; color:#0f172a }
 .fb-phone{ font-size:11px; color:#64748b; margin-top:2px }
+.market-phone{ font-size:11px; color:#64748b; margin-top:2px } /* identisch wie fb-phone */
 
 /* Scrollbar */
 ::-webkit-scrollbar{width:10px; height:10px}
@@ -266,7 +267,7 @@ function buildData(){
           if (beraterIndex[nameKey]) rec.fb_phone = beraterIndex[nameKey];
         }
 
-        // Markt-Telefon aus CSB-Map (separate Spalte)
+        // Markt-Telefon aus CSB-Map (eigene Spalte)
         rec.market_phone = beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon ? beraterCSBIndex[csb].telefon : '';
 
         map.set(csb, rec);
@@ -317,9 +318,14 @@ function rowFor(k){
   }
   tr.appendChild(tdFB);
 
-  // Markt-Telefon (aus CSB-Zuordnung)
+  // Markt-Telefon (aus CSB-Zuordnung) — gleiche Darstellung wie Fachberater-Telefon
   const tdMarket = document.createElement('td');
-  tdMarket.textContent = k.market_phone ? k.market_phone : '-';
+  if (k.market_phone){
+    const mPhoneDiv = el('div','market-phone','☎ ' + k.market_phone);
+    tdMarket.appendChild(mPhoneDiv);
+  } else {
+    tdMarket.textContent = '-';
+  }
   tr.appendChild(tdMarket);
 
   const tdAct = document.createElement('td');
@@ -405,7 +411,7 @@ function onSmart(){
     return;
   }
 
-  // Textsuche inkl. Markt-Telefon & Berater-Telefon
+  // Textsuche inkl. Berater-/Markt-Telefon
   const qN = normDE(qRaw);
   const results = allCustomers.filter(k=>{
     const fb = k.fachberater || '';
@@ -464,7 +470,7 @@ with c3:
 
 # Optional: Name->Telefon (Fachberater-Telefon)
 berater_file = st.file_uploader("OPTIONAL: Fachberater Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
-# NEU: CSB->(Fachberater, Markt-Telefon) (PRIO für Name + eigene Telefonspalte)
+# CSB->(Fachberater, Markt-Telefon)
 berater_csb_file = st.file_uploader("Fachberater-CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt)", type=["xlsx"])
 
 def normalize_digits_py(v) -> str:
@@ -531,7 +537,7 @@ def build_berater_csb_map(df: pd.DataFrame) -> dict:
         if csb:
             mapping[csb] = {
                 "name": fach.strip(),
-                "telefon": tel.strip()   # Markt-Telefon!
+                "telefon": tel.strip()
             }
     return mapping
 
@@ -576,7 +582,7 @@ if excel_file and key_file:
                         bf = pd.read_excel(berater_file, sheet_name=0, header=None)
                     berater_map = build_berater_map(bf)
 
-            # NEU: CSB->(Name, Markt-Telefon)
+            # CSB->(Name, Markt-Telefon)
             berater_csb_map = {}
             if berater_csb_file is not None:
                 with st.spinner("Lese Fachberater-CSB-Zuordnung (A, I, O)..."):
@@ -607,7 +613,7 @@ if excel_file and key_file:
                         eintrag["schluessel"]   = key_map.get(csb_clean, "")
                         eintrag["liefertag"]    = tag
 
-                        # Fachberater-Name ggf. aus CSB-Datei überschreiben (Telefon dort ist MARKT, nicht Berater!)
+                        # Fachberater-Name ggf. aus CSB-Datei überschreiben (Telefon dort ist MARKT)
                         if csb_clean and csb_clean in berater_csb_map and berater_csb_map[csb_clean].get("name"):
                             eintrag["fachberater"] = berater_csb_map[csb_clean]["name"]
 
