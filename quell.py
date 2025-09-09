@@ -129,7 +129,7 @@ tbody tr:hover{background:#eef4ff}
       <div class="searchbar">
         <div class="field">
           <div class="label">Suche</div>
-          <input class="input" id="smartSearch" placeholder="Text (Name/Ort/CSB/SAP/Fachberater) oder Tour (1-4 Ziffern)">
+          <input class="input" id="smartSearch" placeholder="Name, Ort, Tour, CSB, SAP, Straße...">
         </div>
         <div class="field">
           <div class="label">Schluessel</div>
