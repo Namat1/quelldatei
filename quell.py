@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import json
 
+# ===== Full Streamlit app with compact tour banner (no top list), clean list view =====
+
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -12,7 +14,7 @@ HTML_TEMPLATE = """
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f7f9; --surface:#ffffff; --alt:#fafbfd; --border:#d9e2ef; /* dunkler */
+  --bg:#f6f7f9; --surface:#ffffff; --alt:#fafbfd; --border:#d9e2ef;
   --row-border:#e6edf5; --stripe:#f5f8fc;
   --txt:#1f2937; --muted:#667085; --head:#0f172a;
   --accent:#2563eb; --accent-weak:rgba(37,99,235,.12);
@@ -26,7 +28,7 @@ html,body{height:100%}
 body{
   margin:0; background:var(--bg);
   font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  color:var(--txt); font-size:var(--fs-13); line-height:1.45;  /* kleiner */
+  color:var(--txt); font-size:var(--fs-13); line-height:1.45;
 }
 
 /* Frame */
@@ -57,10 +59,10 @@ body{
 .btn-danger{background:#ef4444; border-color:#ef4444; color:#fff}
 .btn-danger:hover{background:#dc2626}
 
-/* Content (single column) */
+/* Content */
 .content{padding:10px 12px}
 
-/* Section chrome: klare Abgrenzung */
+/* Section chrome */
 .section{
   background:var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:var(--shadow); position:relative;
 }
@@ -70,27 +72,14 @@ body{
   border-top-left-radius:8px; border-top-right-radius:8px;
 }
 
-/* Tour summary (top list) */
-.tour-wrap{display:none; margin-bottom:10px}
-.tour-inner{padding:8px}
-.tour-header{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:2px 0 6px}
-.tour-title{font-weight:700; color:var(--head); font-size:var(--fs-13)}
-.tour-stats{display:flex; gap:10px; flex-wrap:wrap; font-size:var(--fs-12); color:var(--muted)}
-.tour-list{border:1px solid var(--row-border); border-radius:6px; overflow:hidden; background:#fff}
-.tour-row{
-  display:grid; grid-template-columns:90px 110px 1fr 56px; gap:8px;
-  padding:6px 8px; border-bottom:1px solid var(--row-border); align-items:center; font-size:var(--fs-13)
+/* Tour summary (compact banner) */
+.tour-wrap{display:none; margin-bottom:8px}
+.tour-banner{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 10px; border:1px solid var(--border); border-radius:6px;
+  background:#f2f5fa; color:#344054; font-weight:700; font-size:13px;
 }
-.tour-row:nth-child(odd){background:var(--stripe)}
-.tour-row:hover{background:#eef4ff}
-.csb-link{font-weight:700; color:#0b3a8a; cursor:pointer}
-.csb-link:hover{text-decoration:underline}
-.key-badge{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:1px 8px; font-weight:700; font-size:11px; display:inline-block}
-.map-pill{
-  justify-self:end; text-decoration:none; font-weight:700; font-size:11px;
-  padding:4px 8px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; color:#374151;
-}
-.map-pill:hover{background:#f3f4f6}
+.tour-banner small{font-weight:600; color:#667085}
 
 /* Table */
 .table-wrap{margin-top:10px}
@@ -104,6 +93,8 @@ thead th{
 tbody td{padding:7px 8px; border-bottom:1px solid var(--row-border); vertical-align:middle}
 tbody tr:nth-child(odd){background:var(--stripe)}
 tbody tr:hover{background:#eef4ff}
+.csb-link{font-weight:700; color:#0b3a8a; cursor:pointer}
+.csb-link:hover{text-decoration:underline}
 .tour-btn{
   display:inline-block; background:#fff; border:1px solid #bbf7d0; color:#065f46;
   padding:1px 7px; margin:1px 4px 1px 0; border-radius:999px; font-weight:700; font-size:11px; cursor:pointer
@@ -149,14 +140,11 @@ tbody tr:hover{background:#eef4ff}
 
       <!-- Content -->
       <div class="content">
-        <!-- Tour-Top -->
+        <!-- Compact tour banner -->
         <div class="section tour-wrap" id="tourWrap">
-          <div class="tour-inner">
-            <div class="tour-header">
-              <div class="tour-title" id="tourTitle"></div>
-              <div class="tour-stats" id="tourStats"></div>
-            </div>
-            <div class="tour-list" id="tourList"></div>
+          <div class="tour-banner">
+            <span id="tourTitle"></span>
+            <small id="tourExtra"></small>
           </div>
         </div>
 
@@ -266,35 +254,29 @@ function renderTable(list, emptyMsg){
 }
 
 function renderTourTop(list, query, isExact){
-  const wrap = $('#tourWrap'), title = $('#tourTitle'), stats = $('#tourStats'), listBox = $('#tourList');
-  if(!list.length){ wrap.style.display='none'; listBox.innerHTML=''; stats.innerHTML=''; title.textContent=''; return; }
+  const wrap = $('#tourWrap'), title = $('#tourTitle'), extra = $('#tourExtra');
+  if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
 
-  const dayCount = {}; const toursSeen = new Set();
+  const label = isExact ? ('Tour ' + query) : ('Tour-Prefix ' + query + '*');
+  title.textContent = label + ' - ' + list.length + ' Kunden';
+
+  // Optional compact day distribution on the right
+  const dayCount = {};
   list.forEach(k => (k.touren||[]).forEach(t=>{
-    if(t.tournummer.startsWith(query)){ dayCount[t.liefertag] = (dayCount[t.liefertag]||0)+1; toursSeen.add(t.tournummer); }
+    const cond = isExact ? (t.tournummer === query) : t.tournummer.startsWith(query);
+    if(cond){ dayCount[t.liefertag] = (dayCount[t.liefertag]||0)+1; }
   }));
-
-  title.textContent = (isExact ? 'Tour ' + query : 'Tour-Prefix ' + query + '*') + ' \u2013 ' + list.length + ' Kunden';
-  stats.innerHTML = Object.entries(dayCount).map(([d,c])=>'<span><b>'+d+':</b> '+c+'</span>').join('') + (isExact?'':'<span><b>Touren:</b> '+toursSeen.size+'</span>');
-
-  listBox.innerHTML='';
-  list.slice().sort((a,b)=> (parseInt(cs(a.csb_nummer))||0) - (parseInt(cs(b.csb_nummer))||0)).forEach(k=>{
-    const csb = cs(k.csb_nummer), plz = cs(k.postleitzahl);
-    const row = el('div','tour-row');
-    const csbLink = el('span','csb-link', csb); csbLink.onclick=()=>{ $('#smartSearch').value = csb; onSmart(); };
-    row.appendChild(csbLink);
-    row.appendChild(el('span','', k.schluessel ? 'S: '+k.schluessel : 'S: -'));
-    row.appendChild(el('span','', (k.name||'-')));
-    const m = document.createElement('a'); m.className='map-pill'; m.textContent='Map';
-    m.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); m.target='_blank';
-    row.appendChild(m);
-    listBox.appendChild(row);
-  });
+  const parts = Object.entries(dayCount).sort().map(([d,c])=> d + ': ' + c);
+  extra.textContent = parts.join('  •  ');
 
   wrap.style.display='block';
 }
 
-function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourList').innerHTML=''; $('#tourStats').innerHTML=''; $('#tourTitle').textContent=''; }
+function closeTourTop(){
+  const wrap = $('#tourWrap'); if(!wrap) return;
+  $('#tourTitle').textContent=''; const ex = $('#tourExtra'); if(ex) ex.textContent='';
+  wrap.style.display='none';
+}
 
 function onSmart(){
   const qRaw = $('#smartSearch').value.trim();
@@ -307,7 +289,7 @@ function onSmart(){
     const exact = qRaw.length===4;
     const results = allCustomers.filter(k => (k.touren||[]).some(t => t.tournummer.startsWith(qRaw)));
     renderTourTop(results, qRaw, exact);
-    renderTable(results, 'Keine Treffer fuer Tour'+(exact?'':'-Prefix')+' "'+qRaw+'"');
+    renderTable(results, 'Keine Treffer fuer Tour' + (exact?'':'-Prefix') + ' "' + qRaw + '"');
     return;
   }
 
@@ -315,7 +297,7 @@ function onSmart(){
     const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+k.fachberater+' '+(k.schluessel||'')).toLowerCase();
     return text.includes(q);
   });
-  renderTable(results, 'Keine Kunden fuer "'+qRaw+'" gefunden');
+  renderTable(results, 'Keine Kunden fuer "' + qRaw + '" gefunden');
 }
 
 function onKey(){
@@ -323,8 +305,8 @@ function onKey(){
   closeTourTop();
   if(!q){ renderTable([], ''); return; }
   const results = allCustomers.filter(k => (k.schluessel||'') === q);
-  if(results.length){ renderTourTop(results, 'Schluessel '+q, true); }
-  renderTable(results, 'Kein Kunde mit Schluessel "'+q+'" gefunden');
+  if(results.length){ renderTourTop(results, 'Schluessel ' + q, true); }
+  renderTable(results, 'Kein Kunde mit Schluessel "' + q + '" gefunden');
 }
 
 function debounce(fn, d=160){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
@@ -343,11 +325,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </html>
 """
 
+# ===== Streamlit UI (unchanged logic) =====
 
-
-
-st.title("Kunden-Suchseite (Listenansicht mit Tour-Uebersicht oben)")
-st.markdown("Ein Feld fuer **Text/Tour** (1-4 Ziffern) und ein Feld fuer **exakte Schluesselnummer**. Bei Toursuche erscheint **oben** eine kompakte Uebersicht, darunter die **Kundenliste**.")
+st.title("Kunden-Suchseite (Listenansicht mit Tour-Banner)")
+st.markdown("Ein Feld fuer **Text/Tour** (1-4 Ziffern) und ein Feld fuer **exakte Schluesselnummer**. Bei Toursuche erscheint oben ein kompaktes Banner, darunter die Kundenliste.")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -356,10 +337,12 @@ with col2:
     key_file = st.file_uploader("Schluesseldatei (A=CSB, F=Schluessel)", type=["xlsx"])
 
 def norm_str_num(x):
-    if pd.isna(x): return ""
+    if pd.isna(x):
+        return ""
     s = str(x).strip()
     try:
-        f = float(s.replace(",", ".")); i = int(f)
+        f = float(s.replace(",", "."))
+        i = int(f)
         return str(i) if f == i else s
     except Exception:
         return s
@@ -381,7 +364,15 @@ def build_key_map(key_df: pd.DataFrame) -> dict:
 if excel_file and key_file:
     if st.button("HTML erzeugen", type="primary"):
         BLATTNAMEN = ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]
-        SPALTEN_MAPPING = {"csb_nummer":"Nr","sap_nummer":"SAP-Nr.","name":"Name","strasse":"Strasse","postleitzahl":"Plz","ort":"Ort","fachberater":"Fachberater"}
+        SPALTEN_MAPPING = {
+            "csb_nummer":"Nr",
+            "sap_nummer":"SAP-Nr.",
+            "name":"Name",
+            "strasse":"Strasse",
+            "postleitzahl":"Plz",
+            "ort":"Ort",
+            "fachberater":"Fachberater"
+        }
         LIEFERTAGE_MAPPING = {"Montag":"Mo","Dienstag":"Die","Mittwoch":"Mitt","Donnerstag":"Don","Freitag":"Fr","Samstag":"Sam"}
 
         try:
@@ -396,7 +387,7 @@ if excel_file and key_file:
             def kunden_sammeln(df: pd.DataFrame):
                 for _, row in df.iterrows():
                     for tag, spaltenname in LIEFERTAGE_MAPPING.items():
-                        if spaltenname not in df.columns: 
+                        if spaltenname not in df.columns:
                             continue
                         tournr_raw = str(row[spaltenname]).strip()
                         if not tournr_raw or not tournr_raw.replace('.', '', 1).isdigit():
