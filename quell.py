@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import json
 
-# DROP-IN: Ersetze deine bisherige HTML_TEMPLATE Konstante hiermit
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -19,11 +18,8 @@ HTML_TEMPLATE = """
   --ok:#16a34a; --ok-weak:rgba(22,163,74,.12);
   --warn:#f59e0b; --warn-weak:rgba(245,158,11,.15);
   --radius:10px; --shadow:0 1px 4px rgba(0,0,0,.06);
-  --shadow-lg:0 8px 24px rgba(0,0,0,.06);
   --fs-12:12px; --fs-13:13px; --fs-14:14px;
-  --pad-8:8px; --pad-10:10px; --pad-12:12px;
 }
-
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -32,16 +28,16 @@ body{
   color:var(--txt); font-size:var(--fs-14); line-height:1.45;
 }
 
-/* FRAME */
+/* Frame */
 .page{min-height:100vh; display:flex; justify-content:center; padding:16px}
 .container{width:100%; max-width:1400px}
 .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
 
-/* HEADER */
+/* Header */
 .header{padding:14px 16px; border-bottom:1px solid var(--border); background:#0b1d3a; color:#fff}
-.title{font-size:16px; font-weight:700; text-align:center; letter-spacing:.2px}
+.title{font-size:16px; font-weight:700; text-align:center}
 
-/* SEARCH BAR */
+/* Searchbar */
 .searchbar{
   padding:12px 16px; display:grid; grid-template-columns:1fr 280px auto; gap:10px; align-items:center;
   border-bottom:1px solid var(--border); background:var(--surface);
@@ -60,19 +56,11 @@ body{
 .btn-danger{background:#ef4444; border-color:#ef4444; color:#fff}
 .btn-danger:hover{background:#dc2626}
 
-/* LAYOUT */
-.content{display:grid; grid-template-columns:320px 1fr; gap:12px; padding:12px 16px}
-@media(max-width:1100px){ .content{grid-template-columns:1fr} }
-.sidebar{display:flex; flex-direction:column; gap:12px}
-.box{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden}
-.box-head{padding:8px 12px; font-weight:700; color:var(--head); background:var(--alt); border-bottom:1px solid var(--border)}
-.box-body{padding:8px 10px; max-height:300px; overflow:auto}
-.fb-item{display:grid; grid-template-columns:1fr auto; gap:8px; padding:8px 6px; border-bottom:1px solid #f1f5f9; font-size:var(--fs-13); cursor:pointer}
-.fb-item:hover{background:#f8fafc}
-.fb-count{background:#64748b; color:#fff; border-radius:999px; font-size:var(--fs-12); padding:2px 8px}
+/* Content (single column) */
+.content{padding:12px 16px}
 
-/* TOUR SUMMARY (TOP LIST) */
-.tour-wrap{display:none; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px; box-shadow:var(--shadow)}
+/* Tour summary (top list) */
+.tour-wrap{display:none; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px; box-shadow:var(--shadow); margin-bottom:12px}
 .tour-header{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:4px 2px 8px}
 .tour-title{font-weight:700; color:var(--head)}
 .tour-stats{display:flex; gap:14px; flex-wrap:wrap; font-size:var(--fs-13); color:var(--muted)}
@@ -89,7 +77,7 @@ body{
 }
 .map-pill:hover{background:#f3f4f6}
 
-/* TABLE */
+/* Table */
 .table-wrap{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden}
 .scroller{max-height:68vh; overflow:auto}
 table{width:100%; border-collapse:separate; border-spacing:0; font-size:var(--fs-13)}
@@ -100,7 +88,6 @@ thead th{
 tbody td{padding:9px 10px; border-bottom:1px solid #f1f5f9; vertical-align:middle}
 tbody tr:nth-child(odd){background:#fcfdff}
 tbody tr:hover{background:#f3f7ff}
-
 .tour-btn{
   display:inline-block; background:#fff; border:1px solid #bbf7d0; color:#065f46;
   padding:2px 8px; margin:2px 4px 2px 0; border-radius:999px; font-weight:700; font-size:var(--fs-12); cursor:pointer
@@ -113,11 +100,11 @@ tbody tr:hover{background:#f3f7ff}
 }
 .table-map:hover{background:#f3f4f6}
 
-/* WELCOME */
+/* Welcome */
 #welcome{padding:40px 16px; text-align:center; color:var(--muted)}
 #welcome h3{margin:0 0 6px; color:#334155}
 
-/* SCROLLBAR */
+/* Scrollbar */
 ::-webkit-scrollbar{width:10px; height:10px}
 ::-webkit-scrollbar-thumb{background:#cbd5e1; border-radius:6px}
 ::-webkit-scrollbar-thumb:hover{background:#94a3b8}
@@ -129,7 +116,7 @@ tbody tr:hover{background:#f3f7ff}
     <div class="card">
       <div class="header"><div class="title">Kunden-Suche</div></div>
 
-      <!-- SEARCH -->
+      <!-- Search -->
       <div class="searchbar">
         <div class="field">
           <div class="label">Suche</div>
@@ -140,57 +127,45 @@ tbody tr:hover{background:#f3f7ff}
           <input class="input" id="keySearch" placeholder="Exakte Schluesselnummer">
         </div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button class="btn" id="btnFB">Fachberater</button>
           <button class="btn btn-danger" id="btnReset">Zuruecksetzen</button>
         </div>
       </div>
 
-      <!-- CONTENT -->
+      <!-- Content (no sidebar) -->
       <div class="content">
-        <!-- Sidebar -->
-        <div class="sidebar">
-          <div class="box" id="fbBox" style="display:none;">
-            <div class="box-head">Fachberater <span id="fbCount" style="font-weight:600;color:#64748b"></span></div>
-            <div class="box-body" id="fbList"></div>
+        <!-- Tour-Top -->
+        <div class="tour-wrap" id="tourWrap">
+          <div class="tour-header">
+            <div class="tour-title" id="tourTitle"></div>
+            <div class="tour-stats" id="tourStats"></div>
           </div>
+          <div class="tour-list" id="tourList"></div>
         </div>
 
-        <!-- Main -->
-        <div>
-          <!-- Tour-Top -->
-          <div class="tour-wrap" id="tourWrap">
-            <div class="tour-header">
-              <div class="tour-title" id="tourTitle"></div>
-              <div class="tour-stats" id="tourStats"></div>
-            </div>
-            <div class="tour-list" id="tourList"></div>
+        <!-- Table -->
+        <div class="table-wrap">
+          <div class="scroller" id="tableScroller" style="display:none;">
+            <table>
+              <thead>
+                <tr>
+                  <th>CSB</th>
+                  <th>SAP</th>
+                  <th>Name</th>
+                  <th>Strasse</th>
+                  <th>PLZ</th>
+                  <th>Ort</th>
+                  <th>Schluessel</th>
+                  <th>Touren</th>
+                  <th>Fachberater</th>
+                  <th>Aktion</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
           </div>
-
-          <!-- Table -->
-          <div class="table-wrap">
-            <div class="scroller" id="tableScroller" style="display:none;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>CSB</th>
-                    <th>SAP</th>
-                    <th>Name</th>
-                    <th>Strasse</th>
-                    <th>PLZ</th>
-                    <th>Ort</th>
-                    <th>Schluessel</th>
-                    <th>Touren</th>
-                    <th>Fachberater</th>
-                    <th>Aktion</th>
-                  </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-              </table>
-            </div>
-            <div id="welcome">
-              <h3>Willkommen</h3>
-              <div>Tippe Tour (1-4 Ziffern) oder Text. Rechts: exakte Schluesselsuche.</div>
-            </div>
+          <div id="welcome">
+            <h3>Willkommen</h3>
+            <div>Tippe Tour (1-4 Ziffern) oder Text. Rechts: exakte Schluesselsuche.</div>
           </div>
         </div>
       </div> <!-- content -->
@@ -199,13 +174,12 @@ tbody tr:hover{background:#f3f7ff}
 </div>
 
 <script>
-/* ===== JS: unveraendert in seiner Logik, nur Styles harmonisiert ===== */
+/* Data injection */
 const tourkundenData = {  }; // wird durch Python ersetzt
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
 
 let allCustomers = [];
-let fbIndex = {};
 
 function buildData(){
   const map = new Map();
@@ -218,12 +192,6 @@ function buildData(){
     });
   }
   allCustomers = Array.from(map.values());
-  fbIndex = {};
-  allCustomers.forEach(k=>{
-    const fb = (k.fachberater||'').trim();
-    if(!fb) return;
-    (fbIndex[fb] ||= []).push(k);
-  });
 }
 
 const cs = v => (v||'').toString().replace(/\\.0$/,'') || '-';
@@ -311,7 +279,7 @@ function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourList').inn
 function onSmart(){
   const qRaw = $('#smartSearch').value.trim();
   const q = qRaw.toLowerCase();
-  closeTourTop(); $('#fbBox').style.display='none';
+  closeTourTop();
   if(!q){ renderTable([], ''); return; }
 
   const isDigits = /^\\d{1,4}$/.test(qRaw);
@@ -323,29 +291,6 @@ function onSmart(){
     return;
   }
 
-  // Textsuche (+ optional Fachberater-Sidebar bei exaktem Match)
-  if(q.length>=3){
-    const names = Object.keys(fbIndex);
-    const hits = names.filter(n => n.toLowerCase()===q);
-    if(hits.length===1){
-      const list = fbIndex[hits[0]];
-      const box = $('#fbBox'), ul = $('#fbList'), c = $('#fbCount');
-      ul.innerHTML='';
-      list.slice().sort((a,b)=> (parseInt(cs(a.csb_nummer))||0) - (parseInt(cs(b.csb_nummer))||0)).forEach(k=>{
-        const csb = cs(k.csb_nummer), plz = cs(k.postleitzahl);
-        const row = document.createElement('div'); row.className='fb-item';
-        const left = document.createElement('div'); left.innerHTML = '<b>'+csb+'</b> \u00b7 '+(k.name||'-');
-        left.onclick=()=>{ $('#smartSearch').value = csb; onSmart(); };
-        const right = document.createElement('div');
-        const m = document.createElement('a'); m.className='table-map'; m.textContent='Map';
-        m.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); m.target='_blank';
-        right.appendChild(m);
-        row.append(left,right); ul.appendChild(row);
-      });
-      c.textContent='('+list.length+')'; box.style.display='block';
-    }
-  }
-
   const results = allCustomers.filter(k=>{
     const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+k.fachberater+' '+(k.schluessel||'')).toLowerCase();
     return text.includes(q);
@@ -355,7 +300,7 @@ function onSmart(){
 
 function onKey(){
   const q = $('#keySearch').value.trim();
-  closeTourTop(); $('#fbBox').style.display='none';
+  closeTourTop();
   if(!q){ renderTable([], ''); return; }
   const results = allCustomers.filter(k => (k.schluessel||'') === q);
   if(results.length){ renderTourTop(results, 'Schluessel '+q, true); }
@@ -370,17 +315,14 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('keySearch').addEventListener('input', debounce(onKey, 180));
   document.getElementById('btnReset').addEventListener('click', ()=>{
     document.getElementById('smartSearch').value=''; document.getElementById('keySearch').value='';
-    closeTourTop(); document.getElementById('fbBox').style.display='none'; renderTable([], '');
-  });
-  document.getElementById('btnFB').addEventListener('click', ()=>{
-    const box = document.getElementById('fbBox');
-    box.style.display = (box.style.display==='none'||box.style.display==='') ? 'block' : 'none';
+    closeTourTop(); renderTable([], '');
   });
 });
 </script>
 </body>
 </html>
 """
+
 
 
 st.title("Kunden-Suchseite (Listenansicht mit Tour-Uebersicht oben)")
