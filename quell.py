@@ -4,7 +4,7 @@ import json
 import base64
 
 # ===== Vollständige App: Listenansicht, Tour-Banner, Umlaut-Suche
-# ===== Logo fest im Header (Base64 aus fixem Pfad)
+# ===== Logo wird IMMER per Upload eingebunden (Base64), kein fester Pfad
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -414,11 +414,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
 st.title("Kunden-Suchseite (Listenansicht, Tour-Banner)")
 st.caption("4-stellig = Tour ODER CSB. Schluessel-Suche ist exakt.")
 
-col1, col2 = st.columns(2)
-with col1:
+c1, c2, c3 = st.columns([1,1,1])
+with c1:
     excel_file = st.file_uploader("Quelldatei (Kundendaten)", type=["xlsx"])
-with col2:
+with c2:
     key_file = st.file_uploader("Schluesseldatei (A=CSB, F=Schluessel)", type=["xlsx"])
+with c3:
+    logo_file = st.file_uploader("Logo (PNG/JPG)", type=["png","jpg","jpeg"])
 
 def normalize_digits_py(v) -> str:
     if pd.isna(v):
@@ -446,20 +448,17 @@ def build_key_map(key_df: pd.DataFrame) -> dict:
 def to_data_url(data: bytes, mime: str = "image/png") -> str:
     return f"data:{mime};base64," + base64.b64encode(data).decode("utf-8")
 
-def get_fixed_logo_data_url() -> str:
-    path = "/mnt/data/Fleischwerk-EDEKA-Nord_Logo_Zusatz EDEKA NORD_2023-02aa5e4d.png"
-    try:
-        with open(path, "rb") as f:
-            return to_data_url(f.read(), "image/png")
-    except FileNotFoundError:
-        st.error(f"Logo-Datei nicht gefunden: {path}")
-        st.stop()
-    except Exception as e:
-        st.error(f"Logo konnte nicht geladen werden: {e}")
-        st.stop()
-
 if excel_file and key_file:
     if st.button("HTML erzeugen", type="primary"):
+        # Logo ist Pflicht:
+        if logo_file is None:
+            st.error("Bitte ein Logo (PNG/JPG) hochladen.")
+            st.stop()
+        # Logo in Base64 umwandeln
+        logo_bytes = logo_file.read()
+        logo_mime = logo_file.type or ("image/png" if logo_file.name.lower().endswith(".png") else "image/jpeg")
+        logo_data_url = to_data_url(logo_bytes, logo_mime)
+
         BLATTNAMEN = ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]
         SPALTEN_MAPPING = {
             "csb_nummer":"Nr",
@@ -517,8 +516,6 @@ if excel_file and key_file:
             key_index_json = json.dumps(key_map, ensure_ascii=False)
             tours_json     = json.dumps(sorted_tours, ensure_ascii=False)
 
-            logo_data_url  = get_fixed_logo_data_url()
-
             final_html = HTML_TEMPLATE.replace("const tourkundenData = {  }", f"const tourkundenData = {tours_json}")
             final_html = final_html.replace("const keyIndex       = {  }", f"const keyIndex = {key_index_json}")
             final_html = final_html.replace("__LOGO_DATA_URL__", logo_data_url)
@@ -539,4 +536,4 @@ if excel_file and key_file:
         except Exception as e:
             st.error(f"Fehler: {e}")
 else:
-    st.info("Bitte Quelldatei und Schluesseldatei hochladen.")
+    st.info("Bitte Quelldatei, Schluesseldatei und Logo hochladen.")
