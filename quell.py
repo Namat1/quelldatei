@@ -2,8 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 
-# ===== Vollständige App: Listenansicht, Tour-Banner, Umlaut-Suche
-# ===== 4-stellig = Tour ODER CSB, robuste Schlüssel- & CSB-Normalisierung =====
+# ===== Vollständige App: Listenansicht, Tour-Banner, Umlaut-Suche, 4-stellig = Tour ODER CSB =====
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -130,7 +129,7 @@ tbody tr:hover{background:#eef4ff}
       <div class="searchbar">
         <div class="field">
           <div class="label">Suche</div>
-          <input class="input" id="smartSearch" placeholder="Text (Name/Ort/CSB/SAP/Fachberater) oder Tour (1-4 Ziffern)">
+          <input class="input" id="smartSearch" placeholder="Name, Ort, Tour, CSB, SAP, Straße, Fachberater, etc...">
         </div>
         <div class="field">
           <div class="label">Schluessel</div>
@@ -188,7 +187,7 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 
 let allCustomers = [];
 
-/* Deutsche Normalisierung (für Textsuche) */
+/* Deutsche Normalisierung für Suche: ä/ö/ü -> ae/oe/ue, ß -> ss, Diakritika entfernen */
 function normDE(s){
   if(!s) return '';
   let x = s.toLowerCase();
@@ -197,25 +196,11 @@ function normDE(s){
   return x.replace(/\\s+/g,' ').trim();
 }
 
-/* ID/Key normalisieren:
-   - trim
-   - .0 entfernen
-   - nur Ziffern
-   - führende Nullen entfernen
-*/
-function normalizeDigits(v){
-  if(v == null) return '';
-  let s = String(v).trim().replace(/\\.0$/,'');
-  s = s.replace(/[^0-9]/g,'');
-  s = s.replace(/^0+(\\d)/,'$1');
-  return s;
-}
-
 /* Dedupliziere Kunden anhand CSB */
 function dedupByCSB(list){
   const seen = new Set(); const out = [];
   for (const k of list){
-    const key = normalizeDigits(k.csb_nummer);
+    const key = (k.csb_nummer ?? '').toString();
     if (!seen.has(key)){ seen.add(key); out.push(k); }
   }
   return out;
@@ -225,18 +210,16 @@ function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
     list.forEach(k=>{
-      const csb = normalizeDigits(k.csb_nummer);
-      if(!csb) return;
-      if(!map.has(csb)) map.set(csb, {...k, csb_nummer: csb, touren: []});
-      map.get(csb).touren.push({ tournummer: normalizeDigits(tour), liefertag: k.liefertag });
-      // Schlüssel auf Client-Seite sicher normalisieren
-      map.get(csb).schluessel = normalizeDigits(map.get(csb).schluessel);
+      const key = k.csb_nummer;
+      if(!key) return;
+      if(!map.has(key)) map.set(key, {...k, touren: []});
+      map.get(key).touren.push({ tournummer: tour, liefertag: k.liefertag });
     });
   }
   allCustomers = Array.from(map.values());
 }
 
-const cs = v => normalizeDigits(v) || '-';
+const cs = v => (v||'').toString().replace(/\\.0$/,'') || '-';
 
 function rowFor(k){
   const tr = document.createElement('tr');
@@ -253,15 +236,13 @@ function rowFor(k){
   tr.appendChild(el('td','',k.ort||'-'));
 
   const tdKey = document.createElement('td');
-  const keyDisp = normalizeDigits(k.schluessel);
-  if(keyDisp){ tdKey.appendChild(el('span','badge-key',keyDisp)); } else { tdKey.textContent='-'; }
+  if(k.schluessel){ tdKey.appendChild(el('span','badge-key',k.schluessel)); } else { tdKey.textContent='-'; }
   tr.appendChild(tdKey);
 
   const tdTours = document.createElement('td');
   (k.touren||[]).forEach(t=>{
-    const tnum = normalizeDigits(t.tournummer);
-    const tb = el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')');
-    tb.onclick=()=>{ $('#smartSearch').value = tnum; onSmart(); };
+    const tb = el('span','tour-btn',t.tournummer+' ('+t.liefertag.substring(0,2)+')');
+    tb.onclick=()=>{ $('#smartSearch').value = t.tournummer; onSmart(); };
     tdTours.appendChild(tb);
   });
   tr.appendChild(tdTours);
@@ -293,6 +274,7 @@ function renderTourTop(list, query, isExact){
   const wrap = $('#tourWrap'), title = $('#tourTitle'), extra = $('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
 
+  // Schlüsselsuche -> kein "Tour" im Titel
   if (query.startsWith('Schluessel ')) {
     const key = query.replace(/^Schluessel\\s+/, '');
     const label = 'Schluessel ' + key + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
@@ -307,13 +289,13 @@ function renderTourTop(list, query, isExact){
     return;
   }
 
+  // Tour-Logik
   const label = isExact ? ('Tour ' + query) : ('Tour-Prefix ' + query + '*');
   title.textContent = label + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
 
   const dayCount = {};
   list.forEach(k => (k.touren||[]).forEach(t=>{
-    const tnum = normalizeDigits(t.tournummer);
-    const cond = isExact ? (tnum === query) : tnum.startsWith(query);
+    const cond = isExact ? (t.tournummer === query) : t.tournummer.startsWith(query);
     if(cond){ dayCount[t.liefertag] = (dayCount[t.liefertag]||0)+1; }
   }));
   extra.textContent = Object.entries(dayCount).sort().map(([d,c])=> d + ': ' + c).join('  •  ');
@@ -333,22 +315,20 @@ function onSmart(){
 
   // 1–3 Ziffern => Tour-Prefix
   if (/^\\d{1,3}$/.test(qRaw)){
-    const qN = normalizeDigits(qRaw);
-    const results = allCustomers.filter(k => (k.touren||[]).some(t => normalizeDigits(t.tournummer).startsWith(qN)));
-    renderTourTop(results, qN, false);
+    const results = allCustomers.filter(k => (k.touren||[]).some(t => t.tournummer.startsWith(qRaw)));
+    renderTourTop(results, qRaw, false);
     renderTable(results);
     return;
   }
 
   // GENAU 4 Ziffern => KANN Tour ODER CSB sein
   if (/^\\d{4}$/.test(qRaw)){
-    const qN = normalizeDigits(qRaw);
-    const tourResults = allCustomers.filter(k => (k.touren||[]).some(t => normalizeDigits(t.tournummer) === qN));
-    const csbResults  = allCustomers.filter(k => normalizeDigits(k.csb_nummer) === qN);
+    const tourResults = allCustomers.filter(k => (k.touren||[]).some(t => t.tournummer === qRaw));
+    const csbResults  = allCustomers.filter(k => (cs(k.csb_nummer) === qRaw));
     const results = dedupByCSB([...tourResults, ...csbResults]);
 
     if (tourResults.length) {
-      renderTourTop(tourResults, qN, true);   // Banner nur für Tour
+      renderTourTop(tourResults, qRaw, true);   // Banner nur für Tour
     } else {
       closeTourTop();
     }
@@ -369,17 +349,9 @@ function onKey(){
   const q = $('#keySearch').value.trim();
   closeTourTop();
   if(!q){ renderTable([]); return; }
-
-  const qClean = normalizeDigits(q);
-  const matches = [];
-  for (const k of allCustomers){
-    if (normalizeDigits(k.schluessel) === qClean){
-      matches.push(k); // niemals abbrechen, alle sammeln
-    }
-  }
-
-  if(matches.length){ renderTourTop(matches, 'Schluessel ' + qClean, true); }
-  renderTable(matches);
+  const results = allCustomers.filter(k => (k.schluessel||'') === q);
+  if(results.length){ renderTourTop(results, 'Schluessel ' + q, true); }
+  renderTable(results);
 }
 
 function debounce(fn, d=160){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
@@ -409,32 +381,27 @@ with col1:
 with col2:
     key_file = st.file_uploader("Schluesseldatei (A=CSB, F=Schluessel)", type=["xlsx"])
 
-def normalize_digits_py(v) -> str:
-    """Nur Ziffern behalten, '.0' und führende Nullen entfernen."""
-    if pd.isna(v):
+def norm_str_num(x):
+    if pd.isna(x):
         return ""
-    s = str(v).strip().replace(".0", "")
-    s = "".join(ch for ch in s if ch.isdigit())
-    if not s:
-        return ""
-    # führende Nullen entfernen
-    s = s.lstrip("0")
-    return s if s else "0"
+    s = str(x).strip()
+    try:
+        f = float(s.replace(",", "."))
+        i = int(f)
+        return str(i) if f == i else s
+    except Exception:
+        return s
 
 def build_key_map(key_df: pd.DataFrame) -> dict:
-    """
-    Erzeugt CSB->Schlüssel Mapping mit harter Normalisierung:
-    - CSB: nur Ziffern, tausender Punkte/Kommas egal
-    - Schlüssel: nur Ziffern (so wird '40', '040', '40.0' identisch)
-    """
     if key_df.shape[1] < 6:
         st.warning("Schluesseldatei hat weniger als 6 Spalten – letzte vorhandene Spalte als Schluessel verwendet.")
     csb_col = 0
     key_col = 5 if key_df.shape[1] > 5 else key_df.shape[1] - 1
     mapping = {}
     for _, row in key_df.iterrows():
-        csb = normalize_digits_py(row.iloc[csb_col] if key_df.shape[1] > 0 else "")
-        schluessel = normalize_digits_py(row.iloc[key_col] if key_df.shape[1] > 0 else "")
+        csb = norm_str_num(row.iloc[csb_col] if key_df.shape[1] > 0 else "")
+        schluessel_raw = row.iloc[key_col] if key_df.shape[1] > 0 else ""
+        schluessel = "" if pd.isna(schluessel_raw) else str(schluessel_raw).strip()
         if csb:
             mapping[csb] = schluessel
     return mapping
@@ -470,19 +437,11 @@ if excel_file and key_file:
                         tournr_raw = str(row[spaltenname]).strip()
                         if not tournr_raw or not tournr_raw.replace('.', '', 1).isdigit():
                             continue
-                        tournr = normalize_digits_py(tournr_raw)
-
-                        # Kundeneintrag aufbauen
+                        tournr = str(int(float(tournr_raw)))
                         eintrag = {k: str(row.get(v, "")).strip() for k, v in SPALTEN_MAPPING.items()}
-
-                        # CSB & Schlüssel HART normalisieren
-                        csb_clean = normalize_digits_py(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
-                        eintrag["csb_nummer"] = csb_clean  # <<< überschreibe mit bereinigter CSB
-                        eintrag["sap_nummer"] = normalize_digits_py(eintrag.get("sap_nummer", ""))  # ebenfalls säubern
-                        eintrag["postleitzahl"] = normalize_digits_py(eintrag.get("postleitzahl", ""))
-                        eintrag["schluessel"] = key_map.get(csb_clean, "")  # bereits bereinigt
+                        csb_clean = norm_str_num(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
+                        eintrag["schluessel"] = key_map.get(csb_clean, "")
                         eintrag["liefertag"] = tag
-
                         tour_dict.setdefault(tournr, []).append(eintrag)
 
             with st.spinner("Verarbeite Quelldatei..."):
@@ -497,8 +456,7 @@ if excel_file and key_file:
                 st.error("Keine gueltigen Kundendaten gefunden.")
                 st.stop()
 
-            # Tourkeys als Ziffern sortieren
-            sorted_tours = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0]) if kv[0].isdigit() else 0))
+            sorted_tours = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0])))
             json_data_string = json.dumps(sorted_tours, indent=2, ensure_ascii=False)
             final_html = HTML_TEMPLATE.replace("const tourkundenData = {  }", f"const tourkundenData = {json_data_string};")
 
@@ -511,7 +469,7 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_liste.html",
+                file_name="suche.html",
                 mime="text/html",
                 type="primary"
             )
