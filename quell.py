@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import json
 
-# ===== Vollständige App: Listenansicht, Tour-Banner, Umlaut-Suche, 4-stellig = Tour ODER CSB =====
+# ===== Vollständige App: Listenansicht, Tour-Banner, Umlaut-Suche,
+# ===== 4-stellig = Tour ODER CSB, robuste Schlüsselsuche (keine Abbrüche) =====
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -187,7 +188,7 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 
 let allCustomers = [];
 
-/* Deutsche Normalisierung für Suche: ä/ö/ü -> ae/oe/ue, ß -> ss, Diakritika entfernen */
+/* Deutsche Normalisierung (für Textsuche) */
 function normDE(s){
   if(!s) return '';
   let x = s.toLowerCase();
@@ -196,9 +197,18 @@ function normDE(s){
   return x.replace(/\\s+/g,' ').trim();
 }
 
-/* Schlüssel-String vereinheitlichen: "40.0" -> "40" */
-function cleanKey(v){
-  return (v ?? '').toString().trim().replace(/\\.0$/, '');
+/* Schlüssel normalisieren:
+   - Trim
+   - ".0" entfernen
+   - Nicht-Ziffern entfernen
+   - Führende Nullen entfernen
+*/
+function normalizeKey(v){
+  if(v == null) return '';
+  let s = String(v).trim().replace(/\\.0$/,'');
+  s = s.replace(/[^0-9]/g,'');   // nur Ziffern
+  s = s.replace(/^0+(\\d)/,'$1'); // führende Nullen weg
+  return s;
 }
 
 /* Dedupliziere Kunden anhand CSB */
@@ -219,6 +229,8 @@ function buildData(){
       if(!key) return;
       if(!map.has(key)) map.set(key, {...k, touren: []});
       map.get(key).touren.push({ tournummer: tour, liefertag: k.liefertag });
+      // WICHTIG: Schluessel auf Client-Seite ebenfalls normalisieren
+      map.get(key).schluessel = normalizeKey(map.get(key).schluessel);
     });
   }
   allCustomers = Array.from(map.values());
@@ -241,7 +253,7 @@ function rowFor(k){
   tr.appendChild(el('td','',k.ort||'-'));
 
   const tdKey = document.createElement('td');
-  const keyDisp = cleanKey(k.schluessel);
+  const keyDisp = normalizeKey(k.schluessel);
   if(keyDisp){ tdKey.appendChild(el('span','badge-key',keyDisp)); } else { tdKey.textContent='-'; }
   tr.appendChild(tdKey);
 
@@ -356,12 +368,17 @@ function onKey(){
   closeTourTop();
   if(!q){ renderTable([]); return; }
 
-  // Vergleich mit bereinigten Schlüsseln (z.B. "40" == "40.0")
-  const qClean = cleanKey(q);
-  const results = allCustomers.filter(k => cleanKey(k.schluessel) === qClean);
+  const qClean = normalizeKey(q);
+  const matches = [];
+  // EXPLIZIT ITERIEREN: niemals frühzeitig abbrechen
+  for (const k of allCustomers){
+    if (normalizeKey(k.schluessel) === qClean){
+      matches.push(k);
+    }
+  }
 
-  if(results.length){ renderTourTop(results, 'Schluessel ' + qClean, true); }
-  renderTable(results);
+  if(matches.length){ renderTourTop(matches, 'Schluessel ' + qClean, true); }
+  renderTable(matches);
 }
 
 function debounce(fn, d=160){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
@@ -396,11 +413,21 @@ def norm_str_num(x):
         return ""
     s = str(x).strip()
     try:
+        # Komma als Dezimaltrenner erlauben, .0 entfernen
         f = float(s.replace(",", "."))
         i = int(f)
         return str(i) if f == i else s
     except Exception:
         return s
+
+def norm_key_py(v):
+    """Wie normalizeKey in JS: Nur Ziffern, .0 weg, führende Nullen weg."""
+    if pd.isna(v):
+        return ""
+    s = str(v).strip().replace(".0", "")
+    s = "".join(ch for ch in s if ch.isdigit())
+    s = s.lstrip("0") or "0" if s else ""
+    return s
 
 def build_key_map(key_df: pd.DataFrame) -> dict:
     if key_df.shape[1] < 6:
@@ -410,9 +437,7 @@ def build_key_map(key_df: pd.DataFrame) -> dict:
     mapping = {}
     for _, row in key_df.iterrows():
         csb = norm_str_num(row.iloc[csb_col] if key_df.shape[1] > 0 else "")
-        schluessel_raw = row.iloc[key_col] if key_df.shape[1] > 0 else ""
-        # >>> WICHTIG: Schlüssel ebenfalls normalisieren (macht aus 40.0 -> 40)
-        schluessel = "" if pd.isna(schluessel_raw) else norm_str_num(schluessel_raw)
+        schluessel = norm_key_py(row.iloc[key_col] if key_df.shape[1] > 0 else "")
         if csb:
             mapping[csb] = schluessel
     return mapping
