@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 
-# ===== Vollständige App: Listenansicht, Tour-Banner, ohne Welcome-Block, mit Umlaut-Suche =====
+# ===== Vollständige App: Listenansicht, Tour-Banner, Umlaut-Suche, 4-stellig = Tour ODER CSB =====
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -21,7 +21,7 @@ HTML_TEMPLATE = """
   --ok:#16a34a; --ok-weak:rgba(22,163,74,.12);
   --warn:#f59e0b; --warn-weak:rgba(245,158,11,.18);
   --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
-  --fs-11:11px; --fs-12:12px; --fs-13:13px;
+  --fs-11:11px; --fs-12:12px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -196,6 +196,16 @@ function normDE(s){
   return x.replace(/\\s+/g,' ').trim();
 }
 
+/* Dedupliziere Kunden anhand CSB */
+function dedupByCSB(list){
+  const seen = new Set(); const out = [];
+  for (const k of list){
+    const key = (k.csb_nummer ?? '').toString();
+    if (!seen.has(key)){ seen.add(key); out.push(k); }
+  }
+  return out;
+}
+
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
@@ -248,7 +258,7 @@ function rowFor(k){
   return tr;
 }
 
-function renderTable(list, emptyMsg){
+function renderTable(list){
   const body = $('#tableBody');
   const scroller = $('#tableScroller');
   body.innerHTML='';
@@ -301,33 +311,47 @@ function closeTourTop(){
 function onSmart(){
   const qRaw = $('#smartSearch').value.trim();
   closeTourTop();
-  if(!qRaw){ renderTable([], ''); return; }
+  if(!qRaw){ renderTable([]); return; }
 
-  // Nur Ziffern (1–4) -> Tour-/Prefixsuche
-  if(/^\\d{1,4}$/.test(qRaw)){
-    const exact = qRaw.length===4;
+  // 1–3 Ziffern => Tour-Prefix
+  if (/^\\d{1,3}$/.test(qRaw)){
     const results = allCustomers.filter(k => (k.touren||[]).some(t => t.tournummer.startsWith(qRaw)));
-    renderTourTop(results, qRaw, exact);
-    renderTable(results, '');
+    renderTourTop(results, qRaw, false);
+    renderTable(results);
     return;
   }
 
-  // Textsuche mit deutscher Normalisierung (Büchen <-> Buechen)
+  // GENAU 4 Ziffern => KANN Tour ODER CSB sein
+  if (/^\\d{4}$/.test(qRaw)){
+    const tourResults = allCustomers.filter(k => (k.touren||[]).some(t => t.tournummer === qRaw));
+    const csbResults  = allCustomers.filter(k => (cs(k.csb_nummer) === qRaw));
+    const results = dedupByCSB([...tourResults, ...csbResults]);
+
+    if (tourResults.length) {
+      renderTourTop(tourResults, qRaw, true);   // Banner nur für Tour
+    } else {
+      closeTourTop();
+    }
+    renderTable(results);
+    return;
+  }
+
+  // Textsuche mit deutscher Normalisierung
   const qN = normDE(qRaw);
   const results = allCustomers.filter(k=>{
     const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+k.fachberater+' '+(k.schluessel||''));
     return normDE(text).includes(qN);
   });
-  renderTable(results, '');
+  renderTable(results);
 }
 
 function onKey(){
   const q = $('#keySearch').value.trim();
   closeTourTop();
-  if(!q){ renderTable([], ''); return; }
+  if(!q){ renderTable([]); return; }
   const results = allCustomers.filter(k => (k.schluessel||'') === q);
   if(results.length){ renderTourTop(results, 'Schluessel ' + q, true); }
-  renderTable(results, '');
+  renderTable(results);
 }
 
 function debounce(fn, d=160){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
@@ -338,7 +362,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('keySearch').addEventListener('input', debounce(onKey, 160));
   document.getElementById('btnReset').addEventListener('click', ()=>{
     document.getElementById('smartSearch').value=''; document.getElementById('keySearch').value='';
-    closeTourTop(); renderTable([], '');
+    closeTourTop(); renderTable([]);
   });
 });
 </script>
@@ -349,7 +373,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # ===== Streamlit-Rahmen =====
 
 st.title("Kunden-Suchseite (Listenansicht, Tour-Banner)")
-st.caption("Ein Feld fuer Text/Tour (1–4 Ziffern) und ein Feld fuer exakte Schluesselnummer.")
+st.caption("Ein Feld fuer Text/Tour (1–4 Ziffern, 4-stellig = Tour ODER CSB) und ein Feld fuer exakte Schluesselnummer.")
 
 col1, col2 = st.columns(2)
 with col1:
