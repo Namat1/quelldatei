@@ -129,7 +129,7 @@ tbody tr:hover{background:#eef4ff}
       <div class="searchbar">
         <div class="field">
           <div class="label">Suche</div>
-          <input class="input" id="smartSearch" placeholder="Name, Ort, Tour, CSB, SAP, Straße, Fachberater, etc...">
+          <input class="input" id="smartSearch" placeholder="Text (Name/Ort/CSB/SAP/Fachberater) oder Tour (1-4 Ziffern)">
         </div>
         <div class="field">
           <div class="label">Schluessel</div>
@@ -196,6 +196,11 @@ function normDE(s){
   return x.replace(/\\s+/g,' ').trim();
 }
 
+/* Schlüssel-String vereinheitlichen: "40.0" -> "40" */
+function cleanKey(v){
+  return (v ?? '').toString().trim().replace(/\\.0$/, '');
+}
+
 /* Dedupliziere Kunden anhand CSB */
 function dedupByCSB(list){
   const seen = new Set(); const out = [];
@@ -236,7 +241,8 @@ function rowFor(k){
   tr.appendChild(el('td','',k.ort||'-'));
 
   const tdKey = document.createElement('td');
-  if(k.schluessel){ tdKey.appendChild(el('span','badge-key',k.schluessel)); } else { tdKey.textContent='-'; }
+  const keyDisp = cleanKey(k.schluessel);
+  if(keyDisp){ tdKey.appendChild(el('span','badge-key',keyDisp)); } else { tdKey.textContent='-'; }
   tr.appendChild(tdKey);
 
   const tdTours = document.createElement('td');
@@ -349,8 +355,12 @@ function onKey(){
   const q = $('#keySearch').value.trim();
   closeTourTop();
   if(!q){ renderTable([]); return; }
-  const results = allCustomers.filter(k => (k.schluessel||'') === q);
-  if(results.length){ renderTourTop(results, 'Schluessel ' + q, true); }
+
+  // Vergleich mit bereinigten Schlüsseln (z.B. "40" == "40.0")
+  const qClean = cleanKey(q);
+  const results = allCustomers.filter(k => cleanKey(k.schluessel) === qClean);
+
+  if(results.length){ renderTourTop(results, 'Schluessel ' + qClean, true); }
   renderTable(results);
 }
 
@@ -401,7 +411,8 @@ def build_key_map(key_df: pd.DataFrame) -> dict:
     for _, row in key_df.iterrows():
         csb = norm_str_num(row.iloc[csb_col] if key_df.shape[1] > 0 else "")
         schluessel_raw = row.iloc[key_col] if key_df.shape[1] > 0 else ""
-        schluessel = "" if pd.isna(schluessel_raw) else str(schluessel_raw).strip()
+        # >>> WICHTIG: Schlüssel ebenfalls normalisieren (macht aus 40.0 -> 40)
+        schluessel = "" if pd.isna(schluessel_raw) else norm_str_num(schluessel_raw)
         if csb:
             mapping[csb] = schluessel
     return mapping
@@ -469,7 +480,7 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche.html",
+                file_name="suche_liste.html",
                 mime="text/html",
                 type="primary"
             )
