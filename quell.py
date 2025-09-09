@@ -2,154 +2,205 @@ import streamlit as st
 import pandas as pd
 import json
 
-# --- HTML: Listenansicht mit fester Tour-Uebersicht oben und Kundenliste darunter ---
+# DROP-IN: Ersetze deine bisherige HTML_TEMPLATE Konstante hiermit
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kunden-Suche</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --ral-1021:#F3DA0B;--ral-5010:#0E294B;
-      --ral-1021-light:#F8E555;--ral-5010-light:#1E3A5F;
-      --ral-1021-soft:rgba(243,218,11,.08);--ral-5010-soft:rgba(14,41,75,.06);
-      --bg:#f5f6f8;--surface:#fff;--surface-alt:#fafbfc;--border:#e5e7eb;
-      --txt:#2c3e50;--muted:#6b7280;--shadow:0 6px 18px rgba(0,0,0,.06);
-      --shadow2:0 10px 30px rgba(0,0,0,.12);
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%);color:var(--txt);font-size:14px;line-height:1.45}
-    .page{min-height:100vh;display:flex;justify-content:center;padding:18px}
-    .container{width:100%;max-width:1400px}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
-    .header{padding:14px 16px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--ral-5010) 0%,var(--ral-5010-light) 100%);color:#fff}
-    .title{font-size:18px;font-weight:800;text-align:center}
-    .searchbar{padding:12px 16px;background:var(--surface);display:grid;grid-template-columns:1fr 280px auto;gap:10px;align-items:center;border-bottom:1px solid var(--border)}
-    @media(max-width:900px){.searchbar{grid-template-columns:1fr;}}
-    .field{display:grid;grid-template-columns:86px 1fr;gap:8px;align-items:center}
-    .label{font-weight:700;color:#e6ebf5}
-    .label.dark{color:#334155}
-    .input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:linear-gradient(135deg,var(--surface) 0%,var(--surface-alt) 100%);transition:border-color .2s,box-shadow .2s}
-    .input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);background:#fff}
-    .btn{padding:10px 14px;border:1px solid var(--border);background:#fff;border-radius:10px;cursor:pointer;font-weight:700}
-    .btn:hover{background:#f3f4f6}
-    .btn-danger{background:#dc3545;border-color:#dc3545;color:#fff}
-    .btn-danger:hover{background:#c82333}
-    .content{display:grid;grid-template-columns:320px 1fr;gap:10px;padding:12px 16px}
-    @media(max-width:1100px){.content{grid-template-columns:1fr}}
-    .sidebar{display:flex;flex-direction:column;gap:10px}
-    .box{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-    .box-head{padding:8px 12px;font-weight:800;color:var(--ral-5010);background:linear-gradient(135deg,var(--ral-5010-soft) 0%,var(--surface-alt) 100%);border-bottom:1px solid var(--border)}
-    .box-body{padding:8px 10px;max-height:300px;overflow:auto}
-    .fb-item{display:grid;grid-template-columns:1fr auto;gap:6px;padding:6px 8px;border-bottom:1px solid #f2f4f7;font-size:12px;cursor:pointer}
-    .fb-item:hover{background:linear-gradient(135deg,var(--ral-1021-soft) 0%,var(--surface-alt) 100%)}
-    .fb-count{background:#6b7280;color:#fff;border-radius:999px;font-size:11px;padding:2px 8px}
-    /* Tour uebersicht oben */
-    .tour-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px}
-    .tour-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
-    .tour-title{font-weight:800;color:var(--ral-5010)}
-    .tour-stats{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
-    .tour-list{border:1px solid var(--border);border-radius:8px;overflow:hidden}
-    .tour-row{display:grid;grid-template-columns:90px 110px 1fr 40px;gap:8px;padding:8px 10px;border-bottom:1px solid #f1f5f9;align-items:center;font-size:12px}
-    .tour-row:nth-child(odd){background:#fbfdff}
-    .tour-row:hover{background:#f3f7ff}
-    .csb-link{font-weight:800;color:var(--ral-5010);cursor:pointer}
-    .key-badge{background:#fff3cd;border:1px solid #ffeaa7;color:#856404;border-radius:999px;padding:2px 8px;font-weight:800;font-size:12px;display:inline-block}
-    .maps-link{justify-self:end;text-decoration:none;background:linear-gradient(135deg,var(--ral-1021) 0%,var(--ral-1021-light) 100%);color:var(--ral-5010);font-weight:800;padding:3px 6px;border-radius:6px}
-    .maps-link:hover{box-shadow:0 2px 8px rgba(243,218,11,.4)}
-    /* Kundenliste Tabelle */
-    .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-    .scroller{max-height:67vh;overflow:auto}
-    table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
-    thead th{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--border);padding:11px 10px;font-weight:800;color:#334155;white-space:nowrap;z-index:1}
-    tbody td{padding:9px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
-    tbody tr:nth-child(odd){background:#fcfdff}
-    tbody tr:hover{background:#f3f7ff}
-    .tour-btn{display:inline-block;background:#fff;border:1px solid #22c55e;color:#16a34a;padding:2px 8px;margin:2px;border-radius:999px;font-weight:700;font-size:11px;cursor:pointer}
-    .tour-btn:hover{background:#22c55e;color:#fff}
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kunden-Suche</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --alt:#f9fafb; --border:#e6eaf0;
+  --txt:#1f2937; --muted:#6b7280; --head:#0f172a;
+  --accent:#2563eb; --accent-weak:rgba(37,99,235,.12);
+  --ok:#16a34a; --ok-weak:rgba(22,163,74,.12);
+  --warn:#f59e0b; --warn-weak:rgba(245,158,11,.15);
+  --radius:10px; --shadow:0 1px 4px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.06);
+  --fs-12:12px; --fs-13:13px; --fs-14:14px;
+  --pad-8:8px; --pad-10:10px; --pad-12:12px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg);
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:var(--txt); font-size:var(--fs-14); line-height:1.45;
+}
+
+/* FRAME */
+.page{min-height:100vh; display:flex; justify-content:center; padding:16px}
+.container{width:100%; max-width:1400px}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+
+/* HEADER */
+.header{padding:14px 16px; border-bottom:1px solid var(--border); background:#0b1d3a; color:#fff}
+.title{font-size:16px; font-weight:700; text-align:center; letter-spacing:.2px}
+
+/* SEARCH BAR */
+.searchbar{
+  padding:12px 16px; display:grid; grid-template-columns:1fr 280px auto; gap:10px; align-items:center;
+  border-bottom:1px solid var(--border); background:var(--surface);
+}
+@media(max-width:960px){ .searchbar{grid-template-columns:1fr} }
+.field{display:grid; grid-template-columns:86px 1fr; gap:8px; align-items:center}
+.label{font-weight:600; color:#334155}
+.input{
+  width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius);
+  background:linear-gradient(180deg, var(--surface), var(--alt));
+  transition:border-color .15s, box-shadow .15s, background .15s;
+}
+.input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak); background:#fff}
+.btn{padding:10px 12px; border:1px solid var(--border); background:#fff; border-radius:var(--radius); cursor:pointer; font-weight:600}
+.btn:hover{background:#f3f4f6}
+.btn-danger{background:#ef4444; border-color:#ef4444; color:#fff}
+.btn-danger:hover{background:#dc2626}
+
+/* LAYOUT */
+.content{display:grid; grid-template-columns:320px 1fr; gap:12px; padding:12px 16px}
+@media(max-width:1100px){ .content{grid-template-columns:1fr} }
+.sidebar{display:flex; flex-direction:column; gap:12px}
+.box{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden}
+.box-head{padding:8px 12px; font-weight:700; color:var(--head); background:var(--alt); border-bottom:1px solid var(--border)}
+.box-body{padding:8px 10px; max-height:300px; overflow:auto}
+.fb-item{display:grid; grid-template-columns:1fr auto; gap:8px; padding:8px 6px; border-bottom:1px solid #f1f5f9; font-size:var(--fs-13); cursor:pointer}
+.fb-item:hover{background:#f8fafc}
+.fb-count{background:#64748b; color:#fff; border-radius:999px; font-size:var(--fs-12); padding:2px 8px}
+
+/* TOUR SUMMARY (TOP LIST) */
+.tour-wrap{display:none; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px; box-shadow:var(--shadow)}
+.tour-header{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:4px 2px 8px}
+.tour-title{font-weight:700; color:var(--head)}
+.tour-stats{display:flex; gap:14px; flex-wrap:wrap; font-size:var(--fs-13); color:var(--muted)}
+.tour-list{border:1px solid var(--border); border-radius:8px; overflow:hidden}
+.tour-row{display:grid; grid-template-columns:90px 110px 1fr 60px; gap:8px; padding:8px 10px; border-bottom:1px solid #f1f5f9; align-items:center; font-size:var(--fs-13)}
+.tour-row:nth-child(odd){background:#fbfdff}
+.tour-row:hover{background:#f3f7ff}
+.csb-link{font-weight:700; color:#0b3a8a; cursor:pointer}
+.csb-link:hover{text-decoration:underline}
+.key-badge{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:2px 8px; font-weight:700; font-size:var(--fs-12); display:inline-block}
+.map-pill{
+  justify-self:end; text-decoration:none; font-weight:700; font-size:var(--fs-12);
+  padding:4px 10px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; color:#374151;
+}
+.map-pill:hover{background:#f3f4f6}
+
+/* TABLE */
+.table-wrap{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden}
+.scroller{max-height:68vh; overflow:auto}
+table{width:100%; border-collapse:separate; border-spacing:0; font-size:var(--fs-13)}
+thead th{
+  position:sticky; top:0; background:#f8fafc; color:#334155; font-weight:700;
+  border-bottom:1px solid var(--border); padding:11px 10px; white-space:nowrap; z-index:1
+}
+tbody td{padding:9px 10px; border-bottom:1px solid #f1f5f9; vertical-align:middle}
+tbody tr:nth-child(odd){background:#fcfdff}
+tbody tr:hover{background:#f3f7ff}
+
+.tour-btn{
+  display:inline-block; background:#fff; border:1px solid #bbf7d0; color:#065f46;
+  padding:2px 8px; margin:2px 4px 2px 0; border-radius:999px; font-weight:700; font-size:var(--fs-12); cursor:pointer
+}
+.tour-btn:hover{background:var(--ok-weak)}
+.badge-key{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:2px 8px; font-weight:700; font-size:var(--fs-12); display:inline-block}
+.table-map{
+  text-decoration:none; font-weight:700; font-size:var(--fs-12);
+  padding:4px 10px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; color:#374151;
+}
+.table-map:hover{background:#f3f4f6}
+
+/* WELCOME */
+#welcome{padding:40px 16px; text-align:center; color:var(--muted)}
+#welcome h3{margin:0 0 6px; color:#334155}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:10px; height:10px}
+::-webkit-scrollbar-thumb{background:#cbd5e1; border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+</style>
 </head>
 <body>
-  <div class="page">
-    <div class="container">
-      <div class="card">
-        <div class="header">
-          <div class="title">Kunden-Suche</div>
+<div class="page">
+  <div class="container">
+    <div class="card">
+      <div class="header"><div class="title">Kunden-Suche</div></div>
+
+      <!-- SEARCH -->
+      <div class="searchbar">
+        <div class="field">
+          <div class="label">Suche</div>
+          <input class="input" id="smartSearch" placeholder="Text (Name/Ort/CSB/SAP/Fachberater) oder Tour (1-4 Ziffern)">
         </div>
-
-        <!-- Searchbar -->
-        <div class="searchbar" id="searchbar">
-          <div class="field">
-            <div class="label dark">Suche</div>
-            <input class="input" id="smartSearch" placeholder="Text (Name/Ort/CSB/SAP/Fachberater) oder Tour (1-4 Ziffern)">
-          </div>
-          <div class="field">
-            <div class="label dark">Schluessel</div>
-            <input class="input" id="keySearch" placeholder="Exakte Schluesselnummer">
-          </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end">
-            <button class="btn" id="btnFB">Fachberater</button>
-            <button class="btn btn-danger" id="btnReset">Zuruecksetzen</button>
-          </div>
+        <div class="field">
+          <div class="label">Schluessel</div>
+          <input class="input" id="keySearch" placeholder="Exakte Schluesselnummer">
         </div>
-
-        <div class="content">
-          <!-- Sidebar -->
-          <div class="sidebar">
-            <div class="box" id="fbBox" style="display:none;">
-              <div class="box-head">Fachberater <span id="fbCount" style="font-weight:600;color:#6b7280"></span></div>
-              <div class="box-body" id="fbList"></div>
-            </div>
-          </div>
-
-          <!-- Main -->
-          <div>
-            <!-- Tour-Listenuebersicht (oben) -->
-            <div class="tour-wrap" id="tourWrap" style="display:none;">
-              <div class="tour-header">
-                <div class="tour-title" id="tourTitle"></div>
-                <div class="tour-stats" id="tourStats"></div>
-              </div>
-              <div class="tour-list" id="tourList"></div>
-            </div>
-
-            <!-- Kundenliste -->
-            <div class="table-wrap">
-              <div class="scroller" id="tableScroller" style="display:none;">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>CSB</th>
-                      <th>SAP</th>
-                      <th>Name</th>
-                      <th>Strasse</th>
-                      <th>PLZ</th>
-                      <th>Ort</th>
-                      <th>Schluessel</th>
-                      <th>Touren</th>
-                      <th>Fachberater</th>
-                      <th>Aktion</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tableBody"></tbody>
-                </table>
-              </div>
-              <div id="welcome" style="padding:40px 16px;text-align:center;color:#6b7280">
-                <h3 style="margin-bottom:6px;color:#334155">Willkommen</h3>
-                <div>Tippe Tour (1-4 Ziffern) oder Text. Rechts: exakte Schluesselsuche.</div>
-              </div>
-            </div>
-          </div>
-        </div> <!-- content -->
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn" id="btnFB">Fachberater</button>
+          <button class="btn btn-danger" id="btnReset">Zuruecksetzen</button>
+        </div>
       </div>
+
+      <!-- CONTENT -->
+      <div class="content">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="box" id="fbBox" style="display:none;">
+            <div class="box-head">Fachberater <span id="fbCount" style="font-weight:600;color:#64748b"></span></div>
+            <div class="box-body" id="fbList"></div>
+          </div>
+        </div>
+
+        <!-- Main -->
+        <div>
+          <!-- Tour-Top -->
+          <div class="tour-wrap" id="tourWrap">
+            <div class="tour-header">
+              <div class="tour-title" id="tourTitle"></div>
+              <div class="tour-stats" id="tourStats"></div>
+            </div>
+            <div class="tour-list" id="tourList"></div>
+          </div>
+
+          <!-- Table -->
+          <div class="table-wrap">
+            <div class="scroller" id="tableScroller" style="display:none;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>CSB</th>
+                    <th>SAP</th>
+                    <th>Name</th>
+                    <th>Strasse</th>
+                    <th>PLZ</th>
+                    <th>Ort</th>
+                    <th>Schluessel</th>
+                    <th>Touren</th>
+                    <th>Fachberater</th>
+                    <th>Aktion</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+            <div id="welcome">
+              <h3>Willkommen</h3>
+              <div>Tippe Tour (1-4 Ziffern) oder Text. Rechts: exakte Schluesselsuche.</div>
+            </div>
+          </div>
+        </div>
+      </div> <!-- content -->
     </div>
   </div>
+</div>
 
 <script>
-const tourkundenData = {  }; // <- wird von Python ersetzt
+/* ===== JS: unveraendert in seiner Logik, nur Styles harmonisiert ===== */
+const tourkundenData = {  }; // wird durch Python ersetzt
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
 
@@ -167,33 +218,34 @@ function buildData(){
     });
   }
   allCustomers = Array.from(map.values());
-  // Fachberater index
   fbIndex = {};
   allCustomers.forEach(k=>{
     const fb = (k.fachberater||'').trim();
     if(!fb) return;
-    fbIndex[fb] = fbIndex[fb] || [];
-    fbIndex[fb].push(k);
+    (fbIndex[fb] ||= []).push(k);
   });
 }
 
-function cs(v){ return (v||'').toString().replace(/\\.0$/,'') || '-'; }
+const cs = v => (v||'').toString().replace(/\\.0$/,'') || '-';
 
 function rowFor(k){
   const tr = document.createElement('tr');
   const csb = cs(k.csb_nummer), sap = cs(k.sap_nummer), plz = cs(k.postleitzahl);
+
   const tdCSB = document.createElement('td');
   const b = el('span','csb-link',csb); b.onclick=()=>{ $('#smartSearch').value = csb; onSmart(); };
-  tdCSB.appendChild(b);
-  tr.appendChild(tdCSB);
-  const tdSAP = el('td','',sap); tr.appendChild(tdSAP);
+  tdCSB.appendChild(b); tr.appendChild(tdCSB);
+
+  tr.appendChild(el('td','',sap));
   tr.appendChild(el('td','',k.name||'-'));
   tr.appendChild(el('td','',k.strasse||'-'));
   tr.appendChild(el('td','',plz));
   tr.appendChild(el('td','',k.ort||'-'));
+
   const tdKey = document.createElement('td');
-  if(k.schluessel){ tdKey.appendChild(el('span','key-badge',k.schluessel)); } else { tdKey.textContent='-'; }
+  if(k.schluessel){ tdKey.appendChild(el('span','badge-key',k.schluessel)); } else { tdKey.textContent='-'; }
   tr.appendChild(tdKey);
+
   const tdTours = document.createElement('td');
   (k.touren||[]).forEach(t=>{
     const tb = el('span','tour-btn',t.tournummer+' ('+t.liefertag.substring(0,2)+')');
@@ -201,15 +253,15 @@ function rowFor(k){
     tdTours.appendChild(tb);
   });
   tr.appendChild(tdTours);
+
   tr.appendChild(el('td','',k.fachberater||'-'));
+
   const tdAct = document.createElement('td');
-  const maps = document.createElement('a');
-  maps.className='maps-link';
-  maps.textContent='Map';
-  maps.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||''));
-  maps.target='_blank';
-  tdAct.appendChild(maps);
-  tr.appendChild(tdAct);
+  const a = document.createElement('a');
+  a.className='table-map'; a.textContent='Map';
+  a.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); a.target='_blank';
+  tdAct.appendChild(a); tr.appendChild(tdAct);
+
   return tr;
 }
 
@@ -218,126 +270,107 @@ function renderTable(list, emptyMsg){
   body.innerHTML='';
   if(list.length){
     list.forEach(k=> body.appendChild(rowFor(k)));
-    scroller.style.display='block';
-    welcome.style.display='none';
+    scroller.style.display='block'; welcome.style.display='none';
   } else {
-    scroller.style.display='none';
-    welcome.style.display='block';
-    welcome.innerHTML = '<h3 style="margin-bottom:6px;color:#334155">Keine Ergebnisse</h3><div>'+ (emptyMsg||'Keine Kunden gefunden') +'</div>';
+    scroller.style.display='none'; welcome.style.display='block';
+    welcome.innerHTML = '<h3>Keine Ergebnisse</h3><div>'+ (emptyMsg||'Keine Kunden gefunden') +'</div>';
   }
 }
 
 function renderTourTop(list, query, isExact){
   const wrap = $('#tourWrap'), title = $('#tourTitle'), stats = $('#tourStats'), listBox = $('#tourList');
   if(!list.length){ wrap.style.display='none'; listBox.innerHTML=''; stats.innerHTML=''; title.textContent=''; return; }
-  // Build stats
-  const dayCount = {};
-  const toursSeen = new Set();
+
+  const dayCount = {}; const toursSeen = new Set();
   list.forEach(k => (k.touren||[]).forEach(t=>{
     if(t.tournummer.startsWith(query)){ dayCount[t.liefertag] = (dayCount[t.liefertag]||0)+1; toursSeen.add(t.tournummer); }
   }));
-  title.textContent = (isExact ? 'Tour ' + query : 'Tour-Prefix ' + query + '*') + ' – ' + list.length + ' Kunden';
+
+  title.textContent = (isExact ? 'Tour ' + query : 'Tour-Prefix ' + query + '*') + ' \u2013 ' + list.length + ' Kunden';
   stats.innerHTML = Object.entries(dayCount).map(([d,c])=>'<span><b>'+d+':</b> '+c+'</span>').join('') + (isExact?'':'<span><b>Touren:</b> '+toursSeen.size+'</span>');
-  // List rows
+
   listBox.innerHTML='';
-  // Sort by CSB
-  const sorted = list.slice().sort((a,b)=> (parseInt(cs(a.csb_nummer))||0) - (parseInt(cs(b.csb_nummer))||0));
-  sorted.forEach(k=>{
+  list.slice().sort((a,b)=> (parseInt(cs(a.csb_nummer))||0) - (parseInt(cs(b.csb_nummer))||0)).forEach(k=>{
     const csb = cs(k.csb_nummer), plz = cs(k.postleitzahl);
-    const murl = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||''));
     const row = el('div','tour-row');
     const csbLink = el('span','csb-link', csb); csbLink.onclick=()=>{ $('#smartSearch').value = csb; onSmart(); };
     row.appendChild(csbLink);
     row.appendChild(el('span','', k.schluessel ? 'S: '+k.schluessel : 'S: -'));
     row.appendChild(el('span','', (k.name||'-')));
-    const a = document.createElement('a'); a.className='maps-link'; a.textContent='Map'; a.href=murl; a.target='_blank';
-    row.appendChild(a);
+    const m = document.createElement('a'); m.className='map-pill'; m.textContent='Map';
+    m.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); m.target='_blank';
+    row.appendChild(m);
     listBox.appendChild(row);
   });
+
   wrap.style.display='block';
 }
 
-function closeTourTop(){
-  $('#tourWrap').style.display='none';
-  $('#tourList').innerHTML=''; $('#tourStats').innerHTML=''; $('#tourTitle').textContent='';
-}
+function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourList').innerHTML=''; $('#tourStats').innerHTML=''; $('#tourTitle').textContent=''; }
 
 function onSmart(){
   const qRaw = $('#smartSearch').value.trim();
   const q = qRaw.toLowerCase();
-  closeTourTop();
-  // side boxes
-  $('#fbBox').style.display='none';
-  // Matching
-  if(!q){
-    renderTable([], ''); return;
-  }
+  closeTourTop(); $('#fbBox').style.display='none';
+  if(!q){ renderTable([], ''); return; }
+
   const isDigits = /^\\d{1,4}$/.test(qRaw);
-  let results = [];
   if(isDigits){
     const exact = qRaw.length===4;
-    results = allCustomers.filter(k => (k.touren||[]).some(t => t.tournummer.startsWith(qRaw)));
+    const results = allCustomers.filter(k => (k.touren||[]).some(t => t.tournummer.startsWith(qRaw)));
     renderTourTop(results, qRaw, exact);
     renderTable(results, 'Keine Treffer fuer Tour'+(exact?'':'-Prefix')+' "'+qRaw+'"');
-  } else {
-    // fachberater box trigger (optional, ab 3 chars)
-    if(q.length>=3){
-      const matches = Object.keys(fbIndex).filter(nm => nm.toLowerCase().includes(q));
-      if(matches.length===1){
-        const name = matches[0];
-        const list = fbIndex[name] || [];
-        const fbBox = $('#fbBox'), fbList = $('#fbList'), fbCount = $('#fbCount');
-        fbList.innerHTML='';
-        list.slice().sort((a,b)=> (parseInt(cs(a.csb_nummer))||0) - (parseInt(cs(b.csb_nummer))||0)).forEach(k=>{
-          const csb = cs(k.csb_nummer), plz = cs(k.postleitzahl);
-          const row = document.createElement('div'); row.className='fb-item';
-          const left = document.createElement('div'); left.innerHTML = '<b>'+csb+'</b> &middot; '+(k.name||'-');
-          left.onclick=()=>{ $('#smartSearch').value = csb; onSmart(); };
-          const right = document.createElement('div');
-          const m = document.createElement('a'); m.className='maps-link'; m.textContent='Map';
-          m.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); m.target='_blank';
-          right.appendChild(m);
-          row.append(left,right);
-          fbList.appendChild(row);
-        });
-        fbCount.textContent = ' ('+list.length+')';
-        fbBox.style.display='block';
-      }
-    }
-    results = allCustomers.filter(k=>{
-      const txt = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+k.fachberater+' '+(k.schluessel||'')).toLowerCase();
-      return txt.includes(q);
-    });
-    renderTable(results, 'Keine Kunden fuer "'+qRaw+'" gefunden');
+    return;
   }
+
+  // Textsuche (+ optional Fachberater-Sidebar bei exaktem Match)
+  if(q.length>=3){
+    const names = Object.keys(fbIndex);
+    const hits = names.filter(n => n.toLowerCase()===q);
+    if(hits.length===1){
+      const list = fbIndex[hits[0]];
+      const box = $('#fbBox'), ul = $('#fbList'), c = $('#fbCount');
+      ul.innerHTML='';
+      list.slice().sort((a,b)=> (parseInt(cs(a.csb_nummer))||0) - (parseInt(cs(b.csb_nummer))||0)).forEach(k=>{
+        const csb = cs(k.csb_nummer), plz = cs(k.postleitzahl);
+        const row = document.createElement('div'); row.className='fb-item';
+        const left = document.createElement('div'); left.innerHTML = '<b>'+csb+'</b> \u00b7 '+(k.name||'-');
+        left.onclick=()=>{ $('#smartSearch').value = csb; onSmart(); };
+        const right = document.createElement('div');
+        const m = document.createElement('a'); m.className='table-map'; m.textContent='Map';
+        m.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); m.target='_blank';
+        right.appendChild(m);
+        row.append(left,right); ul.appendChild(row);
+      });
+      c.textContent='('+list.length+')'; box.style.display='block';
+    }
+  }
+
+  const results = allCustomers.filter(k=>{
+    const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+k.fachberater+' '+(k.schluessel||'')).toLowerCase();
+    return text.includes(q);
+  });
+  renderTable(results, 'Keine Kunden fuer "'+qRaw+'" gefunden');
 }
 
 function onKey(){
   const q = $('#keySearch').value.trim();
-  closeTourTop();
-  $('#fbBox').style.display='none';
+  closeTourTop(); $('#fbBox').style.display='none';
   if(!q){ renderTable([], ''); return; }
   const results = allCustomers.filter(k => (k.schluessel||'') === q);
-  if(results.length){
-    renderTourTop(results, 'Schluessel '+q, true);
-  }
+  if(results.length){ renderTourTop(results, 'Schluessel '+q, true); }
   renderTable(results, 'Kein Kunde mit Schluessel "'+q+'" gefunden');
 }
 
-function debounce(fn, d=200){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
+function debounce(fn, d=180){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
 
 document.addEventListener('DOMContentLoaded', ()=>{
-  if(typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length>0){
-    buildData();
-  } else {
-    document.getElementById('welcome').innerHTML = '<h3 style="margin-bottom:6px;color:#334155">Fehler</h3><div>Keine Kundendaten geladen</div>';
-  }
-  document.getElementById('smartSearch').addEventListener('input', debounce(onSmart, 160));
-  document.getElementById('keySearch').addEventListener('input', debounce(onKey, 160));
+  if(typeof tourkundenData!=='undefined' && Object.keys(tourkundenData).length>0){ buildData(); }
+  document.getElementById('smartSearch').addEventListener('input', debounce(onSmart, 180));
+  document.getElementById('keySearch').addEventListener('input', debounce(onKey, 180));
   document.getElementById('btnReset').addEventListener('click', ()=>{
     document.getElementById('smartSearch').value=''; document.getElementById('keySearch').value='';
-    closeTourTop(); document.getElementById('fbBox').style.display='none';
-    renderTable([], '');
+    closeTourTop(); document.getElementById('fbBox').style.display='none'; renderTable([], '');
   });
   document.getElementById('btnFB').addEventListener('click', ()=>{
     const box = document.getElementById('fbBox');
@@ -348,6 +381,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </body>
 </html>
 """
+
 
 st.title("Kunden-Suchseite (Listenansicht mit Tour-Uebersicht oben)")
 st.markdown("Ein Feld fuer **Text/Tour** (1-4 Ziffern) und ein Feld fuer **exakte Schluesselnummer**. Bei Toursuche erscheint **oben** eine kompakte Uebersicht, darunter die **Kundenliste**.")
