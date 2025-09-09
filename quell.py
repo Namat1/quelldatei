@@ -130,7 +130,7 @@ tbody tr:hover{background:#eef4ff}
       <div class="searchbar">
         <div class="field">
           <div class="label">Suche</div>
-          <input class="input" id="smartSearch" placeholder="Name/Ort/CSB/SAP/Tour/Fachberater/....">
+          <input class="input" id="smartSearch" placeholder="Name / Ort / CSB / SAP / Tour / Fachberater /....">
         </div>
         <div class="field">
           <div class="label">Schluessel</div>
