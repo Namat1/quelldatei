@@ -1,8 +1,3 @@
-Alles klar — hier ist der **komplette Streamlit-Code** (inkl. aktualisiertem `HTML_TEMPLATE`) mit **Live-Suche beim Tippen** und **Tour-Prefix-Suche** (zeigt schon bei 1–3 Ziffern alle passenden Touren, bei genau 4 Ziffern nur die exakte Tour).
-
-> Einfach in eine `.py` Datei packen und ausführen. Der Download erzeugt `kundenliste.html`.
-
-```python
 import streamlit as st
 import pandas as pd
 import json
