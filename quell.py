@@ -578,4 +578,3 @@ else:
         ✅ **Fachberater-Liste** mit Count, suchbar per Klick  
         ✅ **Sauberer Start-/Leerzustand** mit Willkommensbildschirm
         """)
-```
