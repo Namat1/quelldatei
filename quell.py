@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import json
 
-# ===== Vollständige App: Listenansicht, Tour-Banner, Umlaut-Suche,
-# ===== 4-stellig = Tour ODER CSB, robuste Schlüsselsuche (keine Abbrüche) =====
+# ===== Vollständige App: Listenansicht, Tour-Banner, Umlaut-Suche
+# ===== 4-stellig = Tour ODER CSB, robuste Schlüssel- & CSB-Normalisierung =====
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -197,17 +197,17 @@ function normDE(s){
   return x.replace(/\\s+/g,' ').trim();
 }
 
-/* Schlüssel normalisieren:
-   - Trim
-   - ".0" entfernen
-   - Nicht-Ziffern entfernen
-   - Führende Nullen entfernen
+/* ID/Key normalisieren:
+   - trim
+   - .0 entfernen
+   - nur Ziffern
+   - führende Nullen entfernen
 */
-function normalizeKey(v){
+function normalizeDigits(v){
   if(v == null) return '';
   let s = String(v).trim().replace(/\\.0$/,'');
-  s = s.replace(/[^0-9]/g,'');   // nur Ziffern
-  s = s.replace(/^0+(\\d)/,'$1'); // führende Nullen weg
+  s = s.replace(/[^0-9]/g,'');
+  s = s.replace(/^0+(\\d)/,'$1');
   return s;
 }
 
@@ -215,7 +215,7 @@ function normalizeKey(v){
 function dedupByCSB(list){
   const seen = new Set(); const out = [];
   for (const k of list){
-    const key = (k.csb_nummer ?? '').toString();
+    const key = normalizeDigits(k.csb_nummer);
     if (!seen.has(key)){ seen.add(key); out.push(k); }
   }
   return out;
@@ -225,18 +225,18 @@ function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
     list.forEach(k=>{
-      const key = k.csb_nummer;
-      if(!key) return;
-      if(!map.has(key)) map.set(key, {...k, touren: []});
-      map.get(key).touren.push({ tournummer: tour, liefertag: k.liefertag });
-      // WICHTIG: Schluessel auf Client-Seite ebenfalls normalisieren
-      map.get(key).schluessel = normalizeKey(map.get(key).schluessel);
+      const csb = normalizeDigits(k.csb_nummer);
+      if(!csb) return;
+      if(!map.has(csb)) map.set(csb, {...k, csb_nummer: csb, touren: []});
+      map.get(csb).touren.push({ tournummer: normalizeDigits(tour), liefertag: k.liefertag });
+      // Schlüssel auf Client-Seite sicher normalisieren
+      map.get(csb).schluessel = normalizeDigits(map.get(csb).schluessel);
     });
   }
   allCustomers = Array.from(map.values());
 }
 
-const cs = v => (v||'').toString().replace(/\\.0$/,'') || '-';
+const cs = v => normalizeDigits(v) || '-';
 
 function rowFor(k){
   const tr = document.createElement('tr');
@@ -253,14 +253,15 @@ function rowFor(k){
   tr.appendChild(el('td','',k.ort||'-'));
 
   const tdKey = document.createElement('td');
-  const keyDisp = normalizeKey(k.schluessel);
+  const keyDisp = normalizeDigits(k.schluessel);
   if(keyDisp){ tdKey.appendChild(el('span','badge-key',keyDisp)); } else { tdKey.textContent='-'; }
   tr.appendChild(tdKey);
 
   const tdTours = document.createElement('td');
   (k.touren||[]).forEach(t=>{
-    const tb = el('span','tour-btn',t.tournummer+' ('+t.liefertag.substring(0,2)+')');
-    tb.onclick=()=>{ $('#smartSearch').value = t.tournummer; onSmart(); };
+    const tnum = normalizeDigits(t.tournummer);
+    const tb = el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')');
+    tb.onclick=()=>{ $('#smartSearch').value = tnum; onSmart(); };
     tdTours.appendChild(tb);
   });
   tr.appendChild(tdTours);
@@ -292,7 +293,6 @@ function renderTourTop(list, query, isExact){
   const wrap = $('#tourWrap'), title = $('#tourTitle'), extra = $('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
 
-  // Schlüsselsuche -> kein "Tour" im Titel
   if (query.startsWith('Schluessel ')) {
     const key = query.replace(/^Schluessel\\s+/, '');
     const label = 'Schluessel ' + key + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
@@ -307,13 +307,13 @@ function renderTourTop(list, query, isExact){
     return;
   }
 
-  // Tour-Logik
   const label = isExact ? ('Tour ' + query) : ('Tour-Prefix ' + query + '*');
   title.textContent = label + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
 
   const dayCount = {};
   list.forEach(k => (k.touren||[]).forEach(t=>{
-    const cond = isExact ? (t.tournummer === query) : t.tournummer.startsWith(query);
+    const tnum = normalizeDigits(t.tournummer);
+    const cond = isExact ? (tnum === query) : tnum.startsWith(query);
     if(cond){ dayCount[t.liefertag] = (dayCount[t.liefertag]||0)+1; }
   }));
   extra.textContent = Object.entries(dayCount).sort().map(([d,c])=> d + ': ' + c).join('  •  ');
@@ -333,20 +333,22 @@ function onSmart(){
 
   // 1–3 Ziffern => Tour-Prefix
   if (/^\\d{1,3}$/.test(qRaw)){
-    const results = allCustomers.filter(k => (k.touren||[]).some(t => t.tournummer.startsWith(qRaw)));
-    renderTourTop(results, qRaw, false);
+    const qN = normalizeDigits(qRaw);
+    const results = allCustomers.filter(k => (k.touren||[]).some(t => normalizeDigits(t.tournummer).startsWith(qN)));
+    renderTourTop(results, qN, false);
     renderTable(results);
     return;
   }
 
   // GENAU 4 Ziffern => KANN Tour ODER CSB sein
   if (/^\\d{4}$/.test(qRaw)){
-    const tourResults = allCustomers.filter(k => (k.touren||[]).some(t => t.tournummer === qRaw));
-    const csbResults  = allCustomers.filter(k => (cs(k.csb_nummer) === qRaw));
+    const qN = normalizeDigits(qRaw);
+    const tourResults = allCustomers.filter(k => (k.touren||[]).some(t => normalizeDigits(t.tournummer) === qN));
+    const csbResults  = allCustomers.filter(k => normalizeDigits(k.csb_nummer) === qN);
     const results = dedupByCSB([...tourResults, ...csbResults]);
 
     if (tourResults.length) {
-      renderTourTop(tourResults, qRaw, true);   // Banner nur für Tour
+      renderTourTop(tourResults, qN, true);   // Banner nur für Tour
     } else {
       closeTourTop();
     }
@@ -368,12 +370,11 @@ function onKey(){
   closeTourTop();
   if(!q){ renderTable([]); return; }
 
-  const qClean = normalizeKey(q);
+  const qClean = normalizeDigits(q);
   const matches = [];
-  // EXPLIZIT ITERIEREN: niemals frühzeitig abbrechen
   for (const k of allCustomers){
-    if (normalizeKey(k.schluessel) === qClean){
-      matches.push(k);
+    if (normalizeDigits(k.schluessel) === qClean){
+      matches.push(k); // niemals abbrechen, alle sammeln
     }
   }
 
@@ -408,36 +409,32 @@ with col1:
 with col2:
     key_file = st.file_uploader("Schluesseldatei (A=CSB, F=Schluessel)", type=["xlsx"])
 
-def norm_str_num(x):
-    if pd.isna(x):
-        return ""
-    s = str(x).strip()
-    try:
-        # Komma als Dezimaltrenner erlauben, .0 entfernen
-        f = float(s.replace(",", "."))
-        i = int(f)
-        return str(i) if f == i else s
-    except Exception:
-        return s
-
-def norm_key_py(v):
-    """Wie normalizeKey in JS: Nur Ziffern, .0 weg, führende Nullen weg."""
+def normalize_digits_py(v) -> str:
+    """Nur Ziffern behalten, '.0' und führende Nullen entfernen."""
     if pd.isna(v):
         return ""
     s = str(v).strip().replace(".0", "")
     s = "".join(ch for ch in s if ch.isdigit())
-    s = s.lstrip("0") or "0" if s else ""
-    return s
+    if not s:
+        return ""
+    # führende Nullen entfernen
+    s = s.lstrip("0")
+    return s if s else "0"
 
 def build_key_map(key_df: pd.DataFrame) -> dict:
+    """
+    Erzeugt CSB->Schlüssel Mapping mit harter Normalisierung:
+    - CSB: nur Ziffern, tausender Punkte/Kommas egal
+    - Schlüssel: nur Ziffern (so wird '40', '040', '40.0' identisch)
+    """
     if key_df.shape[1] < 6:
         st.warning("Schluesseldatei hat weniger als 6 Spalten – letzte vorhandene Spalte als Schluessel verwendet.")
     csb_col = 0
     key_col = 5 if key_df.shape[1] > 5 else key_df.shape[1] - 1
     mapping = {}
     for _, row in key_df.iterrows():
-        csb = norm_str_num(row.iloc[csb_col] if key_df.shape[1] > 0 else "")
-        schluessel = norm_key_py(row.iloc[key_col] if key_df.shape[1] > 0 else "")
+        csb = normalize_digits_py(row.iloc[csb_col] if key_df.shape[1] > 0 else "")
+        schluessel = normalize_digits_py(row.iloc[key_col] if key_df.shape[1] > 0 else "")
         if csb:
             mapping[csb] = schluessel
     return mapping
@@ -473,11 +470,19 @@ if excel_file and key_file:
                         tournr_raw = str(row[spaltenname]).strip()
                         if not tournr_raw or not tournr_raw.replace('.', '', 1).isdigit():
                             continue
-                        tournr = str(int(float(tournr_raw)))
+                        tournr = normalize_digits_py(tournr_raw)
+
+                        # Kundeneintrag aufbauen
                         eintrag = {k: str(row.get(v, "")).strip() for k, v in SPALTEN_MAPPING.items()}
-                        csb_clean = norm_str_num(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
-                        eintrag["schluessel"] = key_map.get(csb_clean, "")
+
+                        # CSB & Schlüssel HART normalisieren
+                        csb_clean = normalize_digits_py(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
+                        eintrag["csb_nummer"] = csb_clean  # <<< überschreibe mit bereinigter CSB
+                        eintrag["sap_nummer"] = normalize_digits_py(eintrag.get("sap_nummer", ""))  # ebenfalls säubern
+                        eintrag["postleitzahl"] = normalize_digits_py(eintrag.get("postleitzahl", ""))
+                        eintrag["schluessel"] = key_map.get(csb_clean, "")  # bereits bereinigt
                         eintrag["liefertag"] = tag
+
                         tour_dict.setdefault(tournr, []).append(eintrag)
 
             with st.spinner("Verarbeite Quelldatei..."):
@@ -492,7 +497,8 @@ if excel_file and key_file:
                 st.error("Keine gueltigen Kundendaten gefunden.")
                 st.stop()
 
-            sorted_tours = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0])))
+            # Tourkeys als Ziffern sortieren
+            sorted_tours = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0]) if kv[0].isdigit() else 0))
             json_data_string = json.dumps(sorted_tours, indent=2, ensure_ascii=False)
             final_html = HTML_TEMPLATE.replace("const tourkundenData = {  }", f"const tourkundenData = {json_data_string};")
 
