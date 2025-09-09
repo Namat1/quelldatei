@@ -259,20 +259,35 @@ function renderTourTop(list, query, isExact){
   const wrap = $('#tourWrap'), title = $('#tourTitle'), extra = $('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
 
-  const label = isExact ? ('Tour ' + query) : ('Tour-Prefix ' + query + '*');
-  title.textContent = label + ' - ' + list.length + ' Kunden';
+  // --- NEU: Schlüsselsuche -> kein "Tour" im Titel ---
+  if (query.startsWith('Schluessel ')) {
+    const key = query.replace(/^Schluessel\s+/,'');
+    const label = 'Schluessel ' + key + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
+    title.textContent = label;
 
-  // kompakte Liefertags-Verteilung
+    // Liefertage-Verteilung über alle Touren der Treffer
+    const dayCount = {};
+    list.forEach(k => (k.touren||[]).forEach(t=>{
+      dayCount[t.liefertag] = (dayCount[t.liefertag]||0) + 1;
+    }));
+    extra.textContent = Object.entries(dayCount).sort().map(([d,c])=> d + ': ' + c).join('  •  ');
+    wrap.style.display='block';
+    return;
+  }
+
+  // --- bestehende Tour-Logik für Ziffern-Eingaben ---
+  const label = isExact ? ('Tour ' + query) : ('Tour-Prefix ' + query + '*');
+  title.textContent = label + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
+
   const dayCount = {};
   list.forEach(k => (k.touren||[]).forEach(t=>{
     const cond = isExact ? (t.tournummer === query) : t.tournummer.startsWith(query);
     if(cond){ dayCount[t.liefertag] = (dayCount[t.liefertag]||0)+1; }
   }));
-  const parts = Object.entries(dayCount).sort().map(([d,c])=> d + ': ' + c);
-  extra.textContent = parts.join('  •  ');
-
+  extra.textContent = Object.entries(dayCount).sort().map(([d,c])=> d + ': ' + c).join('  •  ');
   wrap.style.display='block';
 }
+
 
 function closeTourTop(){
   const wrap = $('#tourWrap'); if(!wrap) return;
