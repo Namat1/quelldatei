@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import json
 
+# ===== Vollständige App: Listenansicht, Tour-Banner, ohne Welcome-Block =====
+
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -19,14 +21,14 @@ HTML_TEMPLATE = """
   --ok:#16a34a; --ok-weak:rgba(22,163,74,.12);
   --warn:#f59e0b; --warn-weak:rgba(245,158,11,.18);
   --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
-  --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px;
+  --fs-11:11px; --fs-12:12px; --fs-13:13px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0; background:var(--bg);
   font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  color:var(--txt); font-size:var(--fs-12); line-height:1.45; /* kleiner */
+  color:var(--txt); font-size:var(--fs-12); line-height:1.45;
 }
 
 /* Frame */
@@ -36,7 +38,7 @@ body{
 
 /* Header */
 .header{padding:8px 12px; border-bottom:1px solid var(--border); background:#0b1d3a; color:#fff}
-.title{font-size:var(--fs-14); font-weight:700; text-align:center}
+.title{font-size:13px; font-weight:700; text-align:center}
 
 /* Searchbar */
 .searchbar{
@@ -70,14 +72,14 @@ body{
   border-top-left-radius:8px; border-top-right-radius:8px;
 }
 
-/* Tour summary (compact banner) */
+/* Tour banner */
 .tour-wrap{display:none; margin-bottom:8px}
 .tour-banner{
   display:flex; align-items:center; justify-content:space-between;
   padding:6px 10px; border:1px solid var(--border); border-radius:6px;
-  background:#f2f5fa; color:#344054; font-weight:700; font-size:var(--fs-12);
+  background:#f2f5fa; color:#344054; font-weight:700; font-size:12px;
 }
-.tour-banner small{font-weight:600; color:#667085; font-size:var(--fs-11)}
+.tour-banner small{font-weight:600; color:#667085; font-size:11px}
 
 /* Table */
 .table-wrap{margin-top:8px}
@@ -86,7 +88,7 @@ body{
 table{width:100%; border-collapse:separate; border-spacing:0; font-size:var(--fs-12)}
 thead th{
   position:sticky; top:0; background:#f2f5fa; color:#344054; font-weight:700;
-  border-bottom:1px solid var(--row-border); padding:7px 8px; white-space:nowrap; z-index:1; font-size:var(--fs-12)
+  border-bottom:1px solid var(--row-border); padding:7px 8px; white-space:nowrap; z-index:1
 }
 tbody td{padding:6px 8px; border-bottom:1px solid var(--row-border); vertical-align:middle}
 tbody tr:nth-child(odd){background:var(--stripe)}
@@ -97,23 +99,19 @@ tbody tr:hover{background:#eef4ff}
 /* small pills */
 .tour-btn{
   display:inline-block; background:#fff; border:1px solid #bbf7d0; color:#065f46;
-  padding:1px 7px; margin:1px 4px 1px 0; border-radius:999px; font-weight:700; font-size:var(--fs-11); cursor:pointer
+  padding:1px 7px; margin:1px 4px 1px 0; border-radius:999px; font-weight:700; font-size:11px; cursor:pointer
 }
 .tour-btn:hover{background:var(--ok-weak)}
-.badge-key{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:1px 7px; font-weight:700; font-size:var(--fs-11); display:inline-block}
+.badge-key{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:1px 7px; font-weight:700; font-size:11px; display:inline-block}
 
-/* MAP buttons: now colored */
+/* MAP button: colored */
 .table-map,
 .map-pill{
-  text-decoration:none; font-weight:700; font-size:var(--fs-11);
+  text-decoration:none; font-weight:700; font-size:11px;
   padding:5px 10px; border-radius:999px; border:1px solid var(--accent);
   background:var(--accent); color:#fff; display:inline-block; text-align:center;
 }
 .table-map:hover, .map-pill:hover{background:var(--accent-strong); border-color:var(--accent-strong)}
-
-/* Welcome */
-#welcome{padding:20px 12px; text-align:center; color:var(--muted); font-size:var(--fs-12)}
-#welcome h3{margin:0 0 4px; color:#334155; font-size:var(--fs-13)}
 
 /* Scrollbar */
 ::-webkit-scrollbar{width:10px; height:10px}
@@ -144,7 +142,7 @@ tbody tr:hover{background:#eef4ff}
 
       <!-- Content -->
       <div class="content">
-        <!-- Compact tour banner -->
+        <!-- Tour-Banner -->
         <div class="section tour-wrap" id="tourWrap">
           <div class="tour-banner">
             <span id="tourTitle"></span>
@@ -152,7 +150,7 @@ tbody tr:hover{background:#eef4ff}
           </div>
         </div>
 
-        <!-- Table -->
+        <!-- Tabelle -->
         <div class="section table-wrap">
           <div class="table-section">
             <div class="scroller" id="tableScroller" style="display:none;">
@@ -173,10 +171,6 @@ tbody tr:hover{background:#eef4ff}
                 </thead>
                 <tbody id="tableBody"></tbody>
               </table>
-            </div>
-            <div id="welcome">
-              <h3>Willkommen</h3>
-              <div>Tippe Tour (1-4 Ziffern) oder Text. Rechts: exakte Schluesselsuche.</div>
             </div>
           </div>
         </div>
@@ -246,14 +240,18 @@ function rowFor(k){
 }
 
 function renderTable(list, emptyMsg){
-  const body = $('#tableBody'), scroller = $('#tableScroller'), welcome = $('#welcome');
+  const body = $('#tableBody');
+  const scroller = $('#tableScroller');
   body.innerHTML='';
   if(list.length){
     list.forEach(k=> body.appendChild(rowFor(k)));
-    scroller.style.display='block'; welcome.style.display='none';
+    scroller.style.display='block';
   } else {
-    scroller.style.display='none'; welcome.style.display='block';
-    welcome.innerHTML = '<h3>Keine Ergebnisse</h3><div>'+ (emptyMsg||'Keine Kunden gefunden') +'</div>';
+    scroller.style.display='none';
+    // Kein Welcome-Block mehr. Optional: Banner mit "Keine Ergebnisse" setzen:
+    // const wrap = $('#tourWrap'); wrap.style.display='block';
+    // $('#tourTitle').textContent = 'Keine Ergebnisse';
+    // $('#tourExtra').textContent = emptyMsg || '';
   }
 }
 
@@ -264,7 +262,7 @@ function renderTourTop(list, query, isExact){
   const label = isExact ? ('Tour ' + query) : ('Tour-Prefix ' + query + '*');
   title.textContent = label + ' - ' + list.length + ' Kunden';
 
-  // compact day distribution (right)
+  // kompakte Liefertags-Verteilung
   const dayCount = {};
   list.forEach(k => (k.touren||[]).forEach(t=>{
     const cond = isExact ? (t.tournummer === query) : t.tournummer.startsWith(query);
@@ -329,11 +327,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </html>
 """
 
+# ===== Streamlit-Rahmen =====
 
-# ===== Streamlit UI (unchanged logic) =====
-
-st.title("Kunden-Suchseite (Listenansicht mit Tour-Banner)")
-st.markdown("Ein Feld fuer **Text/Tour** (1-4 Ziffern) und ein Feld fuer **exakte Schluesselnummer**. Bei Toursuche erscheint oben ein kompaktes Banner, darunter die Kundenliste.")
+st.title("Kunden-Suchseite (Listenansicht, Tour-Banner)")
+st.caption("Ein Feld fuer Text/Tour (1–4 Ziffern) und ein Feld fuer exakte Schluesselnummer.")
 
 col1, col2 = st.columns(2)
 with col1:
