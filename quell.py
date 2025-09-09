@@ -133,6 +133,93 @@ HTML_TEMPLATE = """
 
     const alleFachberater = [...new Set(Array.from(kundenMap.values()).map(k => k.fachberater?.toLowerCase()))].filter(Boolean);
 
+    input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        let hits = 0;
+
+        tourBox.style.display = 'none';
+        fachberaterBox.style.display = 'none';
+
+        const tourMatch = q.match(/^\\d{4}$/);
+        if (tourMatch) {
+            const tourN = tourMatch[0];
+            const tourKunden = [];
+            const list = [];
+            
+            kundenMap.forEach(k => {
+                if (k.touren.some(t => t.tournummer === tourN)) {
+                    tourKunden.push(k);
+                    const plz = k.postleitzahl?.toString().replace(/\\.0$/, '') || '';
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(k.name + ', ' + k.strasse + ', ' + plz + ' ' + k.ort)}`;
+                    list.push({ ort: k.ort, name: k.name, strasse: k.strasse, csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-', schluessel: k.schluessel || '', mapsUrl });
+                }
+            });
+
+            if (tourKunden.length > 0) {
+                lastTourSearchQuery = tourN;
+                
+                // Wechsel zur Tour-Übersicht-Screen
+                mainScreen.classList.add('hidden');
+                tourResultScreen.classList.add('show');
+                tourResultTitle.textContent = `Tour ${tourN} (${tourKunden.length} Kunden)`;
+                
+                const { summary, list: customersList } = buildTourResultView(tourN, tourKunden);
+                tourSummary.innerHTML = '';
+                tourCustomersList.innerHTML = '';
+                tourSummary.appendChild(summary);
+                tourCustomersList.appendChild(customersList);
+                
+                return;
+            }
+        }
+
+        // Normale Suche weiter
+        const matchedFachberater = q.length > 2 ? alleFachberater.find(fb => fb.includes(q)) : null;
+        if (matchedFachberater) {
+            const kundenDesBeraters = [];
+            let beraterName = '';
+            kundenMap.forEach(k => {
+                if (k.fachberater?.toLowerCase() === matchedFachberater) {
+                    if (!beraterName) beraterName = k.fachberater;
+                    const plz = k.postleitzahl?.toString().replace(/\\.0$/, '') || '';
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(k.name + ', ' + k.strasse + ', ' + plz + ' ' + k.ort)}`;
+                    kundenDesBeraters.push({ csb: k.csb_nummer?.toString().replace(/\\.0$/, '') || '-', schluessel: k.schluessel || '', name: k.name, ort: k.ort, strasse: k.strasse, mapsUrl });
+                }
+            });
+
+            if (kundenDesBeraters.length > 0) {
+                fachberaterNameSpan.textContent = beraterName;
+                fachberaterCountSpan.textContent = kundenDesBeraters.length;
+                fachberaterList.innerHTML = '';
+                kundenDesBeraters.sort((a, b) => Number(a.csb) - Number(b.csb)).forEach((kunde, i) => {
+                    fachberaterList.appendChild(buildFachberaterEntry(kunde, i % 2 !== 0));
+                });
+                fachberaterBox.style.display = 'block';
+            }
+        }
+
+        document.querySelectorAll('.kunde').forEach(c => {
+            const match = q !== '' && c.dataset.search.includes(q);
+            c.classList.toggle('hidden', !match);
+            if (match) { c.classList.add('highlighted'); hits++; }
+            else { c.classList.remove('highlighted'); }
+        });
+
+        treffer.textContent = `🔎 ${hits} Ergebnis${hits === 1 ? '' : 'se'}`;
+    });
+
+    // Tour Result Back Button
+    tourResultBack.addEventListener('click', () => {
+        mainScreen.classList.remove('hidden');
+        tourResultScreen.classList.remove('show');
+        input.value = '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    document.querySelector('#backBtn').addEventListener('click', () => {
+        if (lastTourSearchQuery) {
+            input.value = lastTourSearchQuery;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
             document.querySelector('#backBtn').style.display = 'none';
         }
     });
