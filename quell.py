@@ -3,8 +3,8 @@ import pandas as pd
 import json
 import base64
 
-# ===== Vollständige App: Listenansicht, Tour-Banner, Umlaut-Suche
-# ===== Logo wird IMMER per Upload eingebunden (Base64), kein fester Pfad
+# ===== Vollstaendige App: Listenansicht, Tour-Banner, Umlaut-Suche
+# ===== Logo per Upload (Base64) + optionaler Upload der Fachberater-Telefonliste (A Vorname, B Nachname, C Nummer)
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -42,25 +42,12 @@ body{
 .header{
   padding:14px 12px;
   border-bottom:1px solid var(--border);
-  background:var(--surface);      /* hell (weiß) */
-  color:#0b1d3a;                  /* dunkler Text */
-  display:flex;
-  flex-direction:column;          /* Logo + Titel untereinander */
-  align-items:center;             /* mittig */
-  justify-content:center;         /* mittig */
-  gap:6px;
+  background:var(--surface);
+  color:#0b1d3a;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
 }
-.brand-logo{
-  height:56px;                    /* gern anpassen */
-  width:auto;
-  display:block;
-}
-.title{
-  font-size:13px;
-  font-weight:700;
-  color:#344054;                  /* dezenter Titel */
-  text-align:center;
-}
+.brand-logo{ height:56px; width:auto; display:block }
+.title{ font-size:13px; font-weight:700; color:#344054; text-align:center }
 
 /* Searchbar */
 .searchbar{
@@ -85,9 +72,7 @@ body{
 .content{padding:10px 12px}
 
 /* Section chrome */
-.section{
-  background:var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:var(--shadow); position:relative;
-}
+.section{ background:var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:var(--shadow); position:relative; }
 .section::before{
   content:""; position:absolute; left:0; right:0; top:0; height:3px;
   background:linear-gradient(90deg, rgba(37,99,235,.35), rgba(37,99,235,.0));
@@ -127,13 +112,16 @@ tbody tr:hover{background:#eef4ff}
 .badge-key{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:1px 7px; font-weight:700; font-size:11px; display:inline-block}
 
 /* MAP button: colored */
-.table-map,
-.map-pill{
+.table-map, .map-pill{
   text-decoration:none; font-weight:700; font-size:11px;
   padding:5px 10px; border-radius:999px; border:1px solid var(--accent);
   background:var(--accent); color:#fff; display:inline-block; text-align:center;
 }
 .table-map:hover, .map-pill:hover{background:var(--accent-strong); border-color:var(--accent-strong)}
+
+/* Fachberater Zelle */
+.fb-name{ font-weight:600; color:#0f172a }
+.fb-phone{ font-size:11px; color:#64748b; margin-top:2px }
 
 /* Scrollbar */
 ::-webkit-scrollbar{width:10px; height:10px}
@@ -146,7 +134,7 @@ tbody tr:hover{background:#eef4ff}
   <div class="container">
     <div class="card">
       <div class="header">
-        <img class="brand-logo" alt="EDEKA Nord Fleischwerk" src="__LOGO_DATA_URL__">
+        <img class="brand-logo" alt="Logo" src="__LOGO_DATA_URL__">
         <div class="title">Kunden-Suche</div>
       </div>
 
@@ -154,7 +142,7 @@ tbody tr:hover{background:#eef4ff}
       <div class="searchbar">
         <div class="field">
           <div class="label">Suche</div>
-          <input class="input" id="smartSearch" placeholder="Name / Ort / CSB / SAP / Tour / Fachberater /....">
+          <input class="input" id="smartSearch" placeholder="Name / Ort / CSB / SAP / Tour / Fachberater / ...">
         </div>
         <div class="field">
           <div class="label">Schluessel</div>
@@ -207,7 +195,8 @@ tbody tr:hover{background:#eef4ff}
 <script>
 /* Data injection */
 const tourkundenData = {  };      // wird durch Python ersetzt
-const keyIndex       = {  };      // CSB -> Schlüssel (bereinigt)
+const keyIndex       = {  };      // CSB -> Schluessel (bereinigt)
+const beraterIndex   = {  };      // "vorname nachname" (normalisiert) -> telefon
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
 
@@ -222,7 +211,7 @@ function normDE(s){
   return x.replace(/\\s+/g,' ').trim();
 }
 
-/* Ziffern-Normalizer für CSB/Tour/Schlüssel */
+/* Ziffern-Normalizer fuer CSB/Tour/Schluessel */
 function normalizeDigits(v){
   if(v == null) return '';
   let s = String(v).trim().replace(/\\.0$/,'');
@@ -231,7 +220,26 @@ function normalizeDigits(v){
   return s;
 }
 
-/* Dedupliziere Kunden anhand CSB */
+/* Fachberater-Namen normalisieren fuer Index-Lookups:
+   - lower, trim, mehrfache Spaces raus
+   - "Nachname, Vorname" -> "vorname nachname"
+*/
+function normBeraterName(raw){
+  if(!raw) return '';
+  let s = raw.toString().trim();
+  if(s.includes(',')){
+    // "Nachname, Vorname"
+    const parts = s.split(',').map(v=>v.trim());
+    if(parts.length >= 2){
+      s = parts[1] + ' ' + parts[0];
+    }
+  }
+  s = normDE(s);                 // umlaute ae/oe/ue/ss, lower
+  s = s.replace(/\\s+/g,' ').trim();
+  return s;
+}
+
+/* Dedupliziere Kunden anhand CSB (nach Normalisierung) */
 function dedupByCSB(list){
   const seen = new Set(); const out = [];
   for (const k of list){
@@ -295,7 +303,34 @@ function rowFor(k){
   });
   tr.appendChild(tdTours);
 
-  tr.appendChild(el('td','',k.fachberater||'-'));
+  // Fachberater + Telefon darunter
+  const tdFB = document.createElement('td');
+  const fbName = k.fachberater || '-';
+  const fbNameDiv = el('div','fb-name', fbName || '-');
+  let phoneTxt = '';
+  if (fbName && Object.keys(beraterIndex).length){
+    const key1 = normBeraterName(fbName);       // "vorname nachname" (wenn "nachname, vorname" -> umgedreht)
+    const key2 = (()=>{                         // alternativ "nachname vorname"
+      const raw = fbName.toString().trim();
+      if(raw.includes(',')){
+        const p = raw.split(',').map(v=>v.trim());
+        if(p.length>=2) return normDE(p[0] + ' ' + p[1]);
+      } else {
+        const sp = raw.split(/\s+/);
+        if(sp.length>=2) return normDE(sp.slice(1).join(' ') + ' ' + sp[0]);
+      }
+      return '';
+    })();
+    phoneTxt = beraterIndex[key1] || (key2 ? beraterIndex[key2] : '') || '';
+  }
+  if (phoneTxt){
+    const fbPhoneDiv = el('div','fb-phone','☎ ' + phoneTxt);
+    tdFB.appendChild(fbNameDiv);
+    tdFB.appendChild(fbPhoneDiv);
+  } else {
+    tdFB.appendChild(fbNameDiv);
+  }
+  tr.appendChild(tdFB);
 
   const tdAct = document.createElement('td');
   const a = document.createElement('a');
@@ -374,11 +409,7 @@ function onSmart(){
     const csbResults  = allCustomers.filter(k => normalizeDigits(k.csb_nummer) === qN);
     const results = dedupByCSB([...tourResults, ...csbResults]);
 
-    if (tourResults.length) {
-      renderTourTop(tourResults, qN, true);
-    } else {
-      closeTourTop();
-    }
+    if (tourResults.length) { renderTourTop(tourResults, qN, true); } else { closeTourTop(); }
     renderTable(results);
     return;
   }
@@ -425,10 +456,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </html>
 """
 
-# ===== Streamlit-Rahmen =====
+# ===== Streamlit-UI =====
 
 st.title("Kunden-Suchseite (Listenansicht, Tour-Banner)")
-st.caption("4-stellig = Tour ODER CSB. Schluessel-Suche ist exakt.")
+st.caption("4-stellig = Tour ODER CSB. Schluessel-Suche ist exakt. Fachberater-Telefonliste optional zusaetzlich laden.")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -437,6 +468,9 @@ with c2:
     key_file = st.file_uploader("Schluesseldatei (A=CSB, F=Schluessel)", type=["xlsx"])
 with c3:
     logo_file = st.file_uploader("Logo (PNG/JPG)", type=["png","jpg","jpeg"])
+
+# NEU: optionaler Upload fuer Fachberater-Telefonliste
+berater_file = st.file_uploader("Fachberater Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
 
 def normalize_digits_py(v) -> str:
     if pd.isna(v):
@@ -464,13 +498,53 @@ def build_key_map(key_df: pd.DataFrame) -> dict:
 def to_data_url(data: bytes, mime: str = "image/png") -> str:
     return f"data:{mime};base64," + base64.b64encode(data).decode("utf-8")
 
+def norm_de_py(s: str) -> str:
+    if not s:
+        return ""
+    x = s.lower()
+    x = (x.replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss"))
+    # Entferne diakritische Zeichen
+    try:
+      import unicodedata
+      x = unicodedata.normalize("NFD", x)
+      x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
+    except Exception:
+      pass
+    return " ".join(x.split())
+
+def build_berater_map(df: pd.DataFrame) -> dict:
+    """
+    Erstellt Mapping: 'vorname nachname' (normalisiert) -> telefonnummer (als String, unveraendert)
+    Erlaubt sowohl mit Kopfzeile als auch ohne.
+    """
+    # Versuche mit Header
+    cols = [c.strip().lower() for c in df.columns.astype(str)]
+    use_header = False
+    if len(cols) >= 3 and ("vor" in cols[0] or "name" in cols[0]):
+        use_header = True
+
+    mapping = {}
+    for idx, row in df.iterrows():
+        if use_header:
+            vname = str(row.iloc[0]) if not pd.isna(row.iloc[0]) else ""
+            nname = str(row.iloc[1]) if not pd.isna(row.iloc[1]) else ""
+            tel   = str(row.iloc[2]) if not pd.isna(row.iloc[2]) else ""
+        else:
+            vname = str(row.iloc[0]) if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
+            nname = str(row.iloc[1]) if df.shape[1] > 1 and not pd.isna(row.iloc[1]) else ""
+            tel   = str(row.iloc[2]) if df.shape[1] > 2 and not pd.isna(row.iloc[2]) else ""
+
+        full_norm = norm_de_py((vname + " " + nname).strip())
+        if full_norm:
+            mapping[full_norm] = tel.strip()
+    return mapping
+
 if excel_file and key_file:
     if st.button("HTML erzeugen", type="primary"):
         # Logo ist Pflicht:
         if logo_file is None:
             st.error("Bitte ein Logo (PNG/JPG) hochladen.")
             st.stop()
-        # Logo in Base64 umwandeln
         logo_bytes = logo_file.read()
         logo_mime = logo_file.type or ("image/png" if logo_file.name.lower().endswith(".png") else "image/jpeg")
         logo_data_url = to_data_url(logo_bytes, logo_mime)
@@ -495,6 +569,17 @@ if excel_file and key_file:
                     key_df = pd.read_excel(key_file, sheet_name=0, header=None)
                 key_map = build_key_map(key_df)
 
+            # Optional: Fachberater-Telefonliste laden
+            berater_map = {}
+            if berater_file is not None:
+                with st.spinner("Lese Fachberater-Telefonliste..."):
+                    try:
+                        bf = pd.read_excel(berater_file, sheet_name=0, header=0)
+                    except Exception:
+                        berater_file.seek(0)
+                        bf = pd.read_excel(berater_file, sheet_name=0, header=None)
+                    berater_map = build_berater_map(bf)
+
             tour_dict = {}
             def kunden_sammeln(df: pd.DataFrame):
                 for _, row in df.iterrows():
@@ -508,6 +593,7 @@ if excel_file and key_file:
 
                         eintrag = {k: str(row.get(v, "")).strip() for k, v in SPALTEN_MAPPING.items()}
                         csb_clean = normalize_digits_py(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
+
                         eintrag["csb_nummer"]   = csb_clean
                         eintrag["sap_nummer"]   = normalize_digits_py(eintrag.get("sap_nummer", ""))
                         eintrag["postleitzahl"] = normalize_digits_py(eintrag.get("postleitzahl", ""))
@@ -529,11 +615,13 @@ if excel_file and key_file:
                 st.stop()
 
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0]) if str(kv[0]).isdigit() else 0))
-            key_index_json = json.dumps(key_map, ensure_ascii=False)
-            tours_json     = json.dumps(sorted_tours, ensure_ascii=False)
+            key_index_json    = json.dumps(key_map, ensure_ascii=False)
+            tours_json        = json.dumps(sorted_tours, ensure_ascii=False)
+            berater_index_json= json.dumps(berater_map, ensure_ascii=False)
 
             final_html = HTML_TEMPLATE.replace("const tourkundenData = {  }", f"const tourkundenData = {tours_json}")
             final_html = final_html.replace("const keyIndex       = {  }", f"const keyIndex = {key_index_json}")
+            final_html = final_html.replace("const beraterIndex   = {  }", f"const beraterIndex = {berater_index_json}")
             final_html = final_html.replace("__LOGO_DATA_URL__", logo_data_url)
 
             total_customers = sum(len(v) for v in sorted_tours.values())
@@ -552,4 +640,4 @@ if excel_file and key_file:
         except Exception as e:
             st.error(f"Fehler: {e}")
 else:
-    st.info("Bitte Quelldatei, Schluesseldatei und Logo hochladen.")
+    st.info("Bitte Quelldatei, Schluesseldatei und Logo hochladen. Die Fachberater-Telefonliste ist optional.")
