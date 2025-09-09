@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 
-# ===== Vollständige App: Listenansicht, Tour-Banner, ohne Welcome-Block =====
+# ===== Vollständige App: Listenansicht, Tour-Banner, ohne Welcome-Block, mit Umlaut-Suche =====
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -187,6 +187,15 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 
 let allCustomers = [];
 
+/* Deutsche Normalisierung für Suche: ä/ö/ü -> ae/oe/ue, ß -> ss, Diakritika entfernen */
+function normDE(s){
+  if(!s) return '';
+  let x = s.toLowerCase();
+  x = x.replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+  return x.replace(/\\s+/g,' ').trim();
+}
+
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
@@ -248,10 +257,6 @@ function renderTable(list, emptyMsg){
     scroller.style.display='block';
   } else {
     scroller.style.display='none';
-    // Kein Welcome-Block mehr. Optional: Banner mit "Keine Ergebnisse" setzen:
-    // const wrap = $('#tourWrap'); wrap.style.display='block';
-    // $('#tourTitle').textContent = 'Keine Ergebnisse';
-    // $('#tourExtra').textContent = emptyMsg || '';
   }
 }
 
@@ -259,13 +264,12 @@ function renderTourTop(list, query, isExact){
   const wrap = $('#tourWrap'), title = $('#tourTitle'), extra = $('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
 
-  // --- NEU: Schlüsselsuche -> kein "Tour" im Titel ---
+  // Schlüsselsuche -> kein "Tour" im Titel
   if (query.startsWith('Schluessel ')) {
-    const key = query.replace(/^Schluessel\s+/,'');
+    const key = query.replace(/^Schluessel\\s+/, '');
     const label = 'Schluessel ' + key + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
     title.textContent = label;
 
-    // Liefertage-Verteilung über alle Touren der Treffer
     const dayCount = {};
     list.forEach(k => (k.touren||[]).forEach(t=>{
       dayCount[t.liefertag] = (dayCount[t.liefertag]||0) + 1;
@@ -275,7 +279,7 @@ function renderTourTop(list, query, isExact){
     return;
   }
 
-  // --- bestehende Tour-Logik für Ziffern-Eingaben ---
+  // Tour-Logik
   const label = isExact ? ('Tour ' + query) : ('Tour-Prefix ' + query + '*');
   title.textContent = label + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
 
@@ -288,7 +292,6 @@ function renderTourTop(list, query, isExact){
   wrap.style.display='block';
 }
 
-
 function closeTourTop(){
   const wrap = $('#tourWrap'); if(!wrap) return;
   $('#tourTitle').textContent=''; const ex = $('#tourExtra'); if(ex) ex.textContent='';
@@ -297,24 +300,25 @@ function closeTourTop(){
 
 function onSmart(){
   const qRaw = $('#smartSearch').value.trim();
-  const q = qRaw.toLowerCase();
   closeTourTop();
-  if(!q){ renderTable([], ''); return; }
+  if(!qRaw){ renderTable([], ''); return; }
 
-  const isDigits = /^\\d{1,4}$/.test(qRaw);
-  if(isDigits){
+  // Nur Ziffern (1–4) -> Tour-/Prefixsuche
+  if(/^\\d{1,4}$/.test(qRaw)){
     const exact = qRaw.length===4;
     const results = allCustomers.filter(k => (k.touren||[]).some(t => t.tournummer.startsWith(qRaw)));
     renderTourTop(results, qRaw, exact);
-    renderTable(results, 'Keine Treffer fuer Tour' + (exact?'':'-Prefix') + ' "' + qRaw + '"');
+    renderTable(results, '');
     return;
   }
 
+  // Textsuche mit deutscher Normalisierung (Büchen <-> Buechen)
+  const qN = normDE(qRaw);
   const results = allCustomers.filter(k=>{
-    const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+k.fachberater+' '+(k.schluessel||'')).toLowerCase();
-    return text.includes(q);
+    const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+k.fachberater+' '+(k.schluessel||''));
+    return normDE(text).includes(qN);
   });
-  renderTable(results, 'Keine Kunden fuer "' + qRaw + '" gefunden');
+  renderTable(results, '');
 }
 
 function onKey(){
@@ -323,7 +327,7 @@ function onKey(){
   if(!q){ renderTable([], ''); return; }
   const results = allCustomers.filter(k => (k.schluessel||'') === q);
   if(results.length){ renderTourTop(results, 'Schluessel ' + q, true); }
-  renderTable(results, 'Kein Kunde mit Schluessel "' + q + '" gefunden');
+  renderTable(results, '');
 }
 
 function debounce(fn, d=160){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
