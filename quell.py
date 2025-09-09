@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 
-# --- HTML mit luftiger Karten-Listenansicht + 1 Feld fuer alle Suchen + 1 Feld fuer Schluessel ---
+# --- HTML: Listenansicht (Tabelle) mit vereinter Suche + Schluessel-Suche ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -12,101 +12,68 @@ HTML_TEMPLATE = """
   <title>Kunden-Suche</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f6f7fb; color: #2f2f2f; font-size: 14px; line-height: 1.45;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f6f8; color: #2f2f2f; font-size: 14px; line-height: 1.45; }
 
     .page { min-height: 100vh; display: flex; justify-content: center; padding: 24px; }
     .container { width: 100%; max-width: 1100px; }
 
-    .card {
-      background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-    }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); overflow: hidden; }
 
-    .header { padding: 20px; border-bottom: 1px solid #eef0f3; }
-    .title { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 12px; }
+    .header { padding: 18px; border-bottom: 1px solid #eef0f3; }
+    .title { font-size: 18px; font-weight: 800; text-align: center; margin-bottom: 10px; }
 
-    .search-grid {
-      display: grid; grid-template-columns: 1fr 280px; gap: 12px; align-items: center;
-    }
+    .search-grid { display: grid; grid-template-columns: 1fr 280px; gap: 12px; align-items: center; }
     @media (max-width: 760px) { .search-grid { grid-template-columns: 1fr; } }
 
-    .field {
-      display: grid; grid-template-columns: 86px 1fr; gap: 10px; align-items: center;
-    }
+    .field { display: grid; grid-template-columns: 84px 1fr; gap: 10px; align-items: center; }
     .label { font-weight: 700; color: #4b5563; }
     input[type="text"] {
-      width: 100%; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 12px; font-size: 14px;
+      width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 14px;
       background: #fbfbfc; transition: border-color .2s, box-shadow .2s, background .2s;
     }
-    input[type="text"]:focus {
-      outline: none; border-color: #2563eb; background: #fff; box-shadow: 0 0 0 3px rgba(37,99,235,.12);
-    }
+    input[type="text"]:focus { outline: none; border-color: #2563eb; background: #fff; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
 
-    .toolbar { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .toolbar { padding: 10px 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .stats { font-size: 13px; color: #555; font-weight: 700; }
-    .btn {
-      padding: 10px 14px; font-size: 13px; border-radius: 10px; cursor: pointer;
-      border: 1px solid #d1d5db; background: #fff; transition: background .2s, border-color .2s;
-    }
+    .btn { padding: 8px 14px; font-size: 13px; border-radius: 10px; cursor: pointer; border: 1px solid #d1d5db; background: #fff; }
     .btn:hover { background: #f3f4f6; }
     .btn-danger { background: #dc3545; border-color: #dc3545; color: #fff; }
     .btn-danger:hover { background: #c82333; }
 
-    .content { padding: 0 20px 20px 20px; }
+    /* Info-Band */
+    .info { margin: 12px 18px 0 18px; padding: 10px 12px; border-radius: 10px; background: #e9fbef; border: 1px solid #d1fadf; color: #166534; display: none; }
+    .info.show { display: block; }
 
-    .welcome {
-      padding: 64px 20px; text-align: center; color: #6b7280;
+    /* Tabelle */
+    .table-wrap { padding: 12px 18px 18px 18px; }
+    .table-scroller { max-height: 72vh; overflow: auto; border: 1px solid #e5e7eb; border-radius: 10px; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+    thead th {
+      position: sticky; top: 0; z-index: 2; background: #f8fafc; color: #374151; font-weight: 800;
+      border-bottom: 1px solid #e5e7eb; padding: 12px 10px; white-space: nowrap;
     }
-    .welcome h2 { font-size: 22px; margin-bottom: 8px; color: #374151; }
+    tbody td { padding: 10px 10px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
+    tbody tr:nth-child(odd) { background: #fcfdff; }
+    tbody tr:hover { background: #f3f7ff; }
 
-    /* Ergebnis-Karten */
-    .results-grid {
-      display: grid; gap: 14px;
-      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-    }
-    @media (max-width: 480px) { .results-grid { grid-template-columns: 1fr; } }
+    .csb-btn { background: #eef5ff; border: 1px solid #cfe1ff; padding: 3px 8px; cursor: pointer; font-weight: 800; color: #1d4ed8; font-size: 12px; border-radius: 999px; }
+    .csb-btn:hover { background: #e2eeff; }
+    .key-badge { background: #fff3cd; color: #856404; padding: 2px 8px; border: 1px solid #ffeaa7; font-weight: 800; border-radius: 999px; font-size: 12px; display: inline-block; }
 
-    .result-card {
-      border: 1px solid #e7eaf0; background: #fff; border-radius: 12px; padding: 14px;
-      display: grid; gap: 10px;
-    }
-    .line { display: grid; grid-template-columns: 120px 1fr; gap: 10px; }
-    .k-label { color: #6b7280; font-weight: 700; }
-    .k-value { color: #111827; font-weight: 600; }
+    .tour-btn { display: inline-block; background: #fff; border: 1px solid #22c55e; color: #16a34a; padding: 2px 8px; margin: 1px; cursor: pointer; font-size: 11px; font-weight: 700; border-radius: 999px; }
+    .tour-btn:hover { background: #22c55e; color: #fff; }
 
-    .pill-row { display: flex; gap: 6px; flex-wrap: wrap; }
-    .csb-btn {
-      background: #eef5ff; border: 1px solid #cfe1ff; padding: 3px 8px; cursor: pointer;
-      font-weight: 800; color: #1d4ed8; font-size: 12px; border-radius: 999px;
-    }
-    .key-badge {
-      background: #fff3cd; color: #856404; padding: 2px 8px; border: 1px solid #ffeaa7;
-      font-weight: 800; border-radius: 999px; font-size: 12px;
-    }
-    .tour-badge {
-      background: #ecfdf5; border: 1px solid #bbf7d0; color: #16a34a;
-      padding: 2px 8px; font-size: 12px; border-radius: 999px; font-weight: 700;
-      cursor: pointer;
-    }
-    .tour-badge:hover { background: #d1fae5; }
-
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .maps-btn {
-      background: #6b7280; color: #fff; padding: 6px 12px; border: none; cursor: pointer;
-      font-size: 12px; text-decoration: none; border-radius: 10px; display: inline-block;
-    }
+    .maps-btn { background: #6b7280; color: #fff; padding: 6px 10px; border: none; cursor: pointer; font-size: 12px; text-decoration: none; border-radius: 8px; display: inline-block; }
     .maps-btn:hover { background: #4b5563; }
 
-    .tour-info {
-      margin-bottom: 14px; padding: 12px;
-      background: #e9fbef; border: 1px solid #d1fadf; border-radius: 10px; display: none;
-    }
-    .tour-info.show { display: block; }
-    .tour-info .head { font-weight: 800; color: #166534; margin-bottom: 6px; }
-    .tour-info .stats-line { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; }
+    /* Welcome */
+    .welcome { padding: 64px 18px 24px 18px; text-align: center; color: #6b7280; }
+    .welcome h2 { font-size: 22px; margin-bottom: 8px; color: #374151; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: #c9ced6; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: #aab3bf; }
   </style>
 </head>
 <body>
@@ -130,39 +97,38 @@ HTML_TEMPLATE = """
       <div class="toolbar">
         <div class="stats" id="hitInfo">Bereit</div>
         <div style="display:flex; gap:10px;">
-          <button class="btn" onclick="showFachberater()">Fachberater-Liste</button>
           <button class="btn btn-danger" onclick="clearAll()">Zuruecksetzen</button>
         </div>
       </div>
 
-      <div class="content">
-        <div id="tourInfo" class="tour-info">
-          <div class="head" id="tourInfoHead"></div>
-          <div class="stats-line" id="tourInfoStats"></div>
-        </div>
+      <div id="tourInfo" class="info"></div>
 
+      <div class="table-wrap">
         <div id="welcome" class="welcome">
           <h2>Willkommen</h2>
-          <p>Nutze links das Feld fuer Textsuche oder 1-4 stellige Tournummern. Rechts ist die exakte Schluesselsuche.</p>
+          <p>Tippe zum Suchen: Text (Name/Ort/CSB/SAP/Fachberater) oder Tour (1-4 Ziffern). Rechts: exakte Schluesselsuche.</p>
         </div>
 
-        <div id="results" class="results-grid" style="display:none;"></div>
-
-        <div id="fbListWrap" style="display:none; margin-top:12px;">
-          <div class="result-card">
-            <div class="k-label" style="margin-bottom:6px;">Fachberater</div>
-            <div id="fbList" class="pill-row"></div>
-          </div>
-        </div>
-
-        <div id="keyListWrap" style="display:none; margin-top:12px;">
-          <div class="result-card">
-            <div class="k-label" style="margin-bottom:6px;">Schluessel-Ergebnisse</div>
-            <div id="keyList"></div>
-          </div>
+        <div class="table-scroller" id="tableScroller" style="display:none;">
+          <table>
+            <thead>
+              <tr>
+                <th>CSB</th>
+                <th>SAP</th>
+                <th>Name</th>
+                <th>Strasse</th>
+                <th>PLZ</th>
+                <th>Ort</th>
+                <th>Schluessel</th>
+                <th>Touren</th>
+                <th>Fachberater</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
         </div>
       </div>
-
     </div>
   </div>
 </div>
@@ -173,7 +139,7 @@ const tourkundenData = {  }; // <- wird von Python ersetzt
 const $ = sel => document.querySelector(sel);
 
 // debounce
-function debounce(fn, delay=200){ let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),delay);} }
+function debounce(fn, delay=180){ let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),delay);} }
 
 let allCustomers = [];
 
@@ -184,121 +150,99 @@ function initializeData(){
       const key = k.csb_nummer;
       if(!key) return;
       if(!map.has(key)) map.set(key, {...k, touren: []});
-      map.get(key).touren.push({tournummer: tour, liefertag: k.liefertag});
+      map.get(key).touren.push({ tournummer: tour, liefertag: k.liefertag });
     });
   }
   allCustomers = Array.from(map.values());
 }
 
-function createCard(k){
+function createRow(k){
+  const tr = document.createElement('tr');
+
   const csb = (k.csb_nummer||'').toString().replace(/\\.0$/, '') || '-';
   const sap = (k.sap_nummer||'').toString().replace(/\\.0$/, '') || '-';
   const plz = (k.postleitzahl||'').toString().replace(/\\.0$/, '') || '-';
   const key = k.schluessel || '-';
 
-  const div = document.createElement('div');
-  div.className = 'result-card';
+  // CSB (Button)
+  const tdCSB = document.createElement('td');
+  const csbBtn = document.createElement('button');
+  csbBtn.className = 'csb-btn';
+  csbBtn.textContent = csb;
+  csbBtn.onclick = ()=>{ $('#smartSearch').value = csb; smartSearch(); };
+  tdCSB.appendChild(csbBtn);
 
-  // erste Zeile: Name
-  const name = document.createElement('div');
-  name.className = 'line';
-  name.innerHTML = '<div class="k-label">Name</div><div class="k-value">'+ (k.name||'-') +'</div>';
-  div.appendChild(name);
+  const tdSAP = document.createElement('td'); tdSAP.textContent = sap;
+  const tdName = document.createElement('td'); tdName.textContent = k.name || '-';
+  const tdStr = document.createElement('td'); tdStr.textContent = k.strasse || '-';
+  const tdPLZ = document.createElement('td'); tdPLZ.textContent = plz;
+  const tdOrt = document.createElement('td'); tdOrt.textContent = k.ort || '-';
 
-  // Adresse
-  const adr = document.createElement('div');
-  adr.className = 'line';
-  adr.innerHTML = '<div class="k-label">Adresse</div><div class="k-value">'+ (k.strasse||'-') + ', ' + plz + ' ' + (k.ort||'-') +'</div>';
-  div.appendChild(adr);
+  const tdKey = document.createElement('td');
+  if(key !== '-'){
+    const badge = document.createElement('span');
+    badge.className = 'key-badge';
+    badge.textContent = key;
+    tdKey.appendChild(badge);
+  } else { tdKey.textContent = '-'; }
 
-  // IDs
-  const ids = document.createElement('div');
-  ids.className = 'line';
-  const idsRight = document.createElement('div');
-  idsRight.innerHTML = ''
-    + '<div class="pill-row">'
-    + '<button class="csb-btn" title="CSB suchen">'+ csb +'</button>'
-    + '<span class="key-badge" title="Schluessel">'+ key +'</span>'
-    + '</div>'
-    + '<div style="margin-top:6px; color:#6b7280; font-size:12px;">SAP: <strong>'+ sap +'</strong></div>';
-  ids.innerHTML = '<div class="k-label">Kennungen</div>';
-  ids.appendChild(idsRight);
-  div.appendChild(ids);
-
-  // Touren
-  const tours = document.createElement('div');
-  tours.className = 'line';
-  const tourWrap = document.createElement('div');
-  tourWrap.className = 'pill-row';
+  const tdTours = document.createElement('td');
   (k.touren||[]).forEach(t=>{
     const b = document.createElement('span');
-    b.className = 'tour-badge';
+    b.className = 'tour-btn';
     b.textContent = t.tournummer + ' (' + t.liefertag.substring(0,2) + ')';
     b.onclick = ()=>{ $('#smartSearch').value = t.tournummer; smartSearch(); };
-    tourWrap.appendChild(b);
+    tdTours.appendChild(b);
   });
-  tours.innerHTML = '<div class="k-label">Touren</div>';
-  tours.appendChild(tourWrap);
-  div.appendChild(tours);
 
-  // Fachberater
-  const fb = document.createElement('div');
-  fb.className = 'line';
-  fb.innerHTML = '<div class="k-label">Fachberater</div><div class="k-value">'+ (k.fachberater||'-') +'</div>';
-  div.appendChild(fb);
+  const tdFB = document.createElement('td'); tdFB.textContent = k.fachberater || '-';
 
-  // Actions
-  const act = document.createElement('div');
-  act.className = 'actions';
+  const tdAct = document.createElement('td');
   const m = document.createElement('a');
   m.className = 'maps-btn';
   m.textContent = 'Maps';
-  m.href = 'https://www.google.com/maps/search/?api=1&query='
-           + encodeURIComponent((k.name||'') + ', ' + (k.strasse||'') + ', ' + plz + ' ' + (k.ort||''));
+  m.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((k.name||'') + ', ' + (k.strasse||'') + ', ' + plz + ' ' + (k.ort||''));
   m.target = '_blank';
-  act.appendChild(m);
-  div.appendChild(act);
+  tdAct.appendChild(m);
 
-  // CSB Button Funktion
-  idsRight.querySelector('.csb-btn').onclick = ()=>{ $('#smartSearch').value = csb; smartSearch(); };
-
-  return div;
+  tr.append(tdCSB, tdSAP, tdName, tdStr, tdPLZ, tdOrt, tdKey, tdTours, tdFB, tdAct);
+  return tr;
 }
 
 function render(customers, msgIfEmpty){
-  const grid = $('#results');
+  const body = $('#tableBody');
+  const scroller = $('#tableScroller');
   const welcome = $('#welcome');
   const hit = $('#hitInfo');
 
-  grid.innerHTML = '';
+  body.innerHTML = '';
 
-  if(customers && customers.length>0){
+  if(customers && customers.length > 0){
     welcome.style.display = 'none';
-    grid.style.display = 'grid';
-    customers.forEach(k=> grid.appendChild(createCard(k)));
+    scroller.style.display = 'block';
+    customers.forEach(k => body.appendChild(createRow(k)));
     hit.textContent = customers.length + ' Kunde' + (customers.length===1?'':'n') + ' gefunden';
   } else {
-    grid.style.display = 'none';
+    scroller.style.display = 'none';
     welcome.style.display = 'block';
-    welcome.innerHTML = '<h2>Keine Ergebnisse</h2><p>' + (msgIfEmpty||'Keine Kunden gefunden') + '</p>';
+    welcome.innerHTML = '<h2>Keine Ergebnisse</h2><p>' + (msgIfEmpty || 'Keine Kunden gefunden') + '</p>';
     hit.textContent = 'Keine Treffer';
   }
 }
 
-function clearPanels(){
-  $('#fbListWrap').style.display = 'none';
-  $('#keyListWrap').style.display = 'none';
+function clearInfo(){
+  const info = $('#tourInfo');
+  info.classList.remove('show');
+  info.textContent = '';
 }
 
 function smartSearch(){
   const raw = $('#smartSearch').value.trim();
-  const tourBox = $('#tourInfo');
-  clearPanels();
+  const info = $('#tourInfo');
+  clearInfo();
 
   if(!raw){
-    tourBox.classList.remove('show');
-    $('#welcome').style.display = 'block';
-    $('#results').style.display = 'none';
+    render([], '');
     $('#hitInfo').textContent = 'Bereit';
     return;
   }
@@ -307,11 +251,11 @@ function smartSearch(){
   let results = [];
 
   if(isDigits){
-    // Tour-Prefix (1-3), exakt (4)
-    const exact = raw.length===4;
+    // Tour-Prefix (1-3) oder exakt (4)
+    const exact = raw.length === 4;
     results = allCustomers.filter(k => k.touren && k.touren.some(t => t.tournummer.startsWith(raw)));
 
-    if(results.length>0){
+    if(results.length > 0){
       const toursSeen = new Set();
       const dayCount = {};
       results.forEach(k => k.touren.forEach(t=>{
@@ -320,21 +264,16 @@ function smartSearch(){
           dayCount[t.liefertag] = (dayCount[t.liefertag]||0)+1;
         }
       }));
-      $('#tourInfoHead').textContent = exact
+      info.textContent = exact
         ? 'Tour ' + raw + ': ' + results.length + ' Kunden'
-        : 'Tour-Prefix ' + raw + '*: ' + results.length + ' Kunden · ' + toursSeen.size + ' Touren';
-      $('#tourInfoStats').innerHTML = Object.entries(dayCount)
-        .map(([d,c])=>'<span><strong>'+d+':</strong> '+c+' Kunden</span>').join('');
-      tourBox.classList.add('show');
-    } else {
-      tourBox.classList.remove('show');
+        : 'Tour-Prefix ' + raw + '*: ' + results.length + ' Kunden, ' + toursSeen.size + ' Touren';
+      info.classList.add('show');
     }
     render(results, 'Keine Treffer fuer Tour' + (exact?'':'-Prefix') + ' "' + raw + '"');
 
   } else {
-    // Allgemeinsuche
+    // Textsuche
     const q = raw.toLowerCase();
-    tourBox.classList.remove('show');
     results = allCustomers.filter(k=>{
       const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+k.fachberater).toLowerCase();
       return text.includes(q);
@@ -345,85 +284,52 @@ function smartSearch(){
 
 function searchKey(){
   const q = $('#keySearch').value.trim();
-  const tourBox = $('#tourInfo');
-  clearPanels();
-  tourBox.classList.remove('show');
+  clearInfo();
 
   if(!q){
-    $('#welcome').style.display = 'block';
-    $('#results').style.display = 'none';
+    render([], '');
     $('#hitInfo').textContent = 'Bereit';
     return;
   }
 
   const results = allCustomers.filter(k => (k.schluessel||'') === q);
 
-  if(results.length>0){
-    const wrap = $('#keyListWrap'); const list = $('#keyList');
-    list.innerHTML = '';
-    results.forEach(k=>{
-      const d = document.createElement('div');
-      d.style.padding = '8px 10px';
-      d.style.border = '1px solid #ffe8a3';
-      d.style.background = '#fff9e6';
-      d.style.borderRadius = '10px';
-      d.style.marginBottom = '6px';
-      d.style.cursor = 'pointer';
-      d.innerHTML = '<div><strong>Schluessel: '+(k.schluessel||'-')+'</strong></div>'
-                  + '<div style="font-size:12px;color:#6b7280;">CSB: '+(k.csb_nummer||'-')+' - '+(k.name||'-')+'</div>';
-      d.onclick = ()=>{ $('#smartSearch').value = (k.csb_nummer||''); smartSearch(); };
-      list.appendChild(d);
-    });
-    wrap.style.display = 'block';
+  if(results.length > 0){
+    // kleiner Hinweis im Info-Band
+    const info = $('#tourInfo');
+    info.textContent = 'Schluessel-Treffer: ' + results.length + ' Kunde' + (results.length===1?'':'n');
+    info.classList.add('show');
   }
   render(results, 'Kein Kunde mit Schluessel "'+q+'" gefunden');
-}
-
-function showFachberater(){
-  clearAll();
-  const counts = {};
-  allCustomers.forEach(k=>{ if(k.fachberater) counts[k.fachberater]=(counts[k.fachberater]||0)+1; });
-
-  const wrap = $('#fbListWrap'); const list = $('#fbList');
-  list.innerHTML = '';
-  Object.entries(counts).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([fb,c])=>{
-    const span = document.createElement('span');
-    span.className = 'tour-badge';
-    span.textContent = fb + ' (' + c + ')';
-    span.onclick = ()=>{ $('#smartSearch').value = fb; smartSearch(); };
-    list.appendChild(span);
-  });
-  wrap.style.display = 'block';
 }
 
 function clearAll(){
   $('#smartSearch').value = '';
   $('#keySearch').value = '';
-  $('#tourInfo').classList.remove('show');
-  clearPanels();
-  $('#welcome').style.display = 'block';
-  $('#results').style.display = 'none';
+  clearInfo();
+  render([], '');
   $('#hitInfo').textContent = 'Bereit';
 }
 
 // init
 document.addEventListener('DOMContentLoaded', ()=>{
-  $('#smartSearch').addEventListener('input', debounce(smartSearch, 180));
-  $('#keySearch').addEventListener('input', debounce(searchKey, 180));
-
   if(typeof tourkundenData !== 'undefined' && Object.keys(tourkundenData).length>0){
     initializeData();
   } else {
-    $('#welcome').innerHTML = '<h2>Fehler</h2><p>Keine Kundendaten geladen</p>';
+    const w = document.getElementById('welcome');
+    if(w) w.innerHTML = '<h2>Fehler</h2><p>Keine Kundendaten geladen</p>';
   }
+
+  document.getElementById('smartSearch').addEventListener('input', debounce(smartSearch, 200));
+  document.getElementById('keySearch').addEventListener('input', debounce(searchKey, 200));
 });
 </script>
 </body>
 </html>
 """
 
-st.title("Kunden-Suchseite")
-st.markdown("Ein Feld fuer **Text oder Tour** (1-4 Ziffern) und ein Feld fuer **exakte Schluesselnummer**. Kartenansicht, luftig und uebersichtlich.")
+st.title("Kunden-Suchseite (Listenansicht)")
+st.markdown("Ein Feld fuer **Text oder Tour** (1-4 Ziffern) und ein Feld fuer **exakte Schluesselnummer**. Tabellenansicht, luftig und uebersichtlich.")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -472,6 +378,7 @@ if excel_file and key_file:
 
         try:
             with st.spinner("Verarbeite Dateien..."):
+                # Schluessel
                 key_df = pd.read_excel(key_file, sheet_name=0, header=0)
                 if key_df.shape[1] < 2:
                     key_file.seek(0)
@@ -508,6 +415,7 @@ if excel_file and key_file:
                 st.error("Keine Daten gefunden – Blattnamen/Spalten pruefen.")
                 st.stop()
 
+            # sortiert
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda x: int(x[0])))
             json_data_string = json.dumps(sorted_tours, indent=2, ensure_ascii=False)
             final_html = HTML_TEMPLATE.replace("const tourkundenData = {  }", f"const tourkundenData = {json_data_string};")
