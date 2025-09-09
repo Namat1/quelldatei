@@ -40,11 +40,27 @@ body{
 
 /* Header */
 .header{
-  padding:8px 12px; border-bottom:1px solid var(--border);
-  background:#0b1d3a; color:#fff; display:flex; align-items:center; gap:12px;
+  padding:14px 12px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface);      /* hell (weiß) */
+  color:#0b1d3a;                  /* dunkler Text */
+  display:flex;
+  flex-direction:column;          /* Logo + Titel untereinander */
+  align-items:center;             /* mittig */
+  justify-content:center;         /* mittig */
+  gap:6px;
 }
-.brand-logo{height:42px; width:auto; display:block}
-.title{font-size:13px; font-weight:700}
+.brand-logo{
+  height:56px;                    /* gern anpassen */
+  width:auto;
+  display:block;
+}
+.title{
+  font-size:13px;
+  font-weight:700;
+  color:#344054;                  /* dezenter Titel */
+  text-align:center;
+}
 
 /* Searchbar */
 .searchbar{
