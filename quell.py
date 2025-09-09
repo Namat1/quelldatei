@@ -6,8 +6,8 @@ import base64
 # ===== Vollständige App: Listenansicht, Tour-Banner, Umlaut-Suche
 # ===== Logo per Upload (Base64)
 # ===== Schlüssel-Mapping
-# ===== (Optional) Berater-Telefonliste (Name -> Telefon)
-# ===== NEU: Berater-CSB-Zuordnung (CSB -> {name, telefon}) mit Vorrang
+# ===== OPTIONAL: Berater-Telefonliste (A=Vorname, B=Nachname, C=Nummer) -> Telefon des Fachberaters
+# ===== NEU: CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon) -> Markt-Telefonnummer pro CSB (separate Spalte)
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -145,7 +145,7 @@ tbody tr:hover{background:#eef4ff}
       <div class="searchbar">
         <div class="field">
           <div class="label">Suche</div>
-          <input class="input" id="smartSearch" placeholder="Name / Ort / CSB / SAP / Tour / Fachberater / ...">
+          <input class="input" id="smartSearch" placeholder="Name / Ort / CSB / SAP / Tour / Fachberater / Telefon / ...">
         </div>
         <div class="field">
           <div class="label">Schluessel</div>
@@ -182,6 +182,7 @@ tbody tr:hover{background:#eef4ff}
                     <th>Schluessel</th>
                     <th>Touren</th>
                     <th>Fachberater</th>
+                    <th>Markt Telefon</th>
                     <th>Aktion</th>
                   </tr>
                 </thead>
@@ -199,8 +200,8 @@ tbody tr:hover{background:#eef4ff}
 /* Data injection */
 const tourkundenData   = {  };      // durch Python ersetzt
 const keyIndex         = {  };      // CSB -> Schluessel (bereinigt)
-const beraterIndex     = {  };      // "vorname nachname" -> telefon (Fallback)
-const beraterCSBIndex  = {  };      // CSB -> { name, telefon } (PRIO!)
+const beraterIndex     = {  };      // "vorname nachname" -> telefon (Fachberater-Telefon)
+const beraterCSBIndex  = {  };      // CSB -> { name, telefon } (Markt-Telefon; Name optional)
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
 
@@ -248,20 +249,25 @@ function buildData(){
         rec.sap_nummer   = normalizeDigits(rec.sap_nummer);
         rec.postleitzahl = normalizeDigits(rec.postleitzahl);
         rec.touren       = [];
-        // Schlüssel nachziehen
+
+        // Schlüssel final
         const keyFromIndex = keyIndex[csb] || "";
         rec.schluessel   = normalizeDigits(rec.schluessel) || keyFromIndex;
 
-        // NEU: Fachberater/Telefon per CSB überschreiben (Prio)
-        if (beraterCSBIndex[csb]){
-          rec.fachberater = beraterCSBIndex[csb].name || rec.fachberater;
-          rec.fb_phone    = beraterCSBIndex[csb].telefon || "";
-        } else {
-          // Fallback: Telefon per Name-Liste
-          const fb = rec.fachberater || "";
-          const keyName = normDE(fb);
-          if (beraterIndex[keyName]) rec.fb_phone = beraterIndex[keyName];
+        // Fachberater-Name ggf. aus CSB-Map überschreiben (nur Name)
+        if (beraterCSBIndex[csb] && beraterCSBIndex[csb].name){
+          rec.fachberater = beraterCSBIndex[csb].name;
         }
+
+        // Fachberater-Telefon ausschließlich aus beraterIndex (Name->Telefon)
+        rec.fb_phone = '';
+        if (rec.fachberater){
+          const nameKey = normDE(rec.fachberater);
+          if (beraterIndex[nameKey]) rec.fb_phone = beraterIndex[nameKey];
+        }
+
+        // Markt-Telefon aus CSB-Map (separate Spalte)
+        rec.market_phone = beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon ? beraterCSBIndex[csb].telefon : '';
 
         map.set(csb, rec);
       }
@@ -301,26 +307,20 @@ function rowFor(k){
   });
   tr.appendChild(tdTours);
 
-  // Fachberater + Telefon (CSB-Index hat Vorrang)
+  // Fachberater + Berater-Telefon (nur aus Name->Telefon)
   const tdFB = document.createElement('td');
-  let fbNameDisp = k.fachberater || '-';
-  let fbPhoneDisp = k.fb_phone || '';
-
-  if (beraterCSBIndex[csb]){
-    fbNameDisp  = beraterCSBIndex[csb].name || fbNameDisp;
-    fbPhoneDisp = beraterCSBIndex[csb].telefon || fbPhoneDisp;
-  } else if (!fbPhoneDisp && k.fachberater){
-    const keyName = normDE(k.fachberater);
-    fbPhoneDisp = beraterIndex[keyName] || '';
-  }
-
-  const fbNameDiv = el('div','fb-name', fbNameDisp);
+  const fbNameDiv = el('div','fb-name', k.fachberater || '-');
   tdFB.appendChild(fbNameDiv);
-  if (fbPhoneDisp){
-    const fbPhoneDiv = el('div','fb-phone','☎ ' + fbPhoneDisp);
+  if (k.fb_phone){
+    const fbPhoneDiv = el('div','fb-phone','☎ ' + k.fb_phone);
     tdFB.appendChild(fbPhoneDiv);
   }
   tr.appendChild(tdFB);
+
+  // Markt-Telefon (aus CSB-Zuordnung)
+  const tdMarket = document.createElement('td');
+  tdMarket.textContent = k.market_phone ? k.market_phone : '-';
+  tr.appendChild(tdMarket);
 
   const tdAct = document.createElement('td');
   const a = document.createElement('a');
@@ -385,6 +385,7 @@ function onSmart(){
   closeTourTop();
   if(!qRaw){ renderTable([]); return; }
 
+  // 1-3 Ziffern: Tour-Prefix
   if (/^\\d{1,3}$/.test(qRaw)){
     const qN = normalizeDigits(qRaw);
     const results = allCustomers.filter(k => (k.touren||[]).some(t => normalizeDigits(t.tournummer).startsWith(qN)));
@@ -393,22 +394,22 @@ function onSmart(){
     return;
   }
 
+  // 4-stellig: exakte Tour ODER CSB
   if (/^\\d{4}$/.test(qRaw)){
     const qN = normalizeDigits(qRaw);
     const tourResults = allCustomers.filter(k => (k.touren||[]).some(t => normalizeDigits(t.tournummer) === qN));
     const csbResults  = allCustomers.filter(k => normalizeDigits(k.csb_nummer) === qN);
     const results = dedupByCSB([...tourResults, ...csbResults]);
-
     if (tourResults.length) { renderTourTop(tourResults, qN, true); } else { closeTourTop(); }
     renderTable(results);
     return;
   }
 
+  // Textsuche inkl. Markt-Telefon & Berater-Telefon
   const qN = normDE(qRaw);
   const results = allCustomers.filter(k=>{
-    // Suchtext inkl. ggf. überschriebenem Fachberater
     const fb = k.fachberater || '';
-    const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||''));
+    const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||''));
     return normDE(text).includes(qN);
   });
   renderTable(results);
@@ -451,7 +452,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # ===== Streamlit-UI =====
 
 st.title("Kunden-Suchseite (Listenansicht, Tour-Banner)")
-st.caption("4-stellig = Tour ODER CSB. Schlüssel-Suche exakt. Fachberater per CSB-Datei hat Priorität.")
+st.caption("4-stellig = Tour ODER CSB. Schlüssel-Suche exakt. Berater-Telefon aus Namensliste, Markt-Telefon aus CSB-Zuordnung.")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -461,10 +462,10 @@ with c2:
 with c3:
     logo_file = st.file_uploader("Logo (PNG/JPG)", type=["png","jpg","jpeg"])
 
-# Optional: Name->Telefon (Fallback)
+# Optional: Name->Telefon (Fachberater-Telefon)
 berater_file = st.file_uploader("OPTIONAL: Fachberater Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
-# NEU: CSB->(Fachberater, Telefon) (PRIO)
-berater_csb_file = st.file_uploader("Fachberater-CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon)", type=["xlsx"])
+# NEU: CSB->(Fachberater, Markt-Telefon) (PRIO für Name + eigene Telefonspalte)
+berater_csb_file = st.file_uploader("Fachberater-CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt)", type=["xlsx"])
 
 def normalize_digits_py(v) -> str:
     if pd.isna(v):
@@ -506,7 +507,7 @@ def norm_de_py(s: str) -> str:
     return " ".join(x.split())
 
 def build_berater_map(df: pd.DataFrame) -> dict:
-    """Mapping: 'vorname nachname' (normalisiert) -> telefon"""
+    """Mapping: 'vorname nachname' (normalisiert) -> telefon (Fachberater-Telefon)."""
     mapping = {}
     for _, row in df.iterrows():
         v = str(row.iloc[0]) if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
@@ -519,9 +520,8 @@ def build_berater_map(df: pd.DataFrame) -> dict:
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
     """
-    Mapping: CSB -> { 'name': fachberater_name, 'telefon': telefon }
-    Spalten: A=Fachberater (0), I=CSB (8), O=Telefon (14)
-    Unabhängig davon, ob Header vorhanden sind, über Position gelesen.
+    Mapping: CSB -> { 'name': fachberater_name, 'telefon': markt_telefon }
+    Spalten: A=Fachberater (0), I=CSB (8), O=Telefon/Markt (14)
     """
     mapping = {}
     for _, row in df.iterrows():
@@ -531,7 +531,7 @@ def build_berater_csb_map(df: pd.DataFrame) -> dict:
         if csb:
             mapping[csb] = {
                 "name": fach.strip(),
-                "telefon": tel.strip()
+                "telefon": tel.strip()   # Markt-Telefon!
             }
     return mapping
 
@@ -565,7 +565,7 @@ if excel_file and key_file:
                     key_df = pd.read_excel(key_file, sheet_name=0, header=None)
                 key_map = build_key_map(key_df)
 
-            # Optional: Name->Telefon
+            # Optional: Name->Telefon (Fachberater-Telefon)
             berater_map = {}
             if berater_file is not None:
                 with st.spinner("Lese Fachberater-Telefonliste (Name->Telefon)..."):
@@ -576,7 +576,7 @@ if excel_file and key_file:
                         bf = pd.read_excel(berater_file, sheet_name=0, header=None)
                     berater_map = build_berater_map(bf)
 
-            # NEU: CSB->(Name, Telefon) (PRIO)
+            # NEU: CSB->(Name, Markt-Telefon)
             berater_csb_map = {}
             if berater_csb_file is not None:
                 with st.spinner("Lese Fachberater-CSB-Zuordnung (A, I, O)..."):
@@ -607,7 +607,7 @@ if excel_file and key_file:
                         eintrag["schluessel"]   = key_map.get(csb_clean, "")
                         eintrag["liefertag"]    = tag
 
-                        # Fachberater per CSB-Datei überschreiben (nur Name; Telefon später im Frontend)
+                        # Fachberater-Name ggf. aus CSB-Datei überschreiben (Telefon dort ist MARKT, nicht Berater!)
                         if csb_clean and csb_clean in berater_csb_map and berater_csb_map[csb_clean].get("name"):
                             eintrag["fachberater"] = berater_csb_map[csb_clean]["name"]
 
@@ -654,4 +654,4 @@ if excel_file and key_file:
         except Exception as e:
             st.error(f"Fehler: {e}")
 else:
-    st.info("Bitte Quelldatei, Schlüsseldatei und Logo hochladen. Optional: Name->Telefon. Neu: CSB->(Fachberater, Telefon).")
+    st.info("Bitte Quelldatei, Schlüsseldatei und Logo hochladen. Optional: Name->Telefon. Neu: CSB->(Fachberater, Markt-Telefon).")
