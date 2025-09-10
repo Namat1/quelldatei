@@ -678,7 +678,7 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML (extra Bold)",
                 data=final_html.encode("utf-8"),
-                file_name="suche_bold.html",
+                file_name="suche.html",
                 mime="text/html",
                 type="primary"
             )
