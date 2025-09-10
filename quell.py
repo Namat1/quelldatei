@@ -2,9 +2,11 @@ import streamlit as st
 import pandas as pd
 import json
 import base64
+import unicodedata
 
-# ===== Vollständige App: zweizeilige Struktur, bessere Trennung Key/Touren & Telefone, Tour-Pills ohne Scroll =====
-
+# =========================
+#  HTML TEMPLATE
+# =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -24,7 +26,7 @@ HTML_TEMPLATE = """
   --chip-fb:#0ea5e9; --chip-fb-weak:rgba(14,165,233,.12);
   --chip-market:#8b5cf6; --chip-market-weak:rgba(139,92,246,.12);
   --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
-  --fs-11:11px; --fs-12:12px;
+  --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -33,20 +35,15 @@ body{
   font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   color:var(--txt); font-size:var(--fs-12); line-height:1.45;
 }
-
-/* Frame */
 .page{min-height:100vh; display:flex; justify-content:center; padding:12px}
 .container{width:100%; max-width:1400px}
 .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
 
-/* Header (Logo + Titel) */
-.header{
-  padding:14px 12px; border-bottom:1px solid var(--border);
-  background:var(--surface); color:#0b1d3a;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
-}
-.brand-logo{ height:56px; width:auto; display:block }
-.title{ font-size:13px; font-weight:700; color:#344054; text-align:center }
+/* Header */
+.header{padding:14px 12px; border-bottom:1px solid var(--border); background:var(--surface);
+  display:flex; flex-direction:column; align-items:center; gap:6px}
+.brand-logo{height:56px; width:auto}
+.title{font-size:13px; font-weight:700; color:#344054}
 
 /* Searchbar */
 .searchbar{
@@ -70,14 +67,6 @@ body{
 /* Content */
 .content{padding:10px 12px}
 
-/* Section chrome */
-.section{ background:var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:var(--shadow); position:relative; }
-.section::before{
-  content:""; position:absolute; left:0; right:0; top:0; height:3px;
-  background:linear-gradient(90deg, rgba(37,99,235,.35), rgba(37,99,235,.0));
-  border-top-left-radius:8px; border-top-right-radius:8px;
-}
-
 /* Tour banner */
 .tour-wrap{display:none; margin-bottom:8px}
 .tour-banner{
@@ -88,67 +77,50 @@ body{
 .tour-banner small{font-weight:600; color:#667085; font-size:11px}
 
 /* Table */
-.table-wrap{margin-top:8px}
 .table-section{padding:6px 8px}
 .scroller{max-height:68vh; overflow:auto; border:1px solid var(--row-border); border-radius:6px; background:#fff}
-table{width:100%; border-collapse:separate; border-spacing:0; font-size:var(--fs-12); table-layout:fixed}
+table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
   position:sticky; top:0; background:#f2f5fa; color:#344054; font-weight:700;
-  border-bottom:1px solid var(--row-border); padding:7px 8px; white-space:nowrap; z-index:1
+  border-bottom:1px solid var(--row-border); padding:7px 8px; white-space:nowrap; z-index:1; text-align:left
 }
-tbody td{padding:6px 8px; border-bottom:1px solid var(--row-border); vertical-align:middle}
-
-/* Zellen-Layout Top/Sub (Zeile wächst bei Bedarf) */
-.cell{display:flex; flex-direction:column; gap:3px}
-.cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-
-/* Zebra & Hover */
+tbody td{padding:6px 8px; border-bottom:1px solid var(--row-border); vertical-align:top; text-align:left}
 tbody tr:nth-child(odd){background:var(--stripe)}
 tbody tr:hover{background:#eef4ff}
 
-/* Links / Pills / Badges */
+/* Einheitliches 2-Zeilen-Layout je Zelle (wächst bei Bedarf) */
+.cell{display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-height:32px}
+.cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+/* Links / Labels / Badges */
 .csb-link{font-weight:700; color:#0b3a8a; cursor:pointer}
 .csb-link:hover{text-decoration:underline}
+.small-label{font-size:var(--fs-10); font-weight:800; color:#64748b; letter-spacing:.25px; text-transform:uppercase}
 
-.badge-key{
-  background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e;
-  border-radius:999px; padding:2px 7px; font-weight:700; font-size:11px; display:inline-block
-}
+/* Schlüssel / Touren – klare Trennung */
+.key-tour{display:flex; flex-direction:column; gap:6px; width:100%}
+.key-line{display:flex; align-items:center; gap:6px}
+.key-divider{height:1px; background:#e9eef6; border:0; width:100%; margin:0}
+.badge-key{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:2px 7px; font-weight:700; font-size:11px}
 
-/* --- NEU: klare Trennung Schlüssel / Touren --- */
-.key-tour{
-  display:flex; flex-direction:column; gap:6px;
-}
-.key-divider{
-  height:1px; background:#e9eef6; border:0; margin:0;  /* feine Linie */
-}
-
-/* Tour-Pills ohne Scroll (wrap) */
-.tour-inline{
-  display:flex; flex-wrap:wrap; gap:4px; white-space:normal; /* kein Scrollen */
-}
+/* Tour-Pills (kleiner, umbruchfähig, kein Scroll) */
+.tour-inline{display:flex; flex-wrap:wrap; gap:4px; white-space:normal}
 .tour-btn{
   display:inline-block; background:#fff; border:1px solid #bbf7d0; color:#065f46;
-  padding:2px 7px; border-radius:999px; font-weight:700; font-size:11px; cursor:pointer
+  padding:1px 6px; border-radius:999px; font-weight:700; font-size:var(--fs-10); cursor:pointer; line-height:1.3
 }
 .tour-btn:hover{background:var(--ok-weak)}
 
-/* Telefone als Chips (optisch getrennt) */
-.phone-line{ display:flex; flex-wrap:wrap; gap:6px }
-.phone-chip{
-  display:inline-flex; align-items:center; gap:6px;
-  border-radius:999px; padding:2px 8px; font-weight:700; font-size:11px; line-height:1;
-}
-.chip-fb{ background:var(--chip-fb-weak); color:#075985; border:1px solid #7dd3fc }
-.chip-market{ background:var(--chip-market-weak); color:#4338ca; border:1px solid #c4b5fd }
-.chip-tag{
-  font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.3px;
-  opacity:.9;
-}
+/* Telefone als Chips */
+.phone-line{display:flex; flex-wrap:wrap; gap:6px}
+.phone-chip{display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:2px 8px; font-weight:700; font-size:var(--fs-10); line-height:1}
+.chip-fb{background:var(--chip-fb-weak); color:#075985; border:1px solid #7dd3fc}
+.chip-market{background:var(--chip-market-weak); color:#4338ca; border:1px solid #c4b5fd}
+.chip-tag{font-size:var(--fs-10); font-weight:800; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
 
-/* MAP Button */
+/* Map Button */
 .table-map{
-  text-decoration:none; font-weight:700; font-size:11px;
+  text-decoration:none; font-weight:700; font-size:var(--fs-11);
   padding:5px 10px; border-radius:999px; border:1px solid var(--accent);
   background:var(--accent); color:#fff; display:inline-block; text-align:center;
 }
@@ -169,11 +141,10 @@ tbody tr:hover{background:#eef4ff}
         <div class="title">Kunden-Suche</div>
       </div>
 
-      <!-- Search -->
       <div class="searchbar">
         <div class="field">
           <div class="label">Suche</div>
-          <input class="input" id="smartSearch" placeholder="Name / Ort / CSB / SAP / Tour / Fachberater / Telefon / ...">
+          <input class="input" id="smartSearch" placeholder="Name / Ort / CSB / SAP / Tour / Fachberater / Telefon / …">
         </div>
         <div class="field">
           <div class="label">Schluessel</div>
@@ -184,53 +155,48 @@ tbody tr:hover{background:#eef4ff}
         </div>
       </div>
 
-      <!-- Content -->
       <div class="content">
-        <!-- Tour-Banner -->
-        <div class="section tour-wrap" id="tourWrap">
+        <div class="tour-wrap" id="tourWrap">
           <div class="tour-banner">
             <span id="tourTitle"></span>
             <small id="tourExtra"></small>
           </div>
         </div>
 
-        <!-- Tabelle -->
-        <div class="section table-wrap">
-          <div class="table-section">
-            <div class="scroller" id="tableScroller" style="display:none;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>CSB / SAP</th>
-                    <th>Name / Strasse</th>
-                    <th>PLZ / Ort</th>
-                    <th>Schluessel / Touren</th>
-                    <th>Fachberater / Markt Telefon</th>
-                    <th>Aktion</th>
-                  </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-              </table>
-            </div>
+        <div class="table-section">
+          <div class="scroller" id="tableScroller" style="display:none;">
+            <table>
+              <thead>
+                <tr>
+                  <th>CSB / SAP</th>
+                  <th>Name / Strasse</th>
+                  <th>PLZ / Ort</th>
+                  <th>Schluessel / Touren</th>
+                  <th>Fachberater / Markt Telefon</th>
+                  <th>Aktion</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
           </div>
         </div>
-      </div> <!-- content -->
+
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-/* Data injection */
-const tourkundenData   = {  };      // durch Python ersetzt
-const keyIndex         = {  };      // CSB -> Schluessel
-const beraterIndex     = {  };      // "vorname nachname" -> telefon (Fachberater)
-const beraterCSBIndex  = {  };      // CSB -> { name, telefon } (Markt)
+const tourkundenData   = {  };
+const keyIndex         = {  };
+const beraterIndex     = {  };
+const beraterCSBIndex  = {  };
+
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
 
 let allCustomers = [];
 
-/* Deutsche Normalisierung (für Textsuche) */
 function normDE(s){
   if(!s) return '';
   let x = s.toLowerCase();
@@ -238,8 +204,6 @@ function normDE(s){
   x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
   return x.replace(/\\s+/g,' ').trim();
 }
-
-/* Ziffern-Normalizer */
 function normalizeDigits(v){
   if(v == null) return '';
   let s = String(v).trim().replace(/\\.0$/,'');
@@ -247,8 +211,6 @@ function normalizeDigits(v){
   s = s.replace(/^0+(\\d)/,'$1');
   return s;
 }
-
-/* Dedupliziere Kunden anhand CSB */
 function dedupByCSB(list){
   const seen = new Set(); const out = [];
   for (const k of list){
@@ -273,23 +235,17 @@ function buildData(){
         rec.postleitzahl = normalizeDigits(rec.postleitzahl);
         rec.touren       = [];
 
-        // Schlüssel final
         const keyFromIndex = keyIndex[csb] || "";
         rec.schluessel   = normalizeDigits(rec.schluessel) || keyFromIndex;
 
-        // Fachberater-Name evtl. aus CSB-Map (nur Name)
         if (beraterCSBIndex[csb] && beraterCSBIndex[csb].name){
           rec.fachberater = beraterCSBIndex[csb].name;
         }
-
-        // Fachberater-Telefon aus beraterIndex (Name->Telefon)
-        rec.fb_phone = '';
+        rec.fb_phone     = '';
         if (rec.fachberater){
           const nameKey = normDE(rec.fachberater);
           if (beraterIndex[nameKey]) rec.fb_phone = beraterIndex[nameKey];
         }
-
-        // Markt-Telefon aus CSB-Map
         rec.market_phone = beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon ? beraterCSBIndex[csb].telefon : '';
 
         map.set(csb, rec);
@@ -312,40 +268,41 @@ function twoLineCell(top, sub, topClass='', subClass=''){
 
 function rowFor(k){
   const tr = document.createElement('tr');
-
   const csb = cs(k.csb_nummer), sap = cs(k.sap_nummer), plz = cs(k.postleitzahl);
 
-  /* 1) CSB / SAP */
+  /* CSB / SAP (mit Präfix) */
   const td1 = document.createElement('td');
-  const csbLink = el('span','csb-link', csb);
+  const top1 = el('div','cell-top');
+  const csbLink = el('span','csb-link','CSB: ' + csb);
   csbLink.onclick = ()=>{ $('#smartSearch').value = csb; onSmart(); };
-  const csbWrap = el('div','cell');
-  const top1 = el('div','cell-top'); top1.appendChild(csbLink);
-  const sub1 = el('div','cell-sub', 'SAP: ' + (sap||'-'));
-  csbWrap.append(top1, sub1);
-  td1.appendChild(csbWrap); tr.appendChild(td1);
+  top1.appendChild(csbLink);
+  const sub1 = el('div','cell-sub','SAP: ' + (sap||'-'));
+  const wrap1 = el('div','cell'); wrap1.append(top1, sub1);
+  td1.appendChild(wrap1); tr.appendChild(td1);
 
-  /* 2) Name / Strasse */
+  /* Name / Straße */
   const td2 = document.createElement('td');
   td2.appendChild(twoLineCell(k.name || '-', k.strasse || '-'));
   tr.appendChild(td2);
 
-  /* 3) PLZ / Ort */
+  /* PLZ / Ort */
   const td3 = document.createElement('td');
   td3.appendChild(twoLineCell(plz || '-', k.ort || '-'));
   tr.appendChild(td3);
 
-  /* 4) Schlüssel / Touren — klar getrennt, Touren ohne Scroll (wrap) */
+  /* Schlüssel / Touren */
   const td4 = document.createElement('td');
   const wrap4 = el('div','cell key-tour');
 
   const keyDisp = normalizeDigits(k.schluessel) || keyIndex[csb] || '';
-  const top4 = el('div','cell-top');
-  if (keyDisp){ top4.appendChild(el('span','badge-key', keyDisp)); } else { top4.textContent = '-'; }
+  const keyLine = el('div','key-line');
+  keyLine.appendChild(el('span','small-label','Schlüssel'));
+  if(keyDisp){ keyLine.appendChild(el('span','badge-key', keyDisp)); } else { keyLine.appendChild(el('span','', '-')); }
 
-  const divider = document.createElement('hr'); divider.className = 'key-divider';
+  const divider = el('hr','key-divider');
 
-  const sub4 = el('div','cell-sub');
+  const toursWrap = el('div','cell-sub');
+  const toursLabel = el('span','small-label','Touren');
   const tours = el('div','tour-inline');
   (k.touren||[]).forEach(t=>{
     const tnum = normalizeDigits(t.tournummer);
@@ -353,16 +310,16 @@ function rowFor(k){
     tb.onclick=()=>{ $('#smartSearch').value = tnum; onSmart(); };
     tours.appendChild(tb);
   });
-  sub4.appendChild(tours);
+  toursWrap.appendChild(toursLabel);
+  toursWrap.appendChild(tours);
 
-  wrap4.append(top4, divider, sub4);
+  wrap4.append(keyLine, divider, toursWrap);
   td4.appendChild(wrap4);
   tr.appendChild(td4);
 
-  /* 5) Fachberater / Markt Telefon – Chips deutlich getrennt */
+  /* Fachberater / Markt-Telefon */
   const td5 = document.createElement('td');
   const top5 = el('div','cell-top', k.fachberater || '-');
-
   const sub5 = el('div','cell-sub phone-line');
   if (k.fb_phone){
     const chipFB = el('span','phone-chip chip-fb');
@@ -376,23 +333,19 @@ function rowFor(k){
     chipM.appendChild(el('span','', '☎ ' + k.market_phone));
     sub5.appendChild(chipM);
   }
-  if (!k.fb_phone && !k.market_phone){ sub5.textContent = '-'; }
-
+  if (!k.fb_phone && !k.market_phone){ sub5.textContent='-'; }
   const wrap5 = el('div','cell'); wrap5.append(top5, sub5);
-  td5.appendChild(wrap5);
-  tr.appendChild(td5);
+  td5.appendChild(wrap5); tr.appendChild(td5);
 
-  /* 6) Aktion (Map unten) */
+  /* Aktion */
   const td6 = document.createElement('td');
-  const top6 = el('div','cell-top','');  // bewusst leer
   const sub6 = el('div','cell-sub');
   const a = document.createElement('a');
   a.className='table-map'; a.textContent='Map';
   a.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); a.target='_blank';
   sub6.appendChild(a);
-  const wrap6 = el('div','cell'); wrap6.append(top6, sub6);
-  td6.appendChild(wrap6);
-  tr.appendChild(td6);
+  const wrap6 = el('div','cell'); wrap6.append(el('div','cell-top',''), sub6);
+  td6.appendChild(wrap6); tr.appendChild(td6);
 
   return tr;
 }
@@ -409,7 +362,7 @@ function renderTable(list){
   }
 }
 
-/* --- Tour-Banner & Suche unverändert (gekürzt) --- */
+/* Banner */
 function renderTourTop(list, query, isExact){
   const wrap = $('#tourWrap'), title = $('#tourTitle'), extra = $('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
@@ -428,21 +381,15 @@ function renderTourTop(list, query, isExact){
   extra.textContent = Object.entries(dayCount).sort().map(([d,c])=> d + ': ' + c).join('  •  ');
   wrap.style.display='block';
 }
+function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourTitle').textContent=''; $('#tourExtra').textContent=''; }
 
-function closeTourTop(){
-  const wrap = $('#tourWrap'); if(!wrap) return;
-  $('#tourTitle').textContent=''; const ex = $('#tourExtra'); if(ex) ex.textContent='';
-  wrap.style.display='none';
-}
-
-/* Suche (inkl. Umlaute, 4-stellig = Tour oder CSB) */
+/* Suche */
 function normDE_js(s){
   if(!s) return '';
   let x = s.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
   x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
   return x.replace(/\\s+/g,' ').trim();
 }
-
 function onSmart(){
   const qRaw = $('#smartSearch').value.trim();
   closeTourTop();
@@ -469,7 +416,6 @@ function onSmart(){
   });
   renderTable(results);
 }
-
 function onKey(){
   const q = $('#keySearch').value.trim();
   closeTourTop();
@@ -483,7 +429,6 @@ function onKey(){
   if(matches.length){ renderTourTop(matches, 'Schluessel ' + qClean, true); }
   renderTable(matches);
 }
-
 function debounce(fn, d=160){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
 
 document.addEventListener('DOMContentLoaded', ()=>{
@@ -500,10 +445,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </html>
 """
 
-# ===== Streamlit-Seite =====
-
-st.title("Kunden-Suchseite – klare Trennung & Tour-Pills ohne Scroll")
-st.caption("Schlüssel/Telefon deutlich getrennt • Tour-Pills umbrechen statt scrollen • 4-stellig = Tour ODER CSB.")
+# =========================
+#  STREAMLIT APP
+# =========================
+st.title("Kunden-Suchseite – sauberes Alignment & kleine Tour-Pills")
+st.caption("CSB/SAP mit Präfix • Schlüssel & Touren deutlich getrennt • Tour-Pills umbrechen (10 px).")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -526,36 +472,28 @@ def normalize_digits_py(v) -> str:
     s = s.lstrip("0")
     return s if s else "0"
 
-def build_key_map(key_df: pd.DataFrame) -> dict:
-    if key_df.shape[1] < 6:
-        st.warning("Schlüsseldatei hat weniger als 6 Spalten – letzte vorhandene Spalte als Schlüssel verwendet.")
+def build_key_map(df: pd.DataFrame) -> dict:
+    if df.shape[1] < 6:
+        st.warning("Schlüsseldatei hat < 6 Spalten – nehme letzte vorhandene Spalte als Schlüssel.")
     csb_col = 0
-    key_col = 5 if key_df.shape[1] > 5 else key_df.shape[1] - 1
+    key_col = 5 if df.shape[1] > 5 else df.shape[1] - 1
     mapping = {}
-    for _, row in key_df.iterrows():
-        csb = normalize_digits_py(row.iloc[csb_col] if key_df.shape[1] > 0 else "")
-        schluessel = normalize_digits_py(row.iloc[key_col] if key_df.shape[1] > 0 else "")
+    for _, row in df.iterrows():
+        csb = normalize_digits_py(row.iloc[csb_col] if df.shape[1] > 0 else "")
+        key = normalize_digits_py(row.iloc[key_col] if df.shape[1] > 0 else "")
         if csb:
-            mapping[csb] = schluessel
+            mapping[csb] = key
     return mapping
 
-def to_data_url(data: bytes, mime: str = "image/png") -> str:
-    return f"data:{mime};base64," + base64.b64encode(data).decode("utf-8")
-
 def norm_de_py(s: str) -> str:
-    if not s:
-        return ""
-    x = s.lower()
-    x = (x.replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss"))
-    try:
-        import unicodedata
-        x = unicodedata.normalize("NFD", x)
-        x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
-    except Exception:
-        pass
+    if not s: return ""
+    x = s.lower().replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
+    x = unicodedata.normalize("NFD", x)
+    x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
     return " ".join(x.split())
 
 def build_berater_map(df: pd.DataFrame) -> dict:
+    """Vorname A, Nachname B, Nummer C  -> 'vorname nachname' -> nummer"""
     mapping = {}
     for _, row in df.iterrows():
         v = str(row.iloc[0]) if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
@@ -567,6 +505,7 @@ def build_berater_map(df: pd.DataFrame) -> dict:
     return mapping
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
+    """A=Fachberater (Name), I=CSB, O=Telefon/Markt  -> CSB -> {name, telefon}"""
     mapping = {}
     for _, row in df.iterrows():
         fach = str(row.iloc[0]) if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
@@ -576,14 +515,16 @@ def build_berater_csb_map(df: pd.DataFrame) -> dict:
             mapping[csb] = {"name": fach.strip(), "telefon": tel.strip()}
     return mapping
 
+def to_data_url(file) -> str:
+    mime = file.type or ("image/png" if file.name.lower().endswith(".png") else "image/jpeg")
+    return f"data:{mime};base64," + base64.b64encode(file.read()).decode("utf-8")
+
 if excel_file and key_file:
     if st.button("HTML erzeugen", type="primary"):
         if logo_file is None:
             st.error("Bitte ein Logo (PNG/JPG) hochladen.")
             st.stop()
-        logo_bytes = logo_file.read()
-        logo_mime = logo_file.type or ("image/png" if logo_file.name.lower().endswith(".png") else "image/jpeg")
-        logo_data_url = to_data_url(logo_bytes, logo_mime)
+        logo_data_url = to_data_url(logo_file)
 
         BLATTNAMEN = ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]
         SPALTEN_MAPPING = {
@@ -603,47 +544,41 @@ if excel_file and key_file:
             berater_map = {}
             if berater_file is not None:
                 with st.spinner("Lese Fachberater-Telefonliste..."):
-                    try:
-                        bf = pd.read_excel(berater_file, sheet_name=0, header=0)
+                    try: bf = pd.read_excel(berater_file, sheet_name=0, header=0)
                     except Exception:
-                        berater_file.seek(0)
-                        bf = pd.read_excel(berater_file, sheet_name=0, header=None)
+                        berater_file.seek(0); bf = pd.read_excel(berater_file, sheet_name=0, header=None)
                     berater_map = build_berater_map(bf)
 
             berater_csb_map = {}
             if berater_csb_file is not None:
                 with st.spinner("Lese Fachberater-CSB-Zuordnung..."):
-                    try:
-                        bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=0)
+                    try: bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=0)
                     except Exception:
-                        berater_csb_file.seek(0)
-                        bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=None)
+                        berater_csb_file.seek(0); bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=None)
                     berater_csb_map = build_berater_csb_map(bcf)
 
             tour_dict = {}
             def kunden_sammeln(df: pd.DataFrame):
                 for _, row in df.iterrows():
                     for tag, spaltenname in LIEFERTAGE_MAPPING.items():
-                        if spaltenname not in df.columns:
-                            continue
+                        if spaltenname not in df.columns: continue
                         tournr_raw = str(row[spaltenname]).strip()
-                        if not tournr_raw or not tournr_raw.replace('.', '', 1).isdigit():
-                            continue
+                        if not tournr_raw or not tournr_raw.replace('.', '', 1).isdigit(): continue
                         tournr = normalize_digits_py(tournr_raw)
 
-                        eintrag = {k: str(row.get(v, "")).strip() for k, v in SPALTEN_MAPPING.items()}
-                        csb_clean = normalize_digits_py(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
+                        entry = {k: str(row.get(v, "")).strip() for k, v in SPALTEN_MAPPING.items()}
+                        csb_clean            = normalize_digits_py(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
+                        entry["csb_nummer"]   = csb_clean
+                        entry["sap_nummer"]   = normalize_digits_py(entry.get("sap_nummer", ""))
+                        entry["postleitzahl"] = normalize_digits_py(entry.get("postleitzahl", ""))
+                        entry["schluessel"]   = key_map.get(csb_clean, "")
+                        entry["liefertag"]    = tag
 
-                        eintrag["csb_nummer"]   = csb_clean
-                        eintrag["sap_nummer"]   = normalize_digits_py(eintrag.get("sap_nummer", ""))
-                        eintrag["postleitzahl"] = normalize_digits_py(eintrag.get("postleitzahl", ""))
-                        eintrag["schluessel"]   = key_map.get(csb_clean, "")
-                        eintrag["liefertag"]    = tag
-
+                        # Fachberater-Name ggf. aus CSB-Zuordnung
                         if csb_clean and csb_clean in berater_csb_map and berater_csb_map[csb_clean].get("name"):
-                            eintrag["fachberater"] = berater_csb_map[csb_clean]["name"]
+                            entry["fachberater"] = berater_csb_map[csb_clean]["name"]
 
-                        tour_dict.setdefault(tournr, []).append(eintrag)
+                        tour_dict.setdefault(tournr, []).append(entry)
 
             with st.spinner("Verarbeite Quelldatei..."):
                 for blatt in BLATTNAMEN:
@@ -658,27 +593,24 @@ if excel_file and key_file:
                 st.stop()
 
             sorted_tours       = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0]) if str(kv[0]).isdigit() else 0))
-            key_index_json     = json.dumps(key_map, ensure_ascii=False)
-            tours_json         = json.dumps(sorted_tours, ensure_ascii=False)
-            berater_index_json = json.dumps(berater_map, ensure_ascii=False)
-            berater_csb_json   = json.dumps(berater_csb_map, ensure_ascii=False)
-
-            final_html = HTML_TEMPLATE.replace("const tourkundenData   = {  }", f"const tourkundenData   = {tours_json}")
-            final_html = final_html.replace("const keyIndex         = {  }", f"const keyIndex         = {key_index_json}")
-            final_html = final_html.replace("const beraterIndex     = {  }", f"const beraterIndex     = {berater_index_json}")
-            final_html = final_html.replace("const beraterCSBIndex  = {  }", f"const beraterCSBIndex  = {berater_csb_json}")
-            final_html = final_html.replace("__LOGO_DATA_URL__", logo_file_to_data_url := (lambda b,m: f"data:{m};base64," + base64.b64encode(b).decode("utf-8"))(logo_file.read(), logo_file.type or ("image/png" if logo_file.name.lower().endswith(".png") else "image/jpeg")))
+            final_html = (HTML_TEMPLATE
+                .replace("const tourkundenData   = {  }", f"const tourkundenData   = {json.dumps(sorted_tours, ensure_ascii=False)}")
+                .replace("const keyIndex         = {  }", f"const keyIndex         = {json.dumps(key_map, ensure_ascii=False)}")
+                .replace("const beraterIndex     = {  }", f"const beraterIndex     = {json.dumps(berater_map, ensure_ascii=False)}")
+                .replace("const beraterCSBIndex  = {  }", f"const beraterCSBIndex  = {json.dumps(berater_csb_map, ensure_ascii=False)}")
+                .replace("__LOGO_DATA_URL__", logo_data_url)
+            )
 
             total_customers = sum(len(v) for v in sorted_tours.values())
-            m1,m2,m3 = st.columns(3)
-            with m1: st.metric("Touren", len(sorted_tours))
-            with m2: st.metric("Kunden", total_customers)
-            with m3: st.metric("Schlüssel (Mapping)", len(key_map))
+            c1,c2,c3 = st.columns(3)
+            with c1: st.metric("Touren", len(sorted_tours))
+            with c2: st.metric("Kunden", total_customers)
+            with c3: st.metric("Schlüssel (Mapping)", len(key_map))
 
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_trennung_pills.html",
+                file_name="suche_pills_klein.html",
                 mime="text/html",
                 type="primary"
             )
