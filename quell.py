@@ -5,7 +5,7 @@ import base64
 import unicodedata
 
 # =========================
-#  HTML TEMPLATE
+#  HTML TEMPLATE (Manrope + grüne Schlüssel-Pill)
 # =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -14,19 +14,30 @@ HTML_TEMPLATE = """
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kunden-Suche</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f6f7f9; --surface:#ffffff; --alt:#fafbfd; --border:#d9e2ef;
   --row-border:#e6edf5; --stripe:#f5f8fc;
   --txt:#1f2937; --muted:#667085; --head:#0f172a;
   --accent:#2563eb; --accent-weak:rgba(37,99,235,.12); --accent-strong:#1d4ed8;
+
   --ok:#16a34a; --ok-weak:rgba(22,163,74,.12);
   --warn:#f59e0b; --warn-weak:rgba(245,158,11,.18);
+
   --chip-fb:#0ea5e9; --chip-fb-weak:rgba(14,165,233,.12);
   --chip-market:#8b5cf6; --chip-market-weak:rgba(139,92,246,.12);
+
   --pill-yellow:#fef3c7; --pill-yellow-border:#fcd34d; --pill-yellow-text:#92400e;
+
+  /* NEU: grüne Schlüssel-Pill */
+  --pill-green:#dcfce7;           /* sehr helles Grün (Hintergrund) */
+  --pill-green-border:#86efac;    /* Rand */
+  --pill-green-text:#065f46;      /* Text */
+
+  /* Tour-Pills rot (wie gewünscht) */
   --pill-red:#fee2e2; --pill-red-border:#fecaca; --pill-red-text:#991b1b;
+
   --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
@@ -34,7 +45,7 @@ HTML_TEMPLATE = """
 html,body{height:100%}
 body{
   margin:0; background:var(--bg);
-  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  font-family:Manrope,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   color:var(--txt); font-size:var(--fs-12); line-height:1.45;
 }
 .page{min-height:100vh; display:flex; justify-content:center; padding:12px}
@@ -103,7 +114,14 @@ tbody tr:hover{background:#eef4ff}
 .key-tour{display:flex; flex-direction:column; gap:6px; width:100%}
 .key-line{display:flex; align-items:center; gap:6px}
 .key-divider{height:1px; background:#e9eef6; border:0; width:100%; margin:0}
-.badge-key{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:2px 7px; font-weight:700; font-size:11px}
+
+/* NEU: GRÜNE Schlüssel-Pill */
+.badge-key{
+  background:var(--pill-green);
+  border:1px solid var(--pill-green-border);
+  color:var(--pill-green-text);
+  border-radius:999px; padding:2px 7px; font-weight:800; font-size:11px
+}
 
 /* GELBE Chips (CSB/SAP) */
 a.id-chip{
@@ -337,7 +355,7 @@ function rowFor(k){
   td3.appendChild(twoLineCell(plz, k.ort || '-'));
   tr.appendChild(td3);
 
-  /* Schlüssel / Touren (Tour-Pills rot) */
+  /* Schlüssel / Touren (Schlüssel grün, Touren rot) */
   const td4 = document.createElement('td');
   const wrap4 = el('div','cell key-tour');
 
@@ -489,8 +507,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # =========================
 #  STREAMLIT APP
 # =========================
-st.title("Kunden-Suchseite – klickbare Telefon- & ID-Pills, rote Tour-Pills")
-st.caption("CSB/SAP als gelbe Pills (klickbar) • Tour-Pills rot • Telefon-Pills öffnen ProCall (callto:).")
+st.title("Kunden-Suchseite – grüne Schlüssel-Pill, Manrope-Schrift, klickbare Chips")
+st.caption("CSB/SAP gelb (klickbar) • Tour rot • Schlüssel grün • Telefon-Pills öffnen ProCall (callto:).")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -650,7 +668,7 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_pills_klickbar.html",
+                file_name="suche_gruene_schluesselpill_manrope.html",
                 mime="text/html",
                 type="primary"
             )
