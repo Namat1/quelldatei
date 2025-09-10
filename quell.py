@@ -3,11 +3,7 @@ import pandas as pd
 import json
 import base64
 
-# ===== Vollständige App: zweizeiliges Tabellenlayout pro Kunde (kein Umbruch), Umlaut-Suche
-# ===== Logo per Upload (Base64)
-# ===== Schlüssel-Mapping
-# ===== OPTIONAL: Berater-Telefonliste (A=Vorname, B=Nachname, C=Nummer) -> Telefon des Fachberaters
-# ===== CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt) -> Markt-Telefonnummer pro CSB (separate Anzeige)
+# ===== Vollständige App: zweizeilige Struktur, bessere Trennung Key/Touren & Telefone, Tour-Pills ohne Scroll =====
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -25,6 +21,8 @@ HTML_TEMPLATE = """
   --accent:#2563eb; --accent-weak:rgba(37,99,235,.12); --accent-strong:#1d4ed8;
   --ok:#16a34a; --ok-weak:rgba(22,163,74,.12);
   --warn:#f59e0b; --warn-weak:rgba(245,158,11,.18);
+  --chip-fb:#0ea5e9; --chip-fb-weak:rgba(14,165,233,.12);
+  --chip-market:#8b5cf6; --chip-market-weak:rgba(139,92,246,.12);
   --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
   --fs-11:11px; --fs-12:12px;
 }
@@ -41,7 +39,7 @@ body{
 .container{width:100%; max-width:1400px}
 .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
 
-/* Header */
+/* Header (Logo + Titel) */
 .header{
   padding:14px 12px; border-bottom:1px solid var(--border);
   background:var(--surface); color:#0b1d3a;
@@ -100,14 +98,11 @@ thead th{
 }
 tbody td{padding:6px 8px; border-bottom:1px solid var(--row-border); vertical-align:middle}
 
-/* Zweizeilige Zellen (kein Umbruch innerhalb des Kunden) */
-.cell{display:flex; flex-direction:column; gap:2px}
-.cell-top,.cell-sub{
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.row-2lines{height:40px} /* feste Zeilenhöhe für saubere Zweizeiler */
+/* Zellen-Layout Top/Sub (Zeile wächst bei Bedarf) */
+.cell{display:flex; flex-direction:column; gap:3px}
+.cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
-/* leichte Zebra-Optik & Hover */
+/* Zebra & Hover */
 tbody tr:nth-child(odd){background:var(--stripe)}
 tbody tr:hover{background:#eef4ff}
 
@@ -115,25 +110,43 @@ tbody tr:hover{background:#eef4ff}
 .csb-link{font-weight:700; color:#0b3a8a; cursor:pointer}
 .csb-link:hover{text-decoration:underline}
 
+.badge-key{
+  background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e;
+  border-radius:999px; padding:2px 7px; font-weight:700; font-size:11px; display:inline-block
+}
+
+/* --- NEU: klare Trennung Schlüssel / Touren --- */
+.key-tour{
+  display:flex; flex-direction:column; gap:6px;
+}
+.key-divider{
+  height:1px; background:#e9eef6; border:0; margin:0;  /* feine Linie */
+}
+
+/* Tour-Pills ohne Scroll (wrap) */
 .tour-inline{
-  display:flex; gap:4px; overflow-x:auto; white-space:nowrap; padding-bottom:1px;
+  display:flex; flex-wrap:wrap; gap:4px; white-space:normal; /* kein Scrollen */
 }
 .tour-btn{
   display:inline-block; background:#fff; border:1px solid #bbf7d0; color:#065f46;
-  padding:1px 7px; border-radius:999px; font-weight:700; font-size:11px; cursor:pointer; flex:0 0 auto;
+  padding:2px 7px; border-radius:999px; font-weight:700; font-size:11px; cursor:pointer
 }
 .tour-btn:hover{background:var(--ok-weak)}
 
-.badge-key{
-  background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e;
-  border-radius:999px; padding:1px 7px; font-weight:700; font-size:11px; display:inline-block
+/* Telefone als Chips (optisch getrennt) */
+.phone-line{ display:flex; flex-wrap:wrap; gap:6px }
+.phone-chip{
+  display:inline-flex; align-items:center; gap:6px;
+  border-radius:999px; padding:2px 8px; font-weight:700; font-size:11px; line-height:1;
+}
+.chip-fb{ background:var(--chip-fb-weak); color:#075985; border:1px solid #7dd3fc }
+.chip-market{ background:var(--chip-market-weak); color:#4338ca; border:1px solid #c4b5fd }
+.chip-tag{
+  font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.3px;
+  opacity:.9;
 }
 
-/* Telefone */
-.fb-name{ font-weight:600; color:#0f172a }
-.fb-phone, .market-phone{ font-size:11px; color:#64748b; }
-
-/* MAP button: colored */
+/* MAP Button */
 .table-map{
   text-decoration:none; font-weight:700; font-size:11px;
   padding:5px 10px; border-radius:999px; border:1px solid var(--accent);
@@ -181,7 +194,7 @@ tbody tr:hover{background:#eef4ff}
           </div>
         </div>
 
-        <!-- Tabelle (zweizeilig pro Kunde) -->
+        <!-- Tabelle -->
         <div class="section table-wrap">
           <div class="table-section">
             <div class="scroller" id="tableScroller" style="display:none;">
@@ -299,11 +312,10 @@ function twoLineCell(top, sub, topClass='', subClass=''){
 
 function rowFor(k){
   const tr = document.createElement('tr');
-  tr.className = 'row-2lines';
 
   const csb = cs(k.csb_nummer), sap = cs(k.sap_nummer), plz = cs(k.postleitzahl);
 
-  // 1) CSB / SAP
+  /* 1) CSB / SAP */
   const td1 = document.createElement('td');
   const csbLink = el('span','csb-link', csb);
   csbLink.onclick = ()=>{ $('#smartSearch').value = csb; onSmart(); };
@@ -311,24 +323,27 @@ function rowFor(k){
   const top1 = el('div','cell-top'); top1.appendChild(csbLink);
   const sub1 = el('div','cell-sub', 'SAP: ' + (sap||'-'));
   csbWrap.append(top1, sub1);
-  td1.appendChild(csbWrap);
-  tr.appendChild(td1);
+  td1.appendChild(csbWrap); tr.appendChild(td1);
 
-  // 2) Name / Strasse
+  /* 2) Name / Strasse */
   const td2 = document.createElement('td');
   td2.appendChild(twoLineCell(k.name || '-', k.strasse || '-'));
   tr.appendChild(td2);
 
-  // 3) PLZ / Ort
+  /* 3) PLZ / Ort */
   const td3 = document.createElement('td');
   td3.appendChild(twoLineCell(plz || '-', k.ort || '-'));
   tr.appendChild(td3);
 
-  // 4) Schlüssel / Touren (Touren inline scroll, kein Umbruch)
+  /* 4) Schlüssel / Touren — klar getrennt, Touren ohne Scroll (wrap) */
   const td4 = document.createElement('td');
+  const wrap4 = el('div','cell key-tour');
+
   const keyDisp = normalizeDigits(k.schluessel) || keyIndex[csb] || '';
   const top4 = el('div','cell-top');
   if (keyDisp){ top4.appendChild(el('span','badge-key', keyDisp)); } else { top4.textContent = '-'; }
+
+  const divider = document.createElement('hr'); divider.className = 'key-divider';
 
   const sub4 = el('div','cell-sub');
   const tours = el('div','tour-inline');
@@ -340,29 +355,34 @@ function rowFor(k){
   });
   sub4.appendChild(tours);
 
-  const wrap4 = el('div','cell');
-  wrap4.append(top4, sub4);
+  wrap4.append(top4, divider, sub4);
   td4.appendChild(wrap4);
   tr.appendChild(td4);
 
-  // 5) Fachberater(+☎) / Markt Telefon(☎)
+  /* 5) Fachberater / Markt Telefon – Chips deutlich getrennt */
   const td5 = document.createElement('td');
-  const top5 = el('div','cell-top');
-  top5.appendChild(el('span','fb-name', k.fachberater || '-'));
+  const top5 = el('div','cell-top', k.fachberater || '-');
+
+  const sub5 = el('div','cell-sub phone-line');
   if (k.fb_phone){
-    top5.appendChild(el('span','fb-phone','  ☎ '+k.fb_phone));
+    const chipFB = el('span','phone-chip chip-fb');
+    chipFB.appendChild(el('span','chip-tag','FB'));
+    chipFB.appendChild(el('span','', '☎ ' + k.fb_phone));
+    sub5.appendChild(chipFB);
   }
-  const sub5 = el('div','cell-sub');
   if (k.market_phone){
-    sub5.appendChild(el('span','market-phone','☎ '+k.market_phone));
-  } else {
-    sub5.textContent = '-';
+    const chipM = el('span','phone-chip chip-market');
+    chipM.appendChild(el('span','chip-tag','Markt'));
+    chipM.appendChild(el('span','', '☎ ' + k.market_phone));
+    sub5.appendChild(chipM);
   }
+  if (!k.fb_phone && !k.market_phone){ sub5.textContent = '-'; }
+
   const wrap5 = el('div','cell'); wrap5.append(top5, sub5);
   td5.appendChild(wrap5);
   tr.appendChild(td5);
 
-  // 6) Aktion (unten: Map)
+  /* 6) Aktion (Map unten) */
   const td6 = document.createElement('td');
   const top6 = el('div','cell-top','');  // bewusst leer
   const sub6 = el('div','cell-sub');
@@ -389,32 +409,21 @@ function renderTable(list){
   }
 }
 
+/* --- Tour-Banner & Suche unverändert (gekürzt) --- */
 function renderTourTop(list, query, isExact){
   const wrap = $('#tourWrap'), title = $('#tourTitle'), extra = $('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
-
   if (query.startsWith('Schluessel ')) {
     const key = query.replace(/^Schluessel\\s+/, '');
-    const label = 'Schluessel ' + key + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
-    title.textContent = label;
-
-    const dayCount = {};
-    list.forEach(k => (k.touren||[]).forEach(t=>{
-      dayCount[t.liefertag] = (dayCount[t.liefertag]||0) + 1;
-    }));
-    extra.textContent = Object.entries(dayCount).sort().map(([d,c])=> d + ': ' + c).join('  •  ');
-    wrap.style.display='block';
-    return;
+    title.textContent = 'Schluessel ' + key + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
+  } else {
+    title.textContent = (isExact?('Tour '+query):('Tour-Prefix '+query+'*')) + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
   }
-
-  const label = isExact ? ('Tour ' + query) : ('Tour-Prefix ' + query + '*');
-  title.textContent = label + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
-
   const dayCount = {};
   list.forEach(k => (k.touren||[]).forEach(t=>{
     const tnum = normalizeDigits(t.tournummer);
-    const cond = isExact ? (tnum === query) : tnum.startsWith(query);
-    if(cond){ dayCount[t.liefertag] = (dayCount[t.liefertag]||0)+1; }
+    const cond = isExact ? (tnum === query) : tnum.startsWith(query.replace('Schluessel ',''));
+    if(cond || query.startsWith('Schluessel ')){ dayCount[t.liefertag] = (dayCount[t.liefertag]||0)+1; }
   }));
   extra.textContent = Object.entries(dayCount).sort().map(([d,c])=> d + ': ' + c).join('  •  ');
   wrap.style.display='block';
@@ -426,37 +435,37 @@ function closeTourTop(){
   wrap.style.display='none';
 }
 
+/* Suche (inkl. Umlaute, 4-stellig = Tour oder CSB) */
+function normDE_js(s){
+  if(!s) return '';
+  let x = s.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+  return x.replace(/\\s+/g,' ').trim();
+}
+
 function onSmart(){
   const qRaw = $('#smartSearch').value.trim();
   closeTourTop();
   if(!qRaw){ renderTable([]); return; }
 
-  // 1-3 Ziffern: Tour-Prefix
   if (/^\\d{1,3}$/.test(qRaw)){
-    const qN = normalizeDigits(qRaw);
-    const results = allCustomers.filter(k => (k.touren||[]).some(t => normalizeDigits(t.tournummer).startsWith(qN)));
-    renderTourTop(results, qN, false);
-    renderTable(results);
-    return;
+    const qN = qRaw.replace(/^0+(\\d)/,'$1');
+    const results = allCustomers.filter(k => (k.touren||[]).some(t => (t.tournummer||'').startsWith(qN)));
+    renderTourTop(results, qN, false); renderTable(results); return;
   }
-
-  // 4-stellig: exakte Tour ODER CSB
   if (/^\\d{4}$/.test(qRaw)){
-    const qN = normalizeDigits(qRaw);
-    const tourResults = allCustomers.filter(k => (k.touren||[]).some(t => normalizeDigits(t.tournummer) === qN));
-    const csbResults  = allCustomers.filter(k => normalizeDigits(k.csb_nummer) === qN);
+    const qN = qRaw.replace(/^0+(\\d)/,'$1');
+    const tourResults = allCustomers.filter(k => (k.touren||[]).some(t => (t.tournummer||'') === qN));
+    const csbResults  = allCustomers.filter(k => (k.csb_nummer||'') === qN);
     const results = dedupByCSB([...tourResults, ...csbResults]);
-    if (tourResults.length) { renderTourTop(tourResults, qN, true); } else { closeTourTop(); }
-    renderTable(results);
-    return;
+    if (tourResults.length) renderTourTop(tourResults, qN, true); else closeTourTop();
+    renderTable(results); return;
   }
-
-  // Textsuche inkl. Berater-/Markt-Telefon
-  const qN = normDE(qRaw);
+  const qN = normDE_js(qRaw);
   const results = allCustomers.filter(k=>{
     const fb = k.fachberater || '';
     const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||''));
-    return normDE(text).includes(qN);
+    return normDE_js(text).includes(qN);
   });
   renderTable(results);
 }
@@ -465,16 +474,12 @@ function onKey(){
   const q = $('#keySearch').value.trim();
   closeTourTop();
   if(!q){ renderTable([]); return; }
-
-  const qClean = normalizeDigits(q);
+  const qClean = q.replace(/[^0-9]/g,'').replace(/^0+(\\d)/,'$1');
   const matches = [];
   for (const k of allCustomers){
-    const keyForRow = normalizeDigits(k.schluessel) || keyIndex[normalizeDigits(k.csb_nummer)] || '';
-    if (keyForRow === qClean){
-      matches.push(k);
-    }
+    const keyForRow = (k.schluessel||'') || (keyIndex[k.csb_nummer]||'');
+    if (keyForRow === qClean) matches.push(k);
   }
-
   if(matches.length){ renderTourTop(matches, 'Schluessel ' + qClean, true); }
   renderTable(matches);
 }
@@ -495,10 +500,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </html>
 """
 
-# ===== Streamlit-UI =====
+# ===== Streamlit-Seite =====
 
-st.title("Kunden-Suchseite (zweizeilig pro Kunde, kein Umbruch)")
-st.caption("4-stellig = Tour ODER CSB. Schlüssel-Suche exakt. Berater-Telefon aus Namensliste, Markt-Telefon aus CSB-Zuordnung.")
+st.title("Kunden-Suchseite – klare Trennung & Tour-Pills ohne Scroll")
+st.caption("Schlüssel/Telefon deutlich getrennt • Tour-Pills umbrechen statt scrollen • 4-stellig = Tour ODER CSB.")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -635,7 +640,6 @@ if excel_file and key_file:
                         eintrag["schluessel"]   = key_map.get(csb_clean, "")
                         eintrag["liefertag"]    = tag
 
-                        # Fachberater-Name ggf. aus CSB-Datei (Telefon dort ist Markt)
                         if csb_clean and csb_clean in berater_csb_map and berater_csb_map[csb_clean].get("name"):
                             eintrag["fachberater"] = berater_csb_map[csb_clean]["name"]
 
@@ -663,7 +667,7 @@ if excel_file and key_file:
             final_html = final_html.replace("const keyIndex         = {  }", f"const keyIndex         = {key_index_json}")
             final_html = final_html.replace("const beraterIndex     = {  }", f"const beraterIndex     = {berater_index_json}")
             final_html = final_html.replace("const beraterCSBIndex  = {  }", f"const beraterCSBIndex  = {berater_csb_json}")
-            final_html = final_html.replace("__LOGO_DATA_URL__", logo_data_url)
+            final_html = final_html.replace("__LOGO_DATA_URL__", logo_file_to_data_url := (lambda b,m: f"data:{m};base64," + base64.b64encode(b).decode("utf-8"))(logo_file.read(), logo_file.type or ("image/png" if logo_file.name.lower().endswith(".png") else "image/jpeg")))
 
             total_customers = sum(len(v) for v in sorted_tours.values())
             m1,m2,m3 = st.columns(3)
@@ -674,11 +678,11 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_zweizeilig.html",
+                file_name="suche_trennung_pills.html",
                 mime="text/html",
                 type="primary"
             )
         except Exception as e:
             st.error(f"Fehler: {e}")
 else:
-    st.info("Bitte Quelldatei, Schlüsseldatei und Logo hochladen. Optional: Name->Telefon. CSB-Zuordnung für Markt-Telefon.")
+    st.info("Bitte Quelldatei, Schlüsseldatei und Logo hochladen. Optional: Fachberater-Telefonliste & CSB-Zuordnung.")
