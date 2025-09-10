@@ -5,7 +5,7 @@ import base64
 import unicodedata
 
 # =========================
-#  HTML TEMPLATE (mit "Zurück zur Suche")
+#  HTML TEMPLATE (keine Inline-Scrollbox, normales Seitenscrollen)
 # =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -97,7 +97,6 @@ body{
 
 /* Table */
 .table-section{padding:6px 8px}
-.scroller{max-height:68vh; overflow:auto; border:1px solid var(--row-border); border-radius:6px; background:#fff}
 table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
   position:sticky; top:0; background:#f2f5fa; color:#344054; font-weight:700;
@@ -138,7 +137,7 @@ a.id-chip{
 a.id-chip:hover{filter:brightness(0.97)}
 .id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
 
-/* TOUR-Pills (leichtes Rot) – eine Zeile, kein Scroll nötig dank Wrap */
+/* TOUR-Pills (leichtes Rot) – Wrap statt Scroll */
 .tour-inline{display:flex; flex-wrap:wrap; gap:4px; white-space:normal}
 .tour-btn{
   display:inline-block; background:var(--pill-red); border:1px solid var(--pill-red-border); color:var(--pill-red-text);
@@ -166,7 +165,7 @@ a.phone-chip:hover{filter:brightness(0.96)}
 }
 .table-map:hover{background:var(--accent-strong); border-color:var(--accent-strong)}
 
-/* Scrollbar */
+/* Scrollbar (Seite) */
 ::-webkit-scrollbar{width:10px; height:10px}
 ::-webkit-scrollbar-thumb{background:#cbd5e1; border-radius:6px}
 ::-webkit-scrollbar-thumb:hover{background:#94a3b8}
@@ -203,21 +202,20 @@ a.phone-chip:hover{filter:brightness(0.96)}
         </div>
 
         <div class="table-section">
-          <div class="scroller" id="tableScroller" style="display:none;">
-            <table>
-              <thead>
-                <tr>
-                  <th>CSB / SAP</th>
-                  <th>Name / Strasse</th>
-                  <th>PLZ / Ort</th>
-                  <th>Schluessel / Touren</th>
-                  <th>Fachberater / Markt Telefon</th>
-                  <th>Aktion</th>
-                </tr>
-              </thead>
-              <tbody id="tableBody"></tbody>
-            </table>
-          </div>
+          <!-- KEINE scroller-Box mehr: normales Seitenscrollen -->
+          <table id="resultTable" style="display:none;">
+            <thead>
+              <tr>
+                <th>CSB / SAP</th>
+                <th>Name / Strasse</th>
+                <th>PLZ / Ort</th>
+                <th>Schluessel / Touren</th>
+                <th>Fachberater / Markt Telefon</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
         </div>
 
       </div>
@@ -340,7 +338,7 @@ function makeIdChip(label, value){
   a.className = 'id-chip';
   a.href = 'javascript:void(0)';
   a.addEventListener('click', ()=>{
-    pushPrevQuery(); // <- Merke vorherige Suche (z.B. Tour 1001)
+    pushPrevQuery(); // vorherige Suche merken
     const input = $('#smartSearch');
     input.value = value;
     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -431,13 +429,13 @@ function rowFor(k){
 
 function renderTable(list){
   const body = $('#tableBody');
-  const scroller = $('#tableScroller');
+  const table = $('#resultTable');
   body.innerHTML='';
   if(list.length){
     list.forEach(k=> body.appendChild(rowFor(k)));
-    scroller.style.display='block';
+    table.style.display='table';
   } else {
-    scroller.style.display='none';
+    table.style.display='none';
   }
 }
 
@@ -511,7 +509,7 @@ function onKey(){
 function debounce(fn, d=160){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
 
 document.addEventListener('DOMContentLoaded', ()=>{
-  if(typeof tourkundenData!=='undefined' && Object.keys(tourkundenData).length>0){ buildData(); }
+  if(typeof tourkundenData!=='undefined' && Object.keys(tourkundenData).length > 0){ buildData(); }
   document.getElementById('smartSearch').addEventListener('input', debounce(onSmart, 160));
   document.getElementById('keySearch').addEventListener('input', debounce(onKey, 160));
   document.getElementById('btnReset').addEventListener('click', ()=>{
@@ -530,8 +528,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # =========================
 #  STREAMLIT APP
 # =========================
-st.title("Kunden-Suchseite – Zurück-Button für Tour→CSB, grüne Schlüssel-Pill, klickbare Chips")
-st.caption("CSB/SAP gelb (klickbar) • Tour rot • Schlüssel grün • Telefon-Pills öffnen ProCall (callto:).")
+st.title("Kunden-Suchseite – normales Seitenscrollen (ohne Inline-Scrollbox)")
+st.caption("CSB/SAP gelb (klickbar) • Tour rot • Schlüssel grün • Telefon-Pills (callto:) • Zurück-Button aktiv.")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -656,6 +654,7 @@ if excel_file and key_file:
                         entry["schluessel"]   = key_map.get(csb_clean, "")
                         entry["liefertag"]    = tag
 
+                        # Fachberater-Name aus CSB-Zuordnung übernehmen (falls vorhanden)
                         if csb_clean and csb_clean in berater_csb_map and berater_csb_map[csb_clean].get("name"):
                             entry["fachberater"] = berater_csb_map[csb_clean]["name"]
 
@@ -674,6 +673,8 @@ if excel_file and key_file:
                 st.stop()
 
             sorted_tours       = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0]) if str(kv[0]).isdigit() else 0))
+
+            # JSON einbetten
             final_html = (HTML_TEMPLATE
                 .replace("const tourkundenData   = {  }", f"const tourkundenData   = {json.dumps(sorted_tours, ensure_ascii=False)}")
                 .replace("const keyIndex         = {  }", f"const keyIndex         = {json.dumps(key_map, ensure_ascii=False)}")
@@ -691,7 +692,7 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche.html",
+                file_name="suche_ohne_inline_scroll.html",
                 mime="text/html",
                 type="primary"
             )
