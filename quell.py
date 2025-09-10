@@ -5,7 +5,7 @@ import base64
 import unicodedata
 
 # =========================
-#  HTML TEMPLATE (keine Inline-Scrollbox, normales Seitenscrollen)
+#  HTML TEMPLATE – KEIN INLINE-SCROLL MEHR
 # =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -29,26 +29,27 @@ HTML_TEMPLATE = """
   --chip-market:#8b5cf6; --chip-market-weak:rgba(139,92,246,.12);
 
   --pill-yellow:#fef3c7; --pill-yellow-border:#fcd34d; --pill-yellow-text:#92400e;
-
-  /* Schlüssel-Pill: grün */
   --pill-green:#dcfce7; --pill-green-border:#86efac; --pill-green-text:#065f46;
-
-  /* Tour-Pills: leichtes Rot */
   --pill-red:#fee2e2; --pill-red-border:#fecaca; --pill-red-text:#991b1b;
 
   --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
 *{box-sizing:border-box}
-html,body{height:100%}
+html,body{height:auto; min-height:100%}
 body{
   margin:0; background:var(--bg);
   font-family:Manrope,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  color:var(--txt); font-size:var(--fs-12); line-height:1.45;
+  color:var(--txt); font-size:var(--fs-12); line-height:1.45; overflow:visible;
 }
 .page{min-height:100vh; display:flex; justify-content:center; padding:12px}
 .container{width:100%; max-width:1400px}
-.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+.card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  /* WICHTIG: kein hidden/auto mehr */
+  overflow:visible;
+}
 
 /* Header */
 .header{padding:14px 12px; border-bottom:1px solid var(--border); background:var(--surface);
@@ -60,6 +61,7 @@ body{
 .searchbar{
   padding:8px 12px; display:grid; grid-template-columns:1fr 250px auto auto; gap:8px; align-items:center;
   border-bottom:1px solid var(--border); background:var(--surface);
+  overflow:visible;
 }
 @media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr} }
 @media(max-width:640px){ .searchbar{grid-template-columns:1fr} }
@@ -78,13 +80,11 @@ body{
 .btn-danger:hover{background:#dc2626}
 
 /* Zurück-Button */
-.btn-back{
-  border:1px solid var(--accent); color:var(--accent-strong); background:#eef2ff;
-}
+.btn-back{border:1px solid var(--accent); color:var(--accent-strong); background:#eef2ff;}
 .btn-back:hover{background:#e0e7ff}
 
 /* Content */
-.content{padding:10px 12px}
+.content{padding:10px 12px; overflow:visible}
 
 /* Tour banner */
 .tour-wrap{display:none; margin-bottom:8px}
@@ -95,8 +95,8 @@ body{
 }
 .tour-banner small{font-weight:600; color:#667085; font-size:11px}
 
-/* Table */
-.table-section{padding:6px 8px}
+/* Tabelle – KEIN eigener Scroller; normales Seitenscrollen */
+.table-section{padding:6px 8px; overflow:visible}
 table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
   position:sticky; top:0; background:#f2f5fa; color:#344054; font-weight:700;
@@ -137,7 +137,7 @@ a.id-chip{
 a.id-chip:hover{filter:brightness(0.97)}
 .id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
 
-/* TOUR-Pills (leichtes Rot) – Wrap statt Scroll */
+/* TOUR-Pills (leichtes Rot) – Wrap, KEIN Scroll */
 .tour-inline{display:flex; flex-wrap:wrap; gap:4px; white-space:normal}
 .tour-btn{
   display:inline-block; background:var(--pill-red); border:1px solid var(--pill-red-border); color:var(--pill-red-text);
@@ -165,7 +165,7 @@ a.phone-chip:hover{filter:brightness(0.96)}
 }
 .table-map:hover{background:var(--accent-strong); border-color:var(--accent-strong)}
 
-/* Scrollbar (Seite) */
+/* Scrollbar (nur Seite) */
 ::-webkit-scrollbar{width:10px; height:10px}
 ::-webkit-scrollbar-thumb{background:#cbd5e1; border-radius:6px}
 ::-webkit-scrollbar-thumb:hover{background:#94a3b8}
@@ -202,7 +202,7 @@ a.phone-chip:hover{filter:brightness(0.96)}
         </div>
 
         <div class="table-section">
-          <!-- KEINE scroller-Box mehr: normales Seitenscrollen -->
+          <!-- KEIN eigener Scroller: Tabelle wächst mit der Seite -->
           <table id="resultTable" style="display:none;">
             <thead>
               <tr>
@@ -233,8 +233,8 @@ const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
 
 let allCustomers = [];
-let prevQuery = null;  // Merkt sich die vorherige Suche (für "Zurück zur Suche")
-const DIAL_SCHEME = 'callto'; // 'callto' für ProCall | alternativ 'tel'
+let prevQuery = null;
+const DIAL_SCHEME = 'callto'; // ProCall
 
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\d+]/g,''); }
 function makePhoneChip(label, num, extraClass){
@@ -249,7 +249,6 @@ function makePhoneChip(label, num, extraClass){
   return a;
 }
 
-/* Helpers */
 function normDE(s){
   if(!s) return '';
   let x = s.toLowerCase();
@@ -338,7 +337,7 @@ function makeIdChip(label, value){
   a.className = 'id-chip';
   a.href = 'javascript:void(0)';
   a.addEventListener('click', ()=>{
-    pushPrevQuery(); // vorherige Suche merken
+    pushPrevQuery();
     const input = $('#smartSearch');
     input.value = value;
     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -355,7 +354,7 @@ function rowFor(k){
   const sap = normalizeDigits(k.sap_nummer) || '-';
   const plz = normalizeDigits(k.postleitzahl) || '-';
 
-  /* CSB / SAP als gelbe Pills (click -> Suche) */
+  /* CSB / SAP */
   const td1 = document.createElement('td');
   const wrap1 = el('div','cell');
   const top1 = el('div','cell-top'); top1.appendChild(makeIdChip('CSB', csb));
@@ -373,7 +372,7 @@ function rowFor(k){
   td3.appendChild(twoLineCell(plz, k.ort || '-'));
   tr.appendChild(td3);
 
-  /* Schlüssel / Touren (Schlüssel grün, Touren rot) */
+  /* Schlüssel / Touren */
   const td4 = document.createElement('td');
   const wrap4 = el('div','cell key-tour');
 
@@ -400,16 +399,12 @@ function rowFor(k){
   td4.appendChild(wrap4);
   tr.appendChild(td4);
 
-  /* Fachberater / Markt-Telefon (Pills klickbar) */
+  /* Fachberater / Markt-Telefon */
   const td5 = document.createElement('td');
   const top5 = el('div','cell-top', k.fachberater || '-');
   const sub5 = el('div','cell-sub phone-line');
-  if (k.fb_phone){
-    sub5.appendChild(makePhoneChip('FB', k.fb_phone, 'chip-fb'));
-  }
-  if (k.market_phone){
-    sub5.appendChild(makePhoneChip('Markt', k.market_phone, 'chip-market'));
-  }
+  if (k.fb_phone){ sub5.appendChild(makePhoneChip('FB', k.fb_phone, 'chip-fb')); }
+  if (k.market_phone){ sub5.appendChild(makePhoneChip('Markt', k.market_phone, 'chip-market')); }
   if (!k.fb_phone && !k.market_phone){ sub5.textContent='-'; }
   const wrap5 = el('div','cell'); wrap5.append(top5, sub5);
   td5.appendChild(wrap5); tr.appendChild(td5);
@@ -439,7 +434,6 @@ function renderTable(list){
   }
 }
 
-/* Banner */
 function renderTourTop(list, query, isExact){
   const wrap = $('#tourWrap'), title = $('#tourTitle'), extra = $('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
@@ -528,8 +522,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # =========================
 #  STREAMLIT APP
 # =========================
-st.title("Kunden-Suchseite – normales Seitenscrollen (ohne Inline-Scrollbox)")
-st.caption("CSB/SAP gelb (klickbar) • Tour rot • Schlüssel grün • Telefon-Pills (callto:) • Zurück-Button aktiv.")
+st.title("Kunden-Suchseite – normales Seitenscrollen (kein Inline-Scroll)")
+st.caption("CSB/SAP gelb (klickbar) • Tour rot • Schlüssel grün • ProCall-Links • Umlaute-Suche • Zurück-Button")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -539,7 +533,7 @@ with c2:
 with c3:
     logo_file = st.file_uploader("Logo (PNG/JPG)", type=["png","jpg","jpeg"])
 
-berater_file = st.file_uploader("OPTIONAL: Fachberater Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
+berater_file = st.file_uploader("OPTIONAL: Fachberater-Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
 berater_csb_file = st.file_uploader("Fachberater-CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt)", type=["xlsx"])
 
 def normalize_digits_py(v) -> str:
@@ -560,143 +554,4 @@ def build_key_map(df: pd.DataFrame) -> dict:
     mapping = {}
     for _, row in df.iterrows():
         csb = normalize_digits_py(row.iloc[csb_col] if df.shape[1] > 0 else "")
-        key = normalize_digits_py(row.iloc[key_col] if df.shape[1] > 0 else "")
-        if csb:
-            mapping[csb] = key
-    return mapping
-
-def norm_de_py(s: str) -> str:
-    if not s: return ""
-    x = s.lower().replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
-    x = unicodedata.normalize("NFD", x)
-    x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
-    return " ".join(x.split())
-
-def build_berater_map(df: pd.DataFrame) -> dict:
-    """Vorname A, Nachname B, Nummer C  -> 'vorname nachname' -> nummer"""
-    mapping = {}
-    for _, row in df.iterrows():
-        v = str(row.iloc[0]) if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
-        n = str(row.iloc[1]) if df.shape[1] > 1 and not pd.isna(row.iloc[1]) else ""
-        t = str(row.iloc[2]) if df.shape[1] > 2 and not pd.isna(row.iloc[2]) else ""
-        key = norm_de_py((v + " " + n).strip())
-        if key:
-            mapping[key] = t.strip()
-    return mapping
-
-def build_berater_csb_map(df: pd.DataFrame) -> dict:
-    """A=Fachberater (Name), I=CSB, O=Telefon/Markt  -> CSB -> {name, telefon}"""
-    mapping = {}
-    for _, row in df.iterrows():
-        fach = str(row.iloc[0]) if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
-        csb  = normalize_digits_py(row.iloc[8]) if df.shape[1] > 8 and not pd.isna(row.iloc[8]) else ""
-        tel  = str(row.iloc[14]) if df.shape[1] > 14 and not pd.isna(row.iloc[14]) else ""
-        if csb:
-            mapping[csb] = {"name": fach.strip(), "telefon": tel.strip()}
-    return mapping
-
-def to_data_url(file) -> str:
-    mime = file.type or ("image/png" if file.name.lower().endswith(".png") else "image/jpeg")
-    return f"data:{mime};base64," + base64.b64encode(file.read()).decode("utf-8")
-
-if excel_file and key_file:
-    if st.button("HTML erzeugen", type="primary"):
-        if logo_file is None:
-            st.error("Bitte ein Logo (PNG/JPG) hochladen.")
-            st.stop()
-        logo_data_url = to_data_url(logo_file)
-
-        BLATTNAMEN = ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]
-        SPALTEN_MAPPING = {
-            "csb_nummer":"Nr","sap_nummer":"SAP-Nr.","name":"Name","strasse":"Strasse",
-            "postleitzahl":"Plz","ort":"Ort","fachberater":"Fachberater"
-        }
-        LIEFERTAGE_MAPPING = {"Montag":"Mo","Dienstag":"Die","Mittwoch":"Mitt","Donnerstag":"Don","Freitag":"Fr","Samstag":"Sam"}
-
-        try:
-            with st.spinner("Lese Schlüsseldatei..."):
-                key_df = pd.read_excel(key_file, sheet_name=0, header=0)
-                if key_df.shape[1] < 2:
-                    key_file.seek(0)
-                    key_df = pd.read_excel(key_file, sheet_name=0, header=None)
-                key_map = build_key_map(key_df)
-
-            berater_map = {}
-            if berater_file is not None:
-                with st.spinner("Lese Fachberater-Telefonliste..."):
-                    try: bf = pd.read_excel(berater_file, sheet_name=0, header=0)
-                    except Exception:
-                        berater_file.seek(0); bf = pd.read_excel(berater_file, sheet_name=0, header=None)
-                    berater_map = build_berater_map(bf)
-
-            berater_csb_map = {}
-            if berater_csb_file is not None:
-                with st.spinner("Lese Fachberater-CSB-Zuordnung..."):
-                    try: bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=0)
-                    except Exception:
-                        berater_csb_file.seek(0); bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=None)
-                    berater_csb_map = build_berater_csb_map(bcf)
-
-            tour_dict = {}
-            def kunden_sammeln(df: pd.DataFrame):
-                for _, row in df.iterrows():
-                    for tag, spaltenname in LIEFERTAGE_MAPPING.items():
-                        if spaltenname not in df.columns: continue
-                        tournr_raw = str(row[spaltenname]).strip()
-                        if not tournr_raw or not tournr_raw.replace('.', '', 1).isdigit(): continue
-                        tournr = normalize_digits_py(tournr_raw)
-
-                        entry = {k: str(row.get(v, "")).strip() for k, v in SPALTEN_MAPPING.items()}
-                        csb_clean            = normalize_digits_py(row.get(SPALTEN_MAPPING["csb_nummer"], ""))
-                        entry["csb_nummer"]   = csb_clean
-                        entry["sap_nummer"]   = normalize_digits_py(entry.get("sap_nummer", ""))
-                        entry["postleitzahl"] = normalize_digits_py(entry.get("postleitzahl", ""))
-                        entry["schluessel"]   = key_map.get(csb_clean, "")
-                        entry["liefertag"]    = tag
-
-                        # Fachberater-Name aus CSB-Zuordnung übernehmen (falls vorhanden)
-                        if csb_clean and csb_clean in berater_csb_map and berater_csb_map[csb_clean].get("name"):
-                            entry["fachberater"] = berater_csb_map[csb_clean]["name"]
-
-                        tour_dict.setdefault(tournr, []).append(entry)
-
-            with st.spinner("Verarbeite Quelldatei..."):
-                for blatt in BLATTNAMEN:
-                    try:
-                        df = pd.read_excel(excel_file, sheet_name=blatt)
-                        kunden_sammeln(df)
-                    except ValueError:
-                        pass
-
-            if not tour_dict:
-                st.error("Keine gültigen Kundendaten gefunden.")
-                st.stop()
-
-            sorted_tours       = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0]) if str(kv[0]).isdigit() else 0))
-
-            # JSON einbetten
-            final_html = (HTML_TEMPLATE
-                .replace("const tourkundenData   = {  }", f"const tourkundenData   = {json.dumps(sorted_tours, ensure_ascii=False)}")
-                .replace("const keyIndex         = {  }", f"const keyIndex         = {json.dumps(key_map, ensure_ascii=False)}")
-                .replace("const beraterIndex     = {  }", f"const beraterIndex     = {json.dumps(berater_map, ensure_ascii=False)}")
-                .replace("const beraterCSBIndex  = {  }", f"const beraterCSBIndex  = {json.dumps(berater_csb_map, ensure_ascii=False)}")
-                .replace("__LOGO_DATA_URL__", logo_data_url)
-            )
-
-            total_customers = sum(len(v) for v in sorted_tours.values())
-            m1,m2,m3 = st.columns(3)
-            with m1: st.metric("Touren", len(sorted_tours))
-            with m2: st.metric("Kunden", total_customers)
-            with m3: st.metric("Schlüssel (Mapping)", len(key_map))
-
-            st.download_button(
-                "Download HTML",
-                data=final_html.encode("utf-8"),
-                file_name="suche_ohne_inline_scroll.html",
-                mime="text/html",
-                type="primary"
-            )
-        except Exception as e:
-            st.error(f"Fehler: {e}")
-else:
-    st.info("Bitte Quelldatei, Schlüsseldatei und Logo hochladen. Optional: Fachberater-Telefonliste & CSB-Zuordnung.")
+        key = normalize_digits_py(row.iloc[key_col] if df.shape[1
