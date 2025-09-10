@@ -5,7 +5,7 @@ import base64
 import unicodedata
 
 # =========================
-#  HTML TEMPLATE – kein Inline-Scroll, nur Seitenscrollen
+#  HTML TEMPLATE – Inter (400/600/700) als Font
 # =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -14,7 +14,7 @@ HTML_TEMPLATE = """
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kunden-Suche</title>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f6f7f9; --surface:#ffffff; --alt:#fafbfd; --border:#d9e2ef;
@@ -45,7 +45,7 @@ HTML_TEMPLATE = """
 html, body{margin:0; padding:0; height:auto !important; min-height:100%; overflow:visible !important;}
 body{
   background:var(--bg);
-  font-family:Manrope,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   color:var(--txt); font-size:var(--fs-12); line-height:1.45;
 }
 
@@ -99,7 +99,6 @@ body{
 .table-section{padding:6px 8px; overflow:visible !important;}
 table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
-  /* du kannst sticky drinlassen, erzeugt keinen Inner-Scroll wenn kein overflow gesetzt ist */
   position:sticky; top:0; background:#f2f5fa; color:#344054; font-weight:700;
   border-bottom:1px solid var(--row-border); padding:7px 8px; white-space:nowrap; text-align:left; z-index:2;
 }
@@ -112,7 +111,7 @@ tbody tr:hover{background:#eef4ff}
 .cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
 /* Labels / Badges */
-.small-label{font-size:var(--fs-10); font-weight:800; color:#64748b; letter-spacing:.25px; text-transform:uppercase}
+.small-label{font-size:var(--fs-10); font-weight:700; color:#64748b; letter-spacing:.25px; text-transform:uppercase}
 
 /* Schlüssel / Touren – klare Trennung */
 .key-tour{display:flex; flex-direction:column; gap:6px; width:100%}
@@ -124,7 +123,7 @@ tbody tr:hover{background:#eef4ff}
   background:var(--pill-green);
   border:1px solid var(--pill-green-border);
   color:var(--pill-green-text);
-  border-radius:999px; padding:2px 7px; font-weight:800; font-size:11px
+  border-radius:999px; padding:2px 7px; font-weight:700; font-size:11px
 }
 
 /* CSB/SAP Chips (gelb, klickbar) */
@@ -132,17 +131,17 @@ a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow); color:var(--pill-yellow-text);
   border:1px solid var(--pill-yellow-border);
-  border-radius:999px; padding:2px 8px; font-weight:800; font-size:var(--fs-10);
+  border-radius:999px; padding:2px 8px; font-weight:700; font-size:var(--fs-10);
   text-decoration:none; line-height:1;
 }
 a.id-chip:hover{filter:brightness(0.97)}
-.id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
+.id-tag{font-size:var(--fs-10); font-weight:700; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
 
 /* TOUR-Pills (leichtes Rot) – Wrap statt Scroll */
 .tour-inline{display:flex; flex-wrap:wrap; gap:4px; white-space:normal}
 .tour-btn{
   display:inline-block; background:var(--pill-red); border:1px solid var(--pill-red-border); color:var(--pill-red-text);
-  padding:1px 6px; border-radius:999px; font-weight:800; font-size:var(--fs-10); cursor:pointer; line-height:1.3
+  padding:1px 6px; border-radius:999px; font-weight:700; font-size:var(--fs-10); cursor:pointer; line-height:1.3
 }
 .tour-btn:hover{filter:brightness(0.97)}
 
@@ -150,17 +149,17 @@ a.id-chip:hover{filter:brightness(0.97)}
 .phone-line{display:flex; flex-wrap:wrap; gap:6px}
 a.phone-chip{
   display:inline-flex; align-items:center; gap:6px;
-  border-radius:999px; padding:2px 8px; font-weight:700; font-size:var(--fs-10); line-height:1;
+  border-radius:999px; padding:2px 8px; font-weight:600; font-size:var(--fs-10); line-height:1;
   text-decoration:none; cursor:pointer;
 }
 a.phone-chip.chip-fb{background:var(--chip-fb-weak); color:#075985; border:1px solid #7dd3fc}
 a.phone-chip.chip-market{background:var(--chip-market-weak); color:#4338ca; border:1px solid #c4b5fd}
 a.phone-chip:hover{filter:brightness(0.96)}
-.chip-tag{font-size:var(--fs-10); font-weight:800; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
+.chip-tag{font-size:var(--fs-10); font-weight:700; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
 
 /* Map Button */
 .table-map{
-  text-decoration:none; font-weight:700; font-size:var(--fs-11);
+  text-decoration:none; font-weight:600; font-size:var(--fs-11);
   padding:5px 10px; border-radius:999px; border:1px solid var(--accent);
   background:var(--accent); color:#fff; display:inline-block; text-align:center;
 }
@@ -376,7 +375,7 @@ function rowFor(k){
   td3.appendChild(twoLineCell(plz, k.ort || '-'));
   tr.appendChild(td3);
 
-  /* Schlüssel / Touren (Schlüssel grün, Touren rot) */
+  /* Schlüssel / Touren */
   const td4 = document.createElement('td');
   const wrap4 = el('div','cell key-tour');
 
@@ -407,7 +406,7 @@ function rowFor(k){
   const td5 = document.createElement('td');
   const top5 = el('div','cell-top', k.fachberater || '-');
   const sub5 = el('div','cell-sub phone-line');
-  if (k.fb_phone){   sub5.appendChild(makePhoneChip('FB', k.fb_phone, 'chip-fb')); }
+  if (k.fb_phone){     sub5.appendChild(makePhoneChip('FB', k.fb_phone, 'chip-fb')); }
   if (k.market_phone){ sub5.appendChild(makePhoneChip('Markt', k.market_phone, 'chip-market')); }
   if (!k.fb_phone && !k.market_phone){ sub5.textContent='-'; }
   const wrap5 = el('div','cell'); wrap5.append(top5, sub5);
@@ -521,7 +520,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # =========================
 #  STREAMLIT APP
 # =========================
-st.title("Kunden-Suchseite – nur Seitenscrollen (kein Inline-Scroll)")
+st.title("Kunden-Suchseite – Inter Font (Bold-freundlich)")
 st.caption("CSB/SAP gelb (klickbar) • Tour rot • Schlüssel grün • Telefon-Pills (callto:) • Zurück-Button • Umlaute-Suche")
 
 c1, c2, c3 = st.columns([1,1,1])
@@ -667,7 +666,6 @@ if excel_file and key_file:
 
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0]) if str(kv[0]).isdigit() else 0))
 
-            # JSON in HTML einbetten
             final_html = (HTML_TEMPLATE
                 .replace("const tourkundenData   = {  }", f"const tourkundenData   = {json.dumps(sorted_tours, ensure_ascii=False)}")
                 .replace("const keyIndex         = {  }", f"const keyIndex         = {json.dumps(key_map, ensure_ascii=False)}")
@@ -677,9 +675,9 @@ if excel_file and key_file:
             )
 
             st.download_button(
-                "Download HTML (Seitenscroll)",
+                "Download HTML (Inter Font)",
                 data=final_html.encode("utf-8"),
-                file_name="suche_seitenscroll.html",
+                file_name="suche_inter.html",
                 mime="text/html",
                 type="primary"
             )
