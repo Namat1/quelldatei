@@ -25,6 +25,8 @@ HTML_TEMPLATE = """
   --warn:#f59e0b; --warn-weak:rgba(245,158,11,.18);
   --chip-fb:#0ea5e9; --chip-fb-weak:rgba(14,165,233,.12);
   --chip-market:#8b5cf6; --chip-market-weak:rgba(139,92,246,.12);
+  --pill-yellow:#fef3c7; --pill-yellow-border:#fcd34d; --pill-yellow-text:#92400e;
+  --pill-red:#fee2e2; --pill-red-border:#fecaca; --pill-red-text:#991b1b;
   --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
@@ -88,7 +90,7 @@ tbody td{padding:6px 8px; border-bottom:1px solid var(--row-border); vertical-al
 tbody tr:nth-child(odd){background:var(--stripe)}
 tbody tr:hover{background:#eef4ff}
 
-/* Einheitliches 2-Zeilen-Layout je Zelle (wächst bei Bedarf) */
+/* Einheitliches 2-Zeilen-Layout je Zelle */
 .cell{display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-height:32px}
 .cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
@@ -103,19 +105,35 @@ tbody tr:hover{background:#eef4ff}
 .key-divider{height:1px; background:#e9eef6; border:0; width:100%; margin:0}
 .badge-key{background:var(--warn-weak); border:1px solid #fcd34d; color:#92400e; border-radius:999px; padding:2px 7px; font-weight:700; font-size:11px}
 
-/* Tour-Pills (kleiner, umbruchfähig, kein Scroll) */
+/* GELBE Chips (CSB/SAP) */
+a.id-chip{
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--pill-yellow); color:var(--pill-yellow-text);
+  border:1px solid var(--pill-yellow-border);
+  border-radius:999px; padding:2px 8px; font-weight:800; font-size:var(--fs-10);
+  text-decoration:none; line-height:1;
+}
+a.id-chip:hover{filter:brightness(0.97)}
+.id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
+
+/* TOUR-Pills (leichtes Rot) */
 .tour-inline{display:flex; flex-wrap:wrap; gap:4px; white-space:normal}
 .tour-btn{
-  display:inline-block; background:#fff; border:1px solid #bbf7d0; color:#065f46;
-  padding:1px 6px; border-radius:999px; font-weight:700; font-size:var(--fs-10); cursor:pointer; line-height:1.3
+  display:inline-block; background:var(--pill-red); border:1px solid var(--pill-red-border); color:var(--pill-red-text);
+  padding:1px 6px; border-radius:999px; font-weight:800; font-size:var(--fs-10); cursor:pointer; line-height:1.3
 }
-.tour-btn:hover{background:var(--ok-weak)}
+.tour-btn:hover{filter:brightness(0.97)}
 
-/* Telefone als Chips */
+/* Telefone als klickbare Chips (ProCall/Telefon) */
 .phone-line{display:flex; flex-wrap:wrap; gap:6px}
-.phone-chip{display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:2px 8px; font-weight:700; font-size:var(--fs-10); line-height:1}
-.chip-fb{background:var(--chip-fb-weak); color:#075985; border:1px solid #7dd3fc}
-.chip-market{background:var(--chip-market-weak); color:#4338ca; border:1px solid #c4b5fd}
+a.phone-chip{
+  display:inline-flex; align-items:center; gap:6px;
+  border-radius:999px; padding:2px 8px; font-weight:700; font-size:var(--fs-10); line-height:1;
+  text-decoration:none; cursor:pointer;
+}
+a.phone-chip.chip-fb{background:var(--chip-fb-weak); color:#075985; border:1px solid #7dd3fc}
+a.phone-chip.chip-market{background:var(--chip-market-weak); color:#4338ca; border:1px solid #c4b5fd}
+a.phone-chip:hover{filter:brightness(0.96)}
 .chip-tag{font-size:var(--fs-10); font-weight:800; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
 
 /* Map Button */
@@ -197,6 +215,22 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 
 let allCustomers = [];
 
+/* ProCall-/Telefon-Wählschema */
+const DIAL_SCHEME = 'callto'; // 'callto' für ProCall | alternativ 'tel'
+function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\d+]/g,''); }
+function makePhoneChip(label, num, extraClass){
+  const clean = sanitizePhone(num);
+  const a = document.createElement('a');
+  a.className = 'phone-chip ' + extraClass;
+  a.href = `${DIAL_SCHEME}:${clean}`;
+  a.title = (label === 'FB' ? 'Fachberater' : 'Markt') + ' anrufen';
+  const tag = document.createElement('span'); tag.className='chip-tag'; tag.textContent = label;
+  a.appendChild(tag);
+  a.appendChild(document.createTextNode(' ☎ ' + num));
+  return a;
+}
+
+/* Helpers */
 function normDE(s){
   if(!s) return '';
   let x = s.toLowerCase();
@@ -256,28 +290,41 @@ function buildData(){
   allCustomers = Array.from(map.values());
 }
 
-const cs = v => normalizeDigits(v) || '-';
-
-function twoLineCell(top, sub, topClass='', subClass=''){
+function twoLineCell(top, sub){
   const wrap = el('div','cell');
-  const a = el('div','cell-top ' + topClass, top);
-  const b = el('div','cell-sub ' + subClass, sub);
+  const a = el('div','cell-top', top);
+  const b = el('div','cell-sub', sub);
   wrap.append(a,b);
   return wrap;
 }
 
+function makeIdChip(label, value){
+  const a = document.createElement('a');
+  a.className = 'id-chip';
+  a.href = 'javascript:void(0)';
+  a.addEventListener('click', ()=>{
+    const input = $('#smartSearch');
+    input.value = value;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  const tag = el('span','id-tag', label);
+  a.appendChild(tag);
+  a.appendChild(document.createTextNode(' ' + value));
+  return a;
+}
+
 function rowFor(k){
   const tr = document.createElement('tr');
-  const csb = cs(k.csb_nummer), sap = cs(k.sap_nummer), plz = cs(k.postleitzahl);
+  const csb = normalizeDigits(k.csb_nummer) || '-';
+  const sap = normalizeDigits(k.sap_nummer) || '-';
+  const plz = normalizeDigits(k.postleitzahl) || '-';
 
-  /* CSB / SAP (mit Präfix) */
+  /* CSB / SAP als gelbe Pills (click -> Suche) */
   const td1 = document.createElement('td');
-  const top1 = el('div','cell-top');
-  const csbLink = el('span','csb-link','CSB: ' + csb);
-  csbLink.onclick = ()=>{ $('#smartSearch').value = csb; onSmart(); };
-  top1.appendChild(csbLink);
-  const sub1 = el('div','cell-sub','SAP: ' + (sap||'-'));
-  const wrap1 = el('div','cell'); wrap1.append(top1, sub1);
+  const wrap1 = el('div','cell');
+  const top1 = el('div','cell-top'); top1.appendChild(makeIdChip('CSB', csb));
+  const sub1 = el('div','cell-sub'); sub1.appendChild(makeIdChip('SAP', sap));
+  wrap1.append(top1, sub1);
   td1.appendChild(wrap1); tr.appendChild(td1);
 
   /* Name / Straße */
@@ -287,10 +334,10 @@ function rowFor(k){
 
   /* PLZ / Ort */
   const td3 = document.createElement('td');
-  td3.appendChild(twoLineCell(plz || '-', k.ort || '-'));
+  td3.appendChild(twoLineCell(plz, k.ort || '-'));
   tr.appendChild(td3);
 
-  /* Schlüssel / Touren */
+  /* Schlüssel / Touren (Tour-Pills rot) */
   const td4 = document.createElement('td');
   const wrap4 = el('div','cell key-tour');
 
@@ -317,21 +364,15 @@ function rowFor(k){
   td4.appendChild(wrap4);
   tr.appendChild(td4);
 
-  /* Fachberater / Markt-Telefon */
+  /* Fachberater / Markt-Telefon (Pills klickbar) */
   const td5 = document.createElement('td');
   const top5 = el('div','cell-top', k.fachberater || '-');
   const sub5 = el('div','cell-sub phone-line');
   if (k.fb_phone){
-    const chipFB = el('span','phone-chip chip-fb');
-    chipFB.appendChild(el('span','chip-tag','FB'));
-    chipFB.appendChild(el('span','', '☎ ' + k.fb_phone));
-    sub5.appendChild(chipFB);
+    sub5.appendChild(makePhoneChip('FB', k.fb_phone, 'chip-fb'));
   }
   if (k.market_phone){
-    const chipM = el('span','phone-chip chip-market');
-    chipM.appendChild(el('span','chip-tag','Markt'));
-    chipM.appendChild(el('span','', '☎ ' + k.market_phone));
-    sub5.appendChild(chipM);
+    sub5.appendChild(makePhoneChip('Markt', k.market_phone, 'chip-market'));
   }
   if (!k.fb_phone && !k.market_phone){ sub5.textContent='-'; }
   const wrap5 = el('div','cell'); wrap5.append(top5, sub5);
@@ -448,8 +489,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # =========================
 #  STREAMLIT APP
 # =========================
-st.title("Kunden-Suchseite – sauberes Alignment & kleine Tour-Pills")
-st.caption("CSB/SAP mit Präfix • Schlüssel & Touren deutlich getrennt • Tour-Pills umbrechen (10 px).")
+st.title("Kunden-Suchseite – klickbare Telefon- & ID-Pills, rote Tour-Pills")
+st.caption("CSB/SAP als gelbe Pills (klickbar) • Tour-Pills rot • Telefon-Pills öffnen ProCall (callto:).")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -574,7 +615,6 @@ if excel_file and key_file:
                         entry["schluessel"]   = key_map.get(csb_clean, "")
                         entry["liefertag"]    = tag
 
-                        # Fachberater-Name ggf. aus CSB-Zuordnung
                         if csb_clean and csb_clean in berater_csb_map and berater_csb_map[csb_clean].get("name"):
                             entry["fachberater"] = berater_csb_map[csb_clean]["name"]
 
@@ -602,15 +642,15 @@ if excel_file and key_file:
             )
 
             total_customers = sum(len(v) for v in sorted_tours.values())
-            c1,c2,c3 = st.columns(3)
-            with c1: st.metric("Touren", len(sorted_tours))
-            with c2: st.metric("Kunden", total_customers)
-            with c3: st.metric("Schlüssel (Mapping)", len(key_map))
+            m1,m2,m3 = st.columns(3)
+            with m1: st.metric("Touren", len(sorted_tours))
+            with m2: st.metric("Kunden", total_customers)
+            with m3: st.metric("Schlüssel (Mapping)", len(key_map))
 
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_pills_klein.html",
+                file_name="suche_pills_klickbar.html",
                 mime="text/html",
                 type="primary"
             )
