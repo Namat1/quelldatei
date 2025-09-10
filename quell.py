@@ -5,7 +5,7 @@ import base64
 import unicodedata
 
 # =========================
-#  HTML TEMPLATE (Manrope + grüne Schlüssel-Pill)
+#  HTML TEMPLATE (mit "Zurück zur Suche")
 # =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -30,12 +30,10 @@ HTML_TEMPLATE = """
 
   --pill-yellow:#fef3c7; --pill-yellow-border:#fcd34d; --pill-yellow-text:#92400e;
 
-  /* NEU: grüne Schlüssel-Pill */
-  --pill-green:#dcfce7;           /* sehr helles Grün (Hintergrund) */
-  --pill-green-border:#86efac;    /* Rand */
-  --pill-green-text:#065f46;      /* Text */
+  /* Schlüssel-Pill: grün */
+  --pill-green:#dcfce7; --pill-green-border:#86efac; --pill-green-text:#065f46;
 
-  /* Tour-Pills rot (wie gewünscht) */
+  /* Tour-Pills: leichtes Rot */
   --pill-red:#fee2e2; --pill-red-border:#fecaca; --pill-red-text:#991b1b;
 
   --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
@@ -60,10 +58,12 @@ body{
 
 /* Searchbar */
 .searchbar{
-  padding:8px 12px; display:grid; grid-template-columns:1fr 250px auto; gap:8px; align-items:center;
+  padding:8px 12px; display:grid; grid-template-columns:1fr 250px auto auto; gap:8px; align-items:center;
   border-bottom:1px solid var(--border); background:var(--surface);
 }
-@media(max-width:960px){ .searchbar{grid-template-columns:1fr} }
+@media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr} }
+@media(max-width:640px){ .searchbar{grid-template-columns:1fr} }
+
 .field{display:grid; grid-template-columns:70px 1fr; gap:6px; align-items:center}
 .label{font-weight:600; color:#344054; font-size:var(--fs-12)}
 .input{
@@ -76,6 +76,12 @@ body{
 .btn:hover{background:#f3f4f6}
 .btn-danger{background:#ef4444; border-color:#ef4444; color:#fff}
 .btn-danger:hover{background:#dc2626}
+
+/* Zurück-Button */
+.btn-back{
+  border:1px solid var(--accent); color:var(--accent-strong); background:#eef2ff;
+}
+.btn-back:hover{background:#e0e7ff}
 
 /* Content */
 .content{padding:10px 12px}
@@ -101,13 +107,11 @@ tbody td{padding:6px 8px; border-bottom:1px solid var(--row-border); vertical-al
 tbody tr:nth-child(odd){background:var(--stripe)}
 tbody tr:hover{background:#eef4ff}
 
-/* Einheitliches 2-Zeilen-Layout je Zelle */
+/* 2-Zeilen-Layout je Zelle */
 .cell{display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-height:32px}
 .cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
-/* Links / Labels / Badges */
-.csb-link{font-weight:700; color:#0b3a8a; cursor:pointer}
-.csb-link:hover{text-decoration:underline}
+/* Labels / Badges */
 .small-label{font-size:var(--fs-10); font-weight:800; color:#64748b; letter-spacing:.25px; text-transform:uppercase}
 
 /* Schlüssel / Touren – klare Trennung */
@@ -115,7 +119,7 @@ tbody tr:hover{background:#eef4ff}
 .key-line{display:flex; align-items:center; gap:6px}
 .key-divider{height:1px; background:#e9eef6; border:0; width:100%; margin:0}
 
-/* NEU: GRÜNE Schlüssel-Pill */
+/* Schlüssel-Pill (grün) */
 .badge-key{
   background:var(--pill-green);
   border:1px solid var(--pill-green-border);
@@ -123,7 +127,7 @@ tbody tr:hover{background:#eef4ff}
   border-radius:999px; padding:2px 7px; font-weight:800; font-size:11px
 }
 
-/* GELBE Chips (CSB/SAP) */
+/* CSB/SAP Chips (gelb, klickbar) */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow); color:var(--pill-yellow-text);
@@ -134,7 +138,7 @@ a.id-chip{
 a.id-chip:hover{filter:brightness(0.97)}
 .id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
 
-/* TOUR-Pills (leichtes Rot) */
+/* TOUR-Pills (leichtes Rot) – eine Zeile, kein Scroll nötig dank Wrap */
 .tour-inline{display:flex; flex-wrap:wrap; gap:4px; white-space:normal}
 .tour-btn{
   display:inline-block; background:var(--pill-red); border:1px solid var(--pill-red-border); color:var(--pill-red-text);
@@ -186,9 +190,8 @@ a.phone-chip:hover{filter:brightness(0.96)}
           <div class="label">Schluessel</div>
           <input class="input" id="keySearch" placeholder="Exakte Schluesselnummer">
         </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button class="btn btn-danger" id="btnReset">Zuruecksetzen</button>
-        </div>
+        <button class="btn btn-back" id="btnBack" style="display:none;">⬅️ Zurück zur Suche</button>
+        <button class="btn btn-danger" id="btnReset">Zuruecksetzen</button>
       </div>
 
       <div class="content">
@@ -232,9 +235,9 @@ const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
 
 let allCustomers = [];
-
-/* ProCall-/Telefon-Wählschema */
+let prevQuery = null;  // Merkt sich die vorherige Suche (für "Zurück zur Suche")
 const DIAL_SCHEME = 'callto'; // 'callto' für ProCall | alternativ 'tel'
+
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\d+]/g,''); }
 function makePhoneChip(label, num, extraClass){
   const clean = sanitizePhone(num);
@@ -316,11 +319,28 @@ function twoLineCell(top, sub){
   return wrap;
 }
 
+function pushPrevQuery(){
+  const val = $('#smartSearch').value.trim();
+  if (val){
+    prevQuery = val;
+    $('#btnBack').style.display = 'inline-block';
+  }
+}
+function popPrevQuery(){
+  if (prevQuery){
+    $('#smartSearch').value = prevQuery;
+    prevQuery = null;
+    $('#btnBack').style.display = 'none';
+    onSmart();
+  }
+}
+
 function makeIdChip(label, value){
   const a = document.createElement('a');
   a.className = 'id-chip';
   a.href = 'javascript:void(0)';
   a.addEventListener('click', ()=>{
+    pushPrevQuery(); // <- Merke vorherige Suche (z.B. Tour 1001)
     const input = $('#smartSearch');
     input.value = value;
     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -372,7 +392,7 @@ function rowFor(k){
   (k.touren||[]).forEach(t=>{
     const tnum = normalizeDigits(t.tournummer);
     const tb = el('span','tour-btn', tnum+' ('+t.liefertag.substring(0,2)+')');
-    tb.onclick=()=>{ $('#smartSearch').value = tnum; onSmart(); };
+    tb.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value = tnum; onSmart(); };
     tours.appendChild(tb);
   });
   toursWrap.appendChild(toursLabel);
@@ -496,7 +516,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('keySearch').addEventListener('input', debounce(onKey, 160));
   document.getElementById('btnReset').addEventListener('click', ()=>{
     document.getElementById('smartSearch').value=''; document.getElementById('keySearch').value='';
-    closeTourTop(); renderTable([]);
+    closeTourTop(); renderTable([]); prevQuery=null; document.getElementById('btnBack').style.display='none';
+  });
+  document.getElementById('btnBack').addEventListener('click', ()=>{
+    popPrevQuery();
   });
 });
 </script>
@@ -507,7 +530,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # =========================
 #  STREAMLIT APP
 # =========================
-st.title("Kunden-Suchseite – grüne Schlüssel-Pill, Manrope-Schrift, klickbare Chips")
+st.title("Kunden-Suchseite – Zurück-Button für Tour→CSB, grüne Schlüssel-Pill, klickbare Chips")
 st.caption("CSB/SAP gelb (klickbar) • Tour rot • Schlüssel grün • Telefon-Pills öffnen ProCall (callto:).")
 
 c1, c2, c3 = st.columns([1,1,1])
@@ -668,7 +691,7 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_gruene_schluesselpill_manrope.html",
+                file_name="suche_mit_zurueck_button.html",
                 mime="text/html",
                 type="primary"
             )
