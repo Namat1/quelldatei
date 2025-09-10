@@ -5,7 +5,7 @@ import base64
 import unicodedata
 
 # =========================
-#  HTML TEMPLATE – Inter (400/600/700) als Font
+#  HTML TEMPLATE – Inter 400/600/700/800/900 (mehr Bold)
 # =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -14,12 +14,12 @@ HTML_TEMPLATE = """
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kunden-Suche</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f6f7f9; --surface:#ffffff; --alt:#fafbfd; --border:#d9e2ef;
   --row-border:#e6edf5; --stripe:#f5f8fc;
-  --txt:#1f2937; --muted:#667085; --head:#0f172a;
+  --txt:#111827; --muted:#475569; --head:#0f172a;
   --accent:#2563eb; --accent-weak:rgba(37,99,235,.12); --accent-strong:#1d4ed8;
 
   --ok:#16a34a; --ok-weak:rgba(22,163,74,.12);
@@ -28,28 +28,28 @@ HTML_TEMPLATE = """
   --chip-fb:#0ea5e9; --chip-fb-weak:rgba(14,165,233,.12);
   --chip-market:#8b5cf6; --chip-market-weak:rgba(139,92,246,.12);
 
-  --pill-yellow:#fef3c7; --pill-yellow-border:#fcd34d; --pill-yellow-text:#92400e;
+  --pill-yellow:#fef3c7; --pill-yellow-border:#fcd34d; --pill-yellow-text:#7c2d12;
 
   /* Schlüssel-Pill: grün */
   --pill-green:#dcfce7; --pill-green-border:#86efac; --pill-green-text:#065f46;
 
   /* Tour-Pills: leichtes Rot */
-  --pill-red:#fee2e2; --pill-red-border:#fecaca; --pill-red-text:#991b1b;
+  --pill-red:#fee2e2; --pill-red-border:#fecaca; --pill-red-text:#7f1d1d;
 
   --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
 
-/* Global reset – explizit kein inneres Scrolling */
+/* Global reset – kein inneres Scrolling */
 *{box-sizing:border-box}
-html, body{margin:0; padding:0; height:auto !important; min-height:100%; overflow:visible !important;}
+html, body{margin:0; padding:0; min-height:100%; overflow:visible !important;}
 body{
   background:var(--bg);
   font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  color:var(--txt); font-size:var(--fs-12); line-height:1.45;
+  color:var(--txt); font-size:var(--fs-12); line-height:1.45; font-weight:600; /* Grundgewicht leicht kräftiger */
 }
 
-/* Layout-Wrapper – alles sichtbar, kein overflow */
+/* Layout-Wrapper */
 .page{min-height:100vh; display:flex; justify-content:center; padding:12px; overflow:visible !important;}
 .container{width:100%; max-width:1400px; overflow:visible !important;}
 .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
@@ -59,7 +59,7 @@ body{
 .header{padding:14px 12px; border-bottom:1px solid var(--border); background:var(--surface);
   display:flex; flex-direction:column; align-items:center; gap:6px; overflow:visible !important;}
 .brand-logo{height:56px; width:auto}
-.title{font-size:13px; font-weight:700; color:#344054}
+.title{font-size:14px; font-weight:900; color:#0f172a; letter-spacing:.2px}
 
 /* Searchbar */
 .searchbar{
@@ -69,15 +69,15 @@ body{
 @media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr} }
 @media(max-width:640px){ .searchbar{grid-template-columns:1fr} }
 
-.field{display:grid; grid-template-columns:70px 1fr; gap:6px; align-items:center}
-.label{font-weight:600; color:#344054; font-size:var(--fs-12)}
+.field{display:grid; grid-template-columns:80px 1fr; gap:6px; align-items:center}
+.label{font-weight:800; color:#0f172a; font-size:var(--fs-12); letter-spacing:.2px}
 .input{
   width:100%; padding:7px 9px; border:1px solid var(--border); border-radius:7px;
   background:linear-gradient(180deg, var(--surface), var(--alt));
-  transition:border-color .15s, box-shadow .15s, background .15s; font-size:var(--fs-12)
+  transition:border-color .15s, box-shadow .15s, background .15s; font-size:var(--fs-12); font-weight:700;
 }
 .input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-weak); background:#fff}
-.btn{padding:7px 9px; border:1px solid var(--border); background:#fff; border-radius:7px; cursor:pointer; font-weight:600; font-size:var(--fs-12)}
+.btn{padding:7px 9px; border:1px solid var(--border); background:#fff; border-radius:7px; cursor:pointer; font-weight:800; font-size:var(--fs-12)}
 .btn:hover{background:#f3f4f6}
 .btn-danger{background:#ef4444; border-color:#ef4444; color:#fff}
 .btn-danger:hover{background:#dc2626}
@@ -91,18 +91,19 @@ body{
 .tour-wrap{display:none; margin-bottom:8px; overflow:visible !important;}
 .tour-banner{
   display:flex; align-items:center; justify-content:space-between;
-  padding:6px 10px; border:1px solid var(--border); border-radius:6px;
-  background:#f2f5fa; color:#344054; font-weight:700; font-size:12px;
+  padding:8px 12px; border:1px solid var(--border); border-radius:8px;
+  background:#eef2ff; color:#0f172a; font-weight:900; font-size:12px; letter-spacing:.2px
 }
+.tour-banner small{font-weight:800; color:#334155}
 
-/* Tabelle – KEIN eigener Scroller, nur die Seite scrollt */
+/* Tabelle – KEIN eigener Scroller */
 .table-section{padding:6px 8px; overflow:visible !important;}
 table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
-  position:sticky; top:0; background:#f2f5fa; color:#344054; font-weight:700;
-  border-bottom:1px solid var(--row-border); padding:7px 8px; white-space:nowrap; text-align:left; z-index:2;
+  position:sticky; top:0; background:#f1f5f9; color:#0f172a; font-weight:900;
+  border-bottom:1px solid var(--row-border); padding:8px 8px; white-space:nowrap; text-align:left; z-index:2; letter-spacing:.2px
 }
-tbody td{padding:6px 8px; border-bottom:1px solid var(--row-border); vertical-align:top; text-align:left}
+tbody td{padding:7px 8px; border-bottom:1px solid var(--row-border); vertical-align:top; text-align:left; font-weight:700}
 tbody tr:nth-child(odd){background:var(--stripe)}
 tbody tr:hover{background:#eef4ff}
 
@@ -111,57 +112,57 @@ tbody tr:hover{background:#eef4ff}
 .cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
 /* Labels / Badges */
-.small-label{font-size:var(--fs-10); font-weight:700; color:#64748b; letter-spacing:.25px; text-transform:uppercase}
+.small-label{font-size:var(--fs-10); font-weight:900; color:#0f172a; letter-spacing:.35px; text-transform:uppercase}
 
 /* Schlüssel / Touren – klare Trennung */
 .key-tour{display:flex; flex-direction:column; gap:6px; width:100%}
-.key-line{display:flex; align-items:center; gap:6px}
-.key-divider{height:1px; background:#e9eef6; border:0; width:100%; margin:0}
+.key-line{display:flex; align-items:center; gap:8px}
+.key-divider{height:1px; background:#e5e7eb; border:0; width:100%; margin:0}
 
-/* Schlüssel-Pill (grün) */
+/* Schlüssel-Pill (grün) – fett */
 .badge-key{
   background:var(--pill-green);
   border:1px solid var(--pill-green-border);
   color:var(--pill-green-text);
-  border-radius:999px; padding:2px 7px; font-weight:700; font-size:11px
+  border-radius:999px; padding:3px 8px; font-weight:900; font-size:11px; letter-spacing:.2px
 }
 
-/* CSB/SAP Chips (gelb, klickbar) */
+/* CSB/SAP Chips (gelb, klickbar) – fett */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow); color:var(--pill-yellow-text);
   border:1px solid var(--pill-yellow-border);
-  border-radius:999px; padding:2px 8px; font-weight:700; font-size:var(--fs-10);
+  border-radius:999px; padding:3px 9px; font-weight:900; font-size:var(--fs-10);
   text-decoration:none; line-height:1;
 }
 a.id-chip:hover{filter:brightness(0.97)}
-.id-tag{font-size:var(--fs-10); font-weight:700; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
+.id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.9}
 
-/* TOUR-Pills (leichtes Rot) – Wrap statt Scroll */
+/* TOUR-Pills (leichtes Rot) – Wrap statt Scroll – extra fett */
 .tour-inline{display:flex; flex-wrap:wrap; gap:4px; white-space:normal}
 .tour-btn{
   display:inline-block; background:var(--pill-red); border:1px solid var(--pill-red-border); color:var(--pill-red-text);
-  padding:1px 6px; border-radius:999px; font-weight:700; font-size:var(--fs-10); cursor:pointer; line-height:1.3
+  padding:2px 7px; border-radius:999px; font-weight:900; font-size:var(--fs-10); cursor:pointer; line-height:1.25; letter-spacing:.2px
 }
 .tour-btn:hover{filter:brightness(0.97)}
 
-/* Telefone als klickbare Chips (ProCall/Telefon) */
+/* Telefone als klickbare Chips (ProCall/Telefon) – fett */
 .phone-line{display:flex; flex-wrap:wrap; gap:6px}
 a.phone-chip{
   display:inline-flex; align-items:center; gap:6px;
-  border-radius:999px; padding:2px 8px; font-weight:600; font-size:var(--fs-10); line-height:1;
-  text-decoration:none; cursor:pointer;
+  border-radius:999px; padding:3px 9px; font-weight:900; font-size:var(--fs-10); line-height:1;
+  text-decoration:none; cursor:pointer; letter-spacing:.2px
 }
 a.phone-chip.chip-fb{background:var(--chip-fb-weak); color:#075985; border:1px solid #7dd3fc}
 a.phone-chip.chip-market{background:var(--chip-market-weak); color:#4338ca; border:1px solid #c4b5fd}
 a.phone-chip:hover{filter:brightness(0.96)}
-.chip-tag{font-size:var(--fs-10); font-weight:700; text-transform:uppercase; letter-spacing:.3px; opacity:.9}
+.chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.9}
 
 /* Map Button */
 .table-map{
-  text-decoration:none; font-weight:600; font-size:var(--fs-11);
-  padding:5px 10px; border-radius:999px; border:1px solid var(--accent);
-  background:var(--accent); color:#fff; display:inline-block; text-align:center;
+  text-decoration:none; font-weight:900; font-size:var(--fs-11);
+  padding:6px 11px; border-radius:999px; border:1px solid var(--accent);
+  background:var(--accent); color:#fff; display:inline-block; text-align:center; letter-spacing:.2px
 }
 .table-map:hover{background:var(--accent-strong); border-color:var(--accent-strong)}
 
@@ -357,7 +358,7 @@ function rowFor(k){
   const sap = normalizeDigits(k.sap_nummer) || '-';
   const plz = normalizeDigits(k.postleitzahl) || '-';
 
-  /* CSB / SAP als gelbe Pills (click -> Suche) */
+  /* CSB / SAP (gelbe Pills, klickbar) */
   const td1 = document.createElement('td');
   const wrap1 = el('div','cell');
   const top1 = el('div','cell-top'); top1.appendChild(makeIdChip('CSB', csb));
@@ -443,9 +444,9 @@ function renderTourTop(list, query, isExact){
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
   if (query.startsWith('Schluessel ')) {
     const key = query.replace(/^Schluessel\\s+/, '');
-    title.textContent = 'Schluessel ' + key + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
+    title.textContent = 'Schluessel ' + key + ' — ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
   } else {
-    title.textContent = (isExact?('Tour '+query):('Tour-Prefix '+query+'*')) + ' - ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
+    title.textContent = (isExact?('Tour '+query):('Tour-Prefix '+query+'*')) + ' — ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
   }
   const dayCount = {};
   list.forEach(k => (k.touren||[]).forEach(t=>{
@@ -520,7 +521,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # =========================
 #  STREAMLIT APP
 # =========================
-st.title("Kunden-Suchseite – Inter Font (Bold-freundlich)")
+st.title("Kunden-Suchseite – extra Bold (Inter 400/600/700/800/900)")
 st.caption("CSB/SAP gelb (klickbar) • Tour rot • Schlüssel grün • Telefon-Pills (callto:) • Zurück-Button • Umlaute-Suche")
 
 c1, c2, c3 = st.columns([1,1,1])
@@ -675,9 +676,9 @@ if excel_file and key_file:
             )
 
             st.download_button(
-                "Download HTML (Inter Font)",
+                "Download HTML (extra Bold)",
                 data=final_html.encode("utf-8"),
-                file_name="suche_inter.html",
+                file_name="suche_bold.html",
                 mime="text/html",
                 type="primary"
             )
