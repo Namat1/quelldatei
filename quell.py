@@ -3,6 +3,7 @@ import pandas as pd
 import json
 import base64
 import unicodedata
+import re
 
 # =========================
 #  HTML TEMPLATE – Inter 400/600/700/800/900 (Bold UI)
@@ -238,6 +239,7 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 let allCustomers = [];
 let prevQuery = null;  // merkt vorherige Suche für "Zurück zur Suche"
 const DIAL_SCHEME = 'callto'; // ProCall
+const DEBUG_PHONE = false;    // Bei Bedarf auf true -> Konsole
 
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
 function makePhoneChip(label, num, extraClass){
@@ -252,7 +254,62 @@ function makePhoneChip(label, num, extraClass){
   return a;
 }
 
-/* Helpers */
+/* ======= Robust-Normalizer für Namen (JS) ======= */
+function normalizeNameKey(s){
+  if(!s) return '';
+  let x = s.replace(/\\u00A0/g,' ');        // NBSP -> Space
+  x = x.replace(/[–—]/g,'-');              // en/em dash -> hyphen
+  x = x.toLowerCase()
+       .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,''); // strip accents
+  x = x.replace(/\\(.*?\\)/g,' ');           // remove bracket parts
+  x = x.replace(/[./,;:+*_#|]/g,' ');      // punctuation -> space
+  x = x.replace(/-/g,' ');                 // hyphen -> space
+  x = x.replace(/[^a-z\\s]/g,' ');          // keep letters/spaces only
+  x = x.replace(/\\s+/g,' ').trim();
+  return x;
+}
+function nameVariants(s){
+  const base = normalizeNameKey(s);
+  if(!base) return [];
+  const parts = base.split(' ').filter(Boolean);
+  const out = new Set([base]);
+  if(parts.length >= 2){
+    const first = parts[0], last = parts[parts.length-1];
+    out.add(`${first} ${last}`);   // "petra rose"
+    out.add(`${last} ${first}`);   // "rose petra"
+  }
+  return Array.from(out);
+}
+function pickBeraterPhone(fachberaterName){
+  if(!fachberaterName) return '';
+  const variants = nameVariants(fachberaterName);
+  if (DEBUG_PHONE){ console.log('[FB-MATCH] Original:', fachberaterName, 'Variants:', variants); }
+
+  // 1) exakte Varianten
+  for (const v of variants){
+    if (beraterIndex[v]) {
+      if (DEBUG_PHONE) console.log('[FB-MATCH] exact hit:', v, '->', beraterIndex[v]);
+      return beraterIndex[v];
+    }
+  }
+  // 2) Fallback: token-basiert (alle Teile enthalten)
+  const keys = Object.keys(beraterIndex);
+  for (const v of variants){
+    const parts = v.split(' ').filter(Boolean);
+    for (const k of keys){
+      const hit = parts.every(p => k.includes(p));
+      if (hit){
+        if (DEBUG_PHONE) console.log('[FB-MATCH] token hit:', v, 'in', k, '->', beraterIndex[k]);
+        return beraterIndex[k];
+      }
+    }
+  }
+  if (DEBUG_PHONE) console.warn('[FB-MATCH] no match for:', fachberaterName, 'norm:', normalizeNameKey(fachberaterName));
+  return '';
+}
+
+/* ======= Gemeinsame Helper ======= */
 function normDE(s){
   if(!s) return '';
   let x = s.toLowerCase();
@@ -276,29 +333,7 @@ function dedupByCSB(list){
   return out;
 }
 
-/* Namens-Normalisierung & Varianten – robustes Matching (z. B. "Petra Rose" ↔ "Rose Petra") */
-function normalizeNameKey(s){
-  if(!s) return '';
-  let x = normDE(s);
-  x = x.replace(/\\b(frau|herr|hr|fr|dr|dr\\.)\\b/g, '')
-       .replace(/[;,]/g, ' ')
-       .replace(/\\s+/g, ' ')
-       .trim();
-  return x;
-}
-function nameVariants(s){
-  const base = normalizeNameKey(s);
-  if(!base) return [];
-  const parts = base.split(' ').filter(Boolean);
-  const out = new Set([base]);
-  if(parts.length >= 2){
-    const first = parts[0], last = parts[parts.length-1];
-    out.add(`${first} ${last}`);   // "petra rose"
-    out.add(`${last} ${first}`);   // "rose petra"
-  }
-  return Array.from(out);
-}
-
+/* ======= Datenaufbau ======= */
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
@@ -317,35 +352,14 @@ function buildData(){
         const keyFromIndex = keyIndex[csb] || "";
         rec.schluessel   = normalizeDigits(rec.schluessel) || keyFromIndex;
 
-        /* Fachberater-Name ggf. aus CSB-Zuordnung übernehmen */
+        // Fachberater-Name ggf. aus CSB-Zuordnung übernehmen
         if (beraterCSBIndex[csb] && beraterCSBIndex[csb].name){
           rec.fachberater = beraterCSBIndex[csb].name;
         }
 
-        /* Telefon-Finder mit Varianten */
-        rec.fb_phone     = '';
-        if (rec.fachberater){
-          const variants = nameVariants(rec.fachberater);
-          // 1) exakte Varianten
-          for (const v of variants){
-            if (beraterIndex[v]) { rec.fb_phone = beraterIndex[v]; break; }
-          }
-          // 2) Fallback: alle Namensteile enthalten
-          if (!rec.fb_phone){
-            const keys = Object.keys(beraterIndex);
-            for (const v of variants){
-              const parts = v.split(' ').filter(Boolean);
-              for (const kname of keys){
-                const hit = parts.every(p => kname.includes(p));
-                if (hit){ rec.fb_phone = beraterIndex[kname]; break; }
-              }
-              if (rec.fb_phone) break;
-            }
-          }
-        }
-
-        /* Markt-Telefon aus CSB-Zuordnung */
-        rec.market_phone = beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon ? beraterCSBIndex[csb].telefon : '';
+        // Telefone
+        rec.fb_phone     = rec.fachberater ? pickBeraterPhone(rec.fachberater) : '';
+        rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
 
         map.set(csb, rec);
       }
@@ -355,6 +369,7 @@ function buildData(){
   allCustomers = Array.from(map.values());
 }
 
+/* ======= UI: Zellen/Chips ======= */
 function twoLineCell(top, sub){
   const wrap = el('div','cell');
   const a = el('div','cell-top', top);
@@ -362,7 +377,6 @@ function twoLineCell(top, sub){
   wrap.append(a,b);
   return wrap;
 }
-
 function pushPrevQuery(){
   const val = $('#smartSearch').value.trim();
   if (val){
@@ -378,7 +392,6 @@ function popPrevQuery(){
     onSmart();
   }
 }
-
 function makeIdChip(label, value){
   const a = document.createElement('a');
   a.className = 'id-chip';
@@ -449,6 +462,8 @@ function rowFor(k){
   /* Fachberater / Markt-Telefon */
   const td5 = document.createElement('td');
   const top5 = el('div','cell-top', k.fachberater || '-');
+  // Tooltip für Debug: zeigt den Normalisierungskey des FB-Namens (optional auskommentieren)
+  // top5.title = 'Key: ' + normalizeNameKey(k.fachberater || '');
   const sub5 = el('div','cell-sub phone-line');
   if (k.fb_phone){     sub5.appendChild(makePhoneChip('FB', k.fb_phone, 'chip-fb')); }
   if (k.market_phone){ sub5.appendChild(makePhoneChip('Markt', k.market_phone, 'chip-market')); }
@@ -578,6 +593,7 @@ with c3:
 berater_file = st.file_uploader("OPTIONAL: Fachberater Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
 berater_csb_file = st.file_uploader("Fachberater-CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt)", type=["xlsx"])
 
+# ============== Python-Normalizer/Builder (robust) ==============
 def normalize_digits_py(v) -> str:
     if pd.isna(v):
         return ""
@@ -589,11 +605,21 @@ def normalize_digits_py(v) -> str:
     return s if s else "0"
 
 def norm_de_py(s: str) -> str:
-    if not s: return ""
-    x = s.lower().replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
+    """Robuster deutscher Normalizer: NBSP, Dashes, Umlaute, Klammern, Sonderzeichen."""
+    if not s:
+        return ""
+    x = s.replace("\u00A0", " ")  # NBSP -> Space
+    x = x.replace("–", "-").replace("—", "-")  # en/em dash -> hyphen
+    x = x.lower()
+    x = x.replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
     x = unicodedata.normalize("NFD", x)
     x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
-    return " ".join(x.split())
+    x = re.sub(r"\(.*?\)", " ", x)             # remove bracketed suffixes
+    x = re.sub(r"[./,;:+*_#|]", " ", x)        # punctuation -> space
+    x = re.sub(r"[-]", " ", x)                 # hyphen -> space
+    x = re.sub(r"[^a-z\s]", " ", x)            # keep only letters/spaces
+    x = " ".join(x.split())
+    return x
 
 def build_key_map(df: pd.DataFrame) -> dict:
     if df.shape[1] < 6:
@@ -610,30 +636,26 @@ def build_key_map(df: pd.DataFrame) -> dict:
 
 def build_berater_map(df: pd.DataFrame) -> dict:
     """
-    Vorname A, Nachname B, Nummer C  -> mehrere Key-Varianten -> nummer
-    Deckt 'Petra Rose' und 'Rose Petra' ab, inkl. Titel/Kommas/Spaces.
+    A=Vorname, B=Nachname, C=Nummer  -> robuste Name-Keys -> Nummer
+    Deckt 'Petra Rose' und 'Rose Petra' ab, inkl. Titel/Kommas/Spaces/Sonderzeichen.
     """
     mapping = {}
     for _, row in df.iterrows():
-        v = str(row.iloc[0]) if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
-        n = str(row.iloc[1]) if df.shape[1] > 1 and not pd.isna(row.iloc[1]) else ""
-        t = str(row.iloc[2]) if df.shape[1] > 2 and not pd.isna(row.iloc[2]) else ""
-        if not t.strip():
+        v = ("" if df.shape[1] < 1 or pd.isna(row.iloc[0]) else str(row.iloc[0])).strip()
+        n = ("" if df.shape[1] < 2 or pd.isna(row.iloc[1]) else str(row.iloc[1])).strip()
+        t = ("" if df.shape[1] < 3 or pd.isna(row.iloc[2]) else str(row.iloc[2])).strip()
+        if not t:
             continue
 
-        def norm(s: str) -> str:
-            # norm_de_py plus Titel/Komma/Spaces entfernen
-            x = norm_de_py(s)
-            x = x.replace(" dr ", " ").replace(" dr. ", " ").replace(" frau ", " ").replace(" herr ", " ").replace(" fr ", " ").replace(" hr ", " ")
-            x = x.replace(",", " ").replace(";", " ")
-            x = " ".join(x.split())
-            return x.strip()
+        def base_norm(s: str) -> str:
+            return norm_de_py(s)
 
-        a = norm(f"{v} {n}")  # "petra rose"
-        b = norm(f"{n} {v}")  # "rose petra"
-        for key in {a, b}:
-            if key:
-                mapping[key] = t.strip()
+        full1 = base_norm(f"{v} {n}")  # "petra rose"
+        full2 = base_norm(f"{n} {v}")  # "rose petra"
+
+        for key in {full1, full2}:
+            if key and key not in mapping:
+                mapping[key] = t
     return mapping
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
@@ -651,6 +673,7 @@ def to_data_url(file) -> str:
     mime = file.type or ("image/png" if file.name.lower().endswith(".png") else "image/jpeg")
     return f"data:{mime};base64," + base64.b64encode(file.read()).decode("utf-8")
 
+# ============== Generate HTML ==============
 if excel_file and key_file:
     if st.button("HTML erzeugen", type="primary"):
         if logo_file is None:
