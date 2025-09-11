@@ -587,7 +587,7 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_tech_lab_bright.html",
+                file_name="suche.html",
                 mime="text/html",
                 type="primary"
             )
