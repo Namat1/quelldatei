@@ -104,8 +104,6 @@ tbody tr:hover{ background:var(--row-hover) }
 .cell{display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-height:34px}
 .cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
-.small-label{font-family:"Inter",system-ui; font-size:var(--fs-10); font-weight:900; color:#0f172a; letter-spacing:.35px; text-transform:uppercase}
-
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow); color:var(--pill-yellow-text);
@@ -121,6 +119,7 @@ a.id-chip:hover{filter:brightness(0.98)}
   border-radius:999px; padding:3px 8px; font-weight:900; font-size:var(--fs-11);
 }
 
+/* Tour-Pills */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-block; background:var(--pill-red); border:1px solid var(--pill-red-border); color:var(--pill-red-text);
@@ -128,6 +127,7 @@ a.id-chip:hover{filter:brightness(0.98)}
 }
 .tour-btn:hover{filter:brightness(0.98)}
 
+/* Telefone */
 .phone-line{display:flex; flex-wrap:wrap; gap:6px}
 a.phone-chip{
   display:inline-flex; align-items:center; gap:6px;
@@ -185,7 +185,7 @@ a.phone-chip:hover{filter:brightness(0.98)}
                 <th>CSB / SAP</th>
                 <th>Name / Straße</th>
                 <th>PLZ / Ort</th>
-                <th>Touren</th>        <!-- Touren JETZT vor Schlüssel -->
+                <th>Touren</th>
                 <th>Schlüssel</th>
                 <th>Fachberater / Markttelefon</th>
                 <th>Aktion</th>
@@ -363,7 +363,7 @@ function twoLineCell(top, sub){
   return wrap;
 }
 
-/* === REIHENAUFBAU (Touren vor Schlüssel!) === */
+/* === REIHENAUFBAU (Touren vor Schlüssel) – ohne doppelte Labels === */
 function rowFor(k){
   const tr = document.createElement('tr');
   const csb = (k.csb_nummer||'-');
@@ -387,10 +387,9 @@ function rowFor(k){
   td3.appendChild(twoLineCell(plz, k.ort || '-'));
   tr.appendChild(td3);
 
-  // TOUR-SPALTE (rot) – EIGENE SPALTE
+  // TOUR-SPALTE (rot) – EIGENE SPALTE (ohne Label)
   const tdTours = document.createElement('td');
   const wrapTours = el('div','cell');
-  wrapTours.append(el('div','small-label','Touren'));
   const tours = el('div','tour-inline');
   (k.touren||[]).forEach(t=>{
     const tnum = (t.tournummer||'');
@@ -402,10 +401,9 @@ function rowFor(k){
   tdTours.appendChild(wrapTours);
   tr.appendChild(tdTours);
 
-  // SCHLÜSSEL-SPALTE (grün) – DANACH
+  // SCHLÜSSEL-SPALTE (grün) – ohne Label
   const tdKey = document.createElement('td');
   const wrap4 = el('div','cell');
-  wrap4.append(el('div','small-label','Schlüssel'));
   const keyDisp = (k.schluessel||'') || (keyIndex[csb]||'');
   if(keyDisp){ wrap4.appendChild(el('div','cell-top badge-key', keyDisp)); }
   else { wrap4.appendChild(el('div','cell-top','-')); }
@@ -523,8 +521,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </html>
 """
 
-st.title("Kunden-Suchseite – Tech Look (Touren eigene Spalte, vor Schlüssel)")
-st.caption("Tour-Pills stehen jetzt in einer eigenen Spalte *vor* „Schlüssel“. ProCall, Zurück-Button, 4-stellig = Tour/CSB, Umlautsuche, doppelte Schlüssel, kein Inline-Scroll.")
+st.title("Kunden-Suchseite – Tech Look (ohne doppelte Labels)")
+st.caption("Tour-Pills eigene Spalte vor „Schlüssel“. Keine doppelten „Touren/Schlüssel“-Labels in den Zellen.")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -692,7 +690,7 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_tech_tour_vor_key.html",
+                file_name="suche_ohne_doppelte_labels.html",
                 mime="text/html",
                 type="primary"
             )
