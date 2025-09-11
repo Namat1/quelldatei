@@ -95,14 +95,16 @@ thead th{
   position:sticky; top:0; background:#f3f5f8; color:#0f172a; font-weight:900;
   border-bottom:1px solid var(--line-strong); padding:7px 9px; white-space:nowrap; text-align:left; z-index:2
 }
-tbody td{padding:8px 9px; border-bottom:1px solid var(--row-sep); vertical-align:top; text-align:left; font-weight:700}
-
+tbody td{
+  padding:8px 9px; border-bottom:1px solid var(--row-sep); vertical-align:top; text-align:left; 
+  font-weight:700; overflow:hidden; /* verhindert Überlappung */
+}
 tbody tr{ background:var(--row-a); box-shadow: inset 4px 0 0 var(--row-a-left); transition:background .12s}
 tbody tr:nth-child(even){ background:var(--row-b); box-shadow: inset 4px 0 0 var(--row-b-left) }
 tbody tr:hover{ background:var(--row-hover) }
 
-.cell{display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-height:34px}
-.cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.cell{display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-height:34px; width:100%}
+.cell-top,.cell-sub{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
@@ -180,6 +182,15 @@ a.phone-chip:hover{filter:brightness(0.98)}
 
         <div class="table-section">
           <table id="resultTable" style="display:none;">
+            <colgroup>
+              <col style="width:160px">
+              <col style="width:320px">
+              <col style="width:180px">
+              <col style="width:230px">
+              <col style="width:120px">
+              <col style="width:260px">
+              <col style="width:110px">
+            </colgroup>
             <thead>
               <tr>
                 <th>CSB / SAP</th>
@@ -363,7 +374,7 @@ function twoLineCell(top, sub){
   return wrap;
 }
 
-/* === REIHENAUFBAU (Touren vor Schlüssel) – ohne doppelte Labels === */
+/* === Tabellenzeile === */
 function rowFor(k){
   const tr = document.createElement('tr');
   const csb = (k.csb_nummer||'-');
@@ -387,7 +398,7 @@ function rowFor(k){
   td3.appendChild(twoLineCell(plz, k.ort || '-'));
   tr.appendChild(td3);
 
-  // TOUR-SPALTE (rot) – EIGENE SPALTE (ohne Label)
+  // Touren (eigene Spalte)
   const tdTours = document.createElement('td');
   const wrapTours = el('div','cell');
   const tours = el('div','tour-inline');
@@ -401,7 +412,7 @@ function rowFor(k){
   tdTours.appendChild(wrapTours);
   tr.appendChild(tdTours);
 
-  // SCHLÜSSEL-SPALTE (grün) – ohne Label
+  // Schlüssel (eigene Spalte)
   const tdKey = document.createElement('td');
   const wrap4 = el('div','cell');
   const keyDisp = (k.schluessel||'') || (keyIndex[csb]||'');
@@ -521,8 +532,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </html>
 """
 
-st.title("Kunden-Suchseite – Tech Look (ohne doppelte Labels)")
-st.caption("Tour-Pills eigene Spalte vor „Schlüssel“. Keine doppelten „Touren/Schlüssel“-Labels in den Zellen.")
+# ===== Streamlit UI =====
+
+st.title("Kunden-Suchseite – Tech Look")
+st.caption("Tour-Pills eigene Spalte, Schlüssel grün, Telefon-Pills klickbar (callto:). Fixe Spaltenbreiten & Ellipsizing (kein Überlappen).")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -532,7 +545,7 @@ with c2:
 with c3:
     logo_file = st.file_uploader("Logo (PNG/JPG)", type=["png","jpg","jpeg"])
 
-berater_file = st.file_uploader("OPTIONAL: Fachberater Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
+berater_file = st.file_uploader("OPTIONAL: Fachberater-Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
 berater_csb_file = st.file_uploader("Fachberater-CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt)", type=["xlsx"])
 
 def normalize_digits_py(v) -> str:
@@ -690,7 +703,7 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_ohne_doppelte_labels.html",
+                file_name="suche_tech_look.html",
                 mime="text/html",
                 type="primary"
             )
