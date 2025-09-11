@@ -7,6 +7,7 @@ import re
 
 # =========================
 #  HTML TEMPLATE – Inter 400/600/700/800/900 (Bold UI)
+#  Mit Zero-Width-Fix in der Namens-Normalisierung (JS) + „Zurück zur Suche“
 # =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -254,18 +255,33 @@ function makePhoneChip(label, num, extraClass){
   return a;
 }
 
-/* ======= Robust-Normalizer für Namen (JS) ======= */
+/* ======= Robust-Normalizer für Namen (JS) – inkl. Zero-Width & BOM ======= */
 function normalizeNameKey(s){
   if(!s) return '';
-  let x = s.replace(/\\u00A0/g,' ');        // NBSP -> Space
-  x = x.replace(/[–—]/g,'-');              // en/em dash -> hyphen
+  let x = s;
+
+  // Unsichtbare entfernen (Zero-width & BOM)
+  x = x.replace(/[\\u200B-\\u200D\\uFEFF]/g, '');
+
+  // NBSP -> Space, Dashes normalisieren
+  x = x.replace(/\\u00A0/g,' ').replace(/[–—]/g,'-');
+
+  // lowercase + Umlaute → ae/oe/ue/ss
   x = x.toLowerCase()
        .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
-  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,''); // strip accents
-  x = x.replace(/\\(.*?\\)/g,' ');           // remove bracket parts
-  x = x.replace(/[./,;:+*_#|]/g,' ');      // punctuation -> space
-  x = x.replace(/-/g,' ');                 // hyphen -> space
-  x = x.replace(/[^a-z\\s]/g,' ');          // keep letters/spaces only
+
+  // Akzente strippen
+  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+
+  // Klammerzusätze & Satzzeichen entfernen/vereinheitlichen
+  x = x.replace(/\\(.*?\\)/g,' ');
+  x = x.replace(/[./,;:+*_#|]/g,' ');
+  x = x.replace(/-/g,' ');
+
+  // Nur Buchstaben + Spaces
+  x = x.replace(/[^a-z\\s]/g,' ');
+
+  // Spaces falten
   x = x.replace(/\\s+/g,' ').trim();
   return x;
 }
@@ -462,8 +478,6 @@ function rowFor(k){
   /* Fachberater / Markt-Telefon */
   const td5 = document.createElement('td');
   const top5 = el('div','cell-top', k.fachberater || '-');
-  // Tooltip für Debug: zeigt den Normalisierungskey des FB-Namens (optional auskommentieren)
-  // top5.title = 'Key: ' + normalizeNameKey(k.fachberater || '');
   const sub5 = el('div','cell-sub phone-line');
   if (k.fb_phone){     sub5.appendChild(makePhoneChip('FB', k.fb_phone, 'chip-fb')); }
   if (k.market_phone){ sub5.appendChild(makePhoneChip('Markt', k.market_phone, 'chip-market')); }
@@ -593,7 +607,7 @@ with c3:
 berater_file = st.file_uploader("OPTIONAL: Fachberater Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
 berater_csb_file = st.file_uploader("Fachberater-CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt)", type=["xlsx"])
 
-# ============== Python-Normalizer/Builder (robust) ==============
+# ============== Python-Normalizer/Builder (robust – inkl. Zero-Width-Fix) ==============
 def normalize_digits_py(v) -> str:
     if pd.isna(v):
         return ""
@@ -605,19 +619,33 @@ def normalize_digits_py(v) -> str:
     return s if s else "0"
 
 def norm_de_py(s: str) -> str:
-    """Robuster deutscher Normalizer: NBSP, Dashes, Umlaute, Klammern, Sonderzeichen."""
+    """Robuster deutscher Normalizer: Zero-Width, NBSP, Dashes, Umlaute, Klammern, Sonderzeichen."""
     if not s:
         return ""
-    x = s.replace("\u00A0", " ")  # NBSP -> Space
-    x = x.replace("–", "-").replace("—", "-")  # en/em dash -> hyphen
-    x = x.lower()
-    x = x.replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
+    x = s
+
+    # 0) Unsichtbare entfernen (Zero-Width + BOM)
+    x = x.replace("\u200b","").replace("\u200c","").replace("\u200d","").replace("\ufeff","")
+
+    # 1) NBSP -> Space, Dashes normalisieren
+    x = x.replace("\u00A0", " ").replace("–","-").replace("—","-")
+
+    # 2) lowercase + Umlaute → ae/oe/ue/ss
+    x = x.lower().replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
+
+    # 3) Akzente strippen
     x = unicodedata.normalize("NFD", x)
     x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
-    x = re.sub(r"\(.*?\)", " ", x)             # remove bracketed suffixes
-    x = re.sub(r"[./,;:+*_#|]", " ", x)        # punctuation -> space
-    x = re.sub(r"[-]", " ", x)                 # hyphen -> space
-    x = re.sub(r"[^a-z\s]", " ", x)            # keep only letters/spaces
+
+    # 4) Klammerzusätze & Satzzeichen
+    x = re.sub(r"\(.*?\)", " ", x)
+    x = re.sub(r"[./,;:+*_#|]", " ", x)
+    x = re.sub(r"-", " ", x)
+
+    # 5) Nur Buchstaben + Spaces
+    x = re.sub(r"[^a-z\s]", " ", x)
+
+    # 6) Spaces falten
     x = " ".join(x.split())
     return x
 
@@ -637,7 +665,7 @@ def build_key_map(df: pd.DataFrame) -> dict:
 def build_berater_map(df: pd.DataFrame) -> dict:
     """
     A=Vorname, B=Nachname, C=Nummer  -> robuste Name-Keys -> Nummer
-    Deckt 'Petra Rose' und 'Rose Petra' ab, inkl. Titel/Kommas/Spaces/Sonderzeichen.
+    Deckt 'Petra Rose' und 'Rose Petra' ab, inkl. Zero-Width/NBSP/Titel/Kommas/etc.
     """
     mapping = {}
     for _, row in df.iterrows():
