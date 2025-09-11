@@ -14,23 +14,26 @@ HTML_TEMPLATE = """
 <title>Kunden-Suche</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&family=Inter+Tight:wght@700;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
 <style>
-/* ===== Tech-Lab Theme (kompakt, präzise) ===== */
+/* ===== Tech-Lab (heller Header, knallige Pills, starke Zeilentrennung) ===== */
 :root{
-  --bg:#f4f6f9; --surface:#ffffff; --alt:#f8fafc;
-  --grid:#d1d7e2; --grid-2:#c4cbd8; --head-grid:#b9c2d3;
-  --txt:#0c1220; --muted:#283447;
+  --bg:#f3f6fb; --surface:#ffffff; --alt:#f9fbff;
+  --grid:#cfd7e6; --grid-2:#bfc9dd; --head-grid:#b3bfd6;
+  --txt:#0c1220; --muted:#293346;
+
   --accent:#2563eb; --accent-2:#1f4fd3;
 
-  /* Outline Pills */
-  --pill-yellow-bg:#fffef5; --pill-yellow-bd:#e6d47d; --pill-yellow-tx:#2a2107;
-  --pill-green-bg:#f2fbf6; --pill-green-bd:#95dcb1; --pill-green-tx:#0b3f2e;
-  --pill-red-bg:#fff5f5;   --pill-red-bd:#eaa8a8;  --pill-red-tx:#5b1818;
+  /* Knalligere Outline-Pills */
+  --pill-yellow-bg:#fff3b0; --pill-yellow-bd:#f59e0b; --pill-yellow-tx:#4a3001;
+  --pill-green-bg:#d1fae5; --pill-green-bd:#10b981; --pill-green-tx:#065f46;
+  --pill-red-bg:#ffe4e6;   --pill-red-bd:#fb7185;  --pill-red-tx:#7f1d1d;
 
-  /* Tel chips */
-  --chip-fb-bg:#eef6ff; --chip-fb-bd:#a8cdf8; --chip-fb-tx:#0d3b66;
-  --chip-mk-bg:#f1efff; --chip-mk-bd:#c6bdf9; --chip-mk-tx:#2a2477;
+  /* Tel chips kräftiger */
+  --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;
+  --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;
 
-  --radius:5px; --radius-pill:999px;
+  --row-sep:#e6edff;  /* starke horizontale Trennlinien */
+
+  --radius:6px; --radius-pill:999px;
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
 *{box-sizing:border-box}
@@ -44,16 +47,16 @@ body{
 /* Frame */
 .page{min-height:100vh; display:flex; justify-content:center; padding:10px}
 .container{width:100%; max-width:1400px}
-.card{background:var(--surface); border:1px solid var(--grid); border-radius:6px; overflow:hidden}
+.card{background:var(--surface); border:1px solid var(--grid); border-radius:8px; overflow:hidden}
 
-/* Lab-Header */
+/* Heller Header (Logo sichtbar) */
 .header{
-  padding:8px 12px;
-  background:linear-gradient(180deg,#0b1226 0%, #111a37 100%);
-  color:#eaf1ff; display:flex; align-items:center; justify-content:center; gap:10px;
-  border-bottom:1px solid #0d1733;
+  padding:10px 12px;
+  background:linear-gradient(180deg,#ffffff 0%, #f4f7fe 100%);
+  color:#0b1226; display:flex; align-items:center; justify-content:center; gap:10px;
+  border-bottom:1px solid var(--grid);
 }
-.brand-logo{height:40px; width:auto; filter:drop-shadow(0 0 0 rgba(0,0,0,0))}
+.brand-logo{height:44px; width:auto}
 .title{font-weight:900; letter-spacing:.35px; font-size:13px; text-transform:uppercase}
 
 /* Searchbar */
@@ -66,13 +69,13 @@ body{
 .field{display:grid; grid-template-columns:74px 1fr; gap:6px; align-items:center}
 .label{font-weight:900; color:var(--muted); font-size:var(--fs-11); text-transform:uppercase; letter-spacing:.35px}
 .input{
-  width:100%; padding:7px 9px; border:1px solid var(--grid); border-radius:5px; background:#fff;
+  width:100%; padding:7px 9px; border:1px solid var(--grid); border-radius:6px; background:#fff;
   font-size:var(--fs-12); font-weight:900;
 }
 .input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(37,99,235,.16)}
 
 /* Buttons */
-.btn{padding:7px 10px; border:1px solid var(--grid); background:#fff; color:#0f172a; border-radius:5px; cursor:pointer; font-weight:900; font-size:var(--fs-12)}
+.btn{padding:7px 10px; border:1px solid var(--grid); background:#fff; color:#0f172a; border-radius:6px; cursor:pointer; font-weight:900; font-size:var(--fs-12)}
 .btn:hover{background:#f2f5f9}
 .btn-danger{border-color:#d7263d; background:#d7263d; color:#fff}
 .btn-danger:hover{background:#bf1f33}
@@ -83,7 +86,7 @@ body{
 .tour-wrap{display:none; padding:10px 12px 0}
 .tour-banner{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
-  padding:8px 10px; border:1px dashed var(--head-grid); border-radius:5px;
+  padding:8px 10px; border:1px dashed var(--head-grid); border-radius:6px;
   background:linear-gradient(180deg,#fbfcff,#f4f7fd);
   font-weight:900; font-size:12px; color:#0f172a;
 }
@@ -93,23 +96,28 @@ body{
 table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
   position:sticky; top:0; z-index:2;
-  background:linear-gradient(180deg,#f5f7fb,#eef2f8);
+  background:linear-gradient(180deg,#f7f9fe,#eef2f8);
   color:#0f172a; font-weight:900; text-transform:uppercase; letter-spacing:.25px;
   border-bottom:2px solid var(--head-grid); border-right:1px solid var(--head-grid);
   padding:8px 9px; white-space:nowrap; text-align:left;
 }
 thead th:last-child{border-right:none}
 tbody td{
-  padding:7px 9px; vertical-align:top; font-weight:800;
+  padding:8px 9px; vertical-align:top; font-weight:800;
   border-bottom:1px solid var(--grid); border-right:1px solid var(--grid);
   background:#fff;
 }
 tbody td:last-child{border-right:none}
-tbody tr:nth-child(even) td{background:#fbfdff}
-tbody tr:hover td{background:#f2f6ff}
 
-/* Zellen: zweizeilig, keine Überschneidung */
-.cell{display:flex; flex-direction:column; gap:2px; min-height:34px; width:100%}
+/* Stärkere farbliche Abgrenzung je Kunde */
+tbody tr:nth-child(odd) td{background:#f8fbff}
+tbody tr:nth-child(even) td{background:#ffffff}
+/* dicker „Gutter“ zwischen den Zeilen */
+tbody tr+tr td{border-top:6px solid var(--row-sep)}
+tbody tr:hover td{background:#eef4ff}
+
+/* Zellen: zweizeilig, kein Überschneiden */
+.cell{display:flex; flex-direction:column; gap:2px; min-height:36px; width:100%}
 .cell-top,.cell-sub{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
 /* Monospace Zahlen */
@@ -119,42 +127,45 @@ tbody tr:hover td{background:#f2f6ff}
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow-bg); color:var(--pill-yellow-tx);
-  border:1px solid var(--pill-yellow-bd); border-radius:var(--radius-pill); padding:3px 8px;
+  border:1.5px solid var(--pill-yellow-bd); border-radius:var(--radius-pill); padding:3px 9px;
   font-weight:900; font-size:var(--fs-11); text-decoration:none; line-height:1;
+  box-shadow:0 0 0 2px rgba(245,158,11,.12) inset;
 }
 a.id-chip:hover{filter:brightness(.97)}
 .id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
 /* Schlüssel (grün, separat) */
 .badge-key{
-  display:inline-block; background:var(--pill-green-bg); border:1px solid var(--pill-green-bd);
-  color:var(--pill-green-tx); border-radius:var(--radius-pill); padding:3px 8px;
+  display:inline-block; background:var(--pill-green-bg); border:1.5px solid var(--pill-green-bd);
+  color:var(--pill-green-tx); border-radius:var(--radius-pill); padding:3px 9px;
   font-weight:900; font-size:var(--fs-11); line-height:1;
+  box-shadow:0 0 0 2px rgba(16,185,129,.12) inset;
 }
 
-/* Touren (rot, eigene Spalte – keine Scrolls) */
+/* Touren (rot, eigene Spalte) */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
-  display:inline-block; background:var(--pill-red-bg); border:1px solid var(--pill-red-bd); color:var(--pill-red-tx);
-  padding:3px 8px; border-radius:var(--radius-pill); font-weight:900; font-size:var(--fs-10); cursor:pointer; line-height:1.25; letter-spacing:.15px
+  display:inline-block; background:var(--pill-red-bg); border:1.5px solid var(--pill-red-bd); color:var(--pill-red-tx);
+  padding:3px 9px; border-radius:var(--radius-pill); font-weight:900; font-size:var(--fs-10); cursor:pointer; line-height:1.25; letter-spacing:.15px;
+  box-shadow:0 0 0 2px rgba(251,113,133,.12) inset;
 }
 .tour-btn:hover{filter:brightness(.97)}
 
-/* Telefon-Chips */
+/* Telefon-Chips kräftig */
 .phone-line{display:flex; flex-wrap:wrap; gap:6px}
 a.phone-chip{
   display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
-  padding:3px 8px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer
+  padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer
 }
-a.phone-chip.chip-fb{background:var(--chip-fb-bg); color:var(--chip-fb-tx); border:1px solid var(--chip-fb-bd)}
-a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); border:1px solid var(--chip-mk-bd)}
+a.phone-chip.chip-fb{background:var(--chip-fb-bg); color:var(--chip-fb-tx); border:1.5px solid var(--chip-fb-bd)}
+a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); border:1.5px solid var(--chip-mk-bd)}
 a.phone-chip:hover{filter:brightness(.97)}
 .chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
 /* Map Button */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
-  padding:6px 10px; border-radius:5px; border:1px solid var(--accent);
+  padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
   background:var(--accent); color:#fff; display:inline-block; text-align:center; letter-spacing:.2px
 }
 .table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
@@ -192,12 +203,12 @@ a.phone-chip:hover{filter:brightness(.97)}
       <div class="table-section">
         <table id="resultTable" style="display:none;">
           <colgroup>
-            <col style="width:170px">
-            <col style="width:330px">
-            <col style="width:200px">
-            <col style="width:240px">
+            <col style="width:180px">
+            <col style="width:340px">
+            <col style="width:210px">
+            <col style="width:280px">
             <col style="width:120px">
-            <col style="width:260px">
+            <col style="width:270px">
             <col style="width:110px">
           </colgroup>
           <thead>
@@ -413,9 +424,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </html>
 """
 
-# ===== Streamlit =====
-st.title("Kunden-Suche – Tech-Lab")
-st.caption("Dezenter, technischer Look • klare Gitterlinien • Monospace für Nummern • keine Inline-Scroller • Telefon-Pills klickbar (callto:).")
+# ===== Streamlit-Wrapper =====
+st.title("Kunden-Suche – Tech-Lab (heller Header & knallige Pills)")
+st.caption("Dezenter, technischer Look • klare Zeilentrenner • kräftige Pills • Telefon-Pills klickbar (callto:).")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -576,7 +587,7 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_tech_lab.html",
+                file_name="suche_tech_lab_bright.html",
                 mime="text/html",
                 type="primary"
             )
