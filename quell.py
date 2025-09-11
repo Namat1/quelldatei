@@ -31,7 +31,7 @@ HTML_TEMPLATE = """
   --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;
   --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;
 
-  --row-sep:#e6edff;  /* starke horizontale Trennlinien */
+  --row-sep:#e6edff;
 
   --radius:6px; --radius-pill:999px;
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
@@ -90,6 +90,13 @@ body{
   background:linear-gradient(180deg,#fbfcff,#f4f7fd);
   font-weight:900; font-size:12px; color:#0f172a;
 }
+/* >>> GROßER PILL für Tour-/Schlüsselzusammenfassung */
+#tourTitle{
+  display:inline-flex; align-items:center; gap:10px;
+  background:var(--pill-red-bg); color:var(--pill-red-tx);
+  border:2px solid var(--pill-red-bd); border-radius:var(--radius-pill);
+  padding:8px 14px; font-size:13px; line-height:1; box-shadow:0 0 0 3px rgba(251,113,133,.12) inset;
+}
 
 /* Tabelle */
 .table-section{padding:6px 12px 14px}
@@ -112,7 +119,6 @@ tbody td:last-child{border-right:none}
 /* Stärkere farbliche Abgrenzung je Kunde */
 tbody tr:nth-child(odd) td{background:#f8fbff}
 tbody tr:nth-child(even) td{background:#ffffff}
-/* dicker „Gutter“ zwischen den Zeilen */
 tbody tr+tr td{border-top:6px solid var(--row-sep)}
 tbody tr:hover td{background:#eef4ff}
 
