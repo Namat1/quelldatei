@@ -5,7 +5,7 @@ import base64
 import unicodedata
 
 # =========================
-#  HTML TEMPLATE – Inter 400/600/700/800/900 (mehr Bold)
+#  HTML TEMPLATE – Inter 400/600/700/800/900 (Bold UI)
 # =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -46,7 +46,7 @@ html, body{margin:0; padding:0; min-height:100%; overflow:visible !important;}
 body{
   background:var(--bg);
   font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  color:var(--txt); font-size:var(--fs-12); line-height:1.45; font-weight:600; /* Grundgewicht leicht kräftiger */
+  color:var(--txt); font-size:var(--fs-12); line-height:1.45; font-weight:600;
 }
 
 /* Layout-Wrapper */
@@ -239,7 +239,7 @@ let allCustomers = [];
 let prevQuery = null;  // merkt vorherige Suche für "Zurück zur Suche"
 const DIAL_SCHEME = 'callto'; // ProCall
 
-function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\d+]/g,''); }
+function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
 function makePhoneChip(label, num, extraClass){
   const clean = sanitizePhone(num);
   const a = document.createElement('a');
@@ -276,6 +276,29 @@ function dedupByCSB(list){
   return out;
 }
 
+/* Namens-Normalisierung & Varianten – robustes Matching (z. B. "Petra Rose" ↔ "Rose Petra") */
+function normalizeNameKey(s){
+  if(!s) return '';
+  let x = normDE(s);
+  x = x.replace(/\\b(frau|herr|hr|fr|dr|dr\\.)\\b/g, '')
+       .replace(/[;,]/g, ' ')
+       .replace(/\\s+/g, ' ')
+       .trim();
+  return x;
+}
+function nameVariants(s){
+  const base = normalizeNameKey(s);
+  if(!base) return [];
+  const parts = base.split(' ').filter(Boolean);
+  const out = new Set([base]);
+  if(parts.length >= 2){
+    const first = parts[0], last = parts[parts.length-1];
+    out.add(`${first} ${last}`);   // "petra rose"
+    out.add(`${last} ${first}`);   // "rose petra"
+  }
+  return Array.from(out);
+}
+
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
@@ -294,14 +317,34 @@ function buildData(){
         const keyFromIndex = keyIndex[csb] || "";
         rec.schluessel   = normalizeDigits(rec.schluessel) || keyFromIndex;
 
+        /* Fachberater-Name ggf. aus CSB-Zuordnung übernehmen */
         if (beraterCSBIndex[csb] && beraterCSBIndex[csb].name){
           rec.fachberater = beraterCSBIndex[csb].name;
         }
+
+        /* Telefon-Finder mit Varianten */
         rec.fb_phone     = '';
         if (rec.fachberater){
-          const nameKey = normDE(rec.fachberater);
-          if (beraterIndex[nameKey]) rec.fb_phone = beraterIndex[nameKey];
+          const variants = nameVariants(rec.fachberater);
+          // 1) exakte Varianten
+          for (const v of variants){
+            if (beraterIndex[v]) { rec.fb_phone = beraterIndex[v]; break; }
+          }
+          // 2) Fallback: alle Namensteile enthalten
+          if (!rec.fb_phone){
+            const keys = Object.keys(beraterIndex);
+            for (const v of variants){
+              const parts = v.split(' ').filter(Boolean);
+              for (const kname of keys){
+                const hit = parts.every(p => kname.includes(p));
+                if (hit){ rec.fb_phone = beraterIndex[kname]; break; }
+              }
+              if (rec.fb_phone) break;
+            }
+          }
         }
+
+        /* Markt-Telefon aus CSB-Zuordnung */
         rec.market_phone = beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon ? beraterCSBIndex[csb].telefon : '';
 
         map.set(csb, rec);
@@ -521,8 +564,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # =========================
 #  STREAMLIT APP
 # =========================
-st.title("Kunden-Suchseite – extra Bold (Inter 400/600/700/800/900)")
-st.caption("CSB/SAP gelb (klickbar) • Tour rot • Schlüssel grün • Telefon-Pills (callto:) • Zurück-Button • Umlaute-Suche")
+st.title("Kunden-Suchseite – Bold UI, robustes Berater-Matching")
+st.caption("CSB/SAP gelb (klickbar) • Tour rot • Schlüssel grün • Telefon-Pills (callto:) • Zurück-Button • Umlaute-Suche • kein Inline-Scroll")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -545,6 +588,13 @@ def normalize_digits_py(v) -> str:
     s = s.lstrip("0")
     return s if s else "0"
 
+def norm_de_py(s: str) -> str:
+    if not s: return ""
+    x = s.lower().replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
+    x = unicodedata.normalize("NFD", x)
+    x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
+    return " ".join(x.split())
+
 def build_key_map(df: pd.DataFrame) -> dict:
     if df.shape[1] < 6:
         st.warning("Schlüsseldatei hat < 6 Spalten – nehme letzte vorhandene Spalte als Schlüssel.")
@@ -558,23 +608,32 @@ def build_key_map(df: pd.DataFrame) -> dict:
             mapping[csb] = key
     return mapping
 
-def norm_de_py(s: str) -> str:
-    if not s: return ""
-    x = s.lower().replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
-    x = unicodedata.normalize("NFD", x)
-    x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
-    return " ".join(x.split())
-
 def build_berater_map(df: pd.DataFrame) -> dict:
-    """Vorname A, Nachname B, Nummer C  -> 'vorname nachname' -> nummer"""
+    """
+    Vorname A, Nachname B, Nummer C  -> mehrere Key-Varianten -> nummer
+    Deckt 'Petra Rose' und 'Rose Petra' ab, inkl. Titel/Kommas/Spaces.
+    """
     mapping = {}
     for _, row in df.iterrows():
         v = str(row.iloc[0]) if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
         n = str(row.iloc[1]) if df.shape[1] > 1 and not pd.isna(row.iloc[1]) else ""
         t = str(row.iloc[2]) if df.shape[1] > 2 and not pd.isna(row.iloc[2]) else ""
-        key = norm_de_py((v + " " + n).strip())
-        if key:
-            mapping[key] = t.strip()
+        if not t.strip():
+            continue
+
+        def norm(s: str) -> str:
+            # norm_de_py plus Titel/Komma/Spaces entfernen
+            x = norm_de_py(s)
+            x = x.replace(" dr ", " ").replace(" dr. ", " ").replace(" frau ", " ").replace(" herr ", " ").replace(" fr ", " ").replace(" hr ", " ")
+            x = x.replace(",", " ").replace(";", " ")
+            x = " ".join(x.split())
+            return x.strip()
+
+        a = norm(f"{v} {n}")  # "petra rose"
+        b = norm(f"{n} {v}")  # "rose petra"
+        for key in {a, b}:
+            if key:
+                mapping[key] = t.strip()
     return mapping
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
@@ -617,17 +676,21 @@ if excel_file and key_file:
             berater_map = {}
             if berater_file is not None:
                 with st.spinner("Lese Fachberater-Telefonliste..."):
-                    try: bf = pd.read_excel(berater_file, sheet_name=0, header=0)
+                    try:
+                        bf = pd.read_excel(berater_file, sheet_name=0, header=0)
                     except Exception:
-                        berater_file.seek(0); bf = pd.read_excel(berater_file, sheet_name=0, header=None)
+                        berater_file.seek(0)
+                        bf = pd.read_excel(berater_file, sheet_name=0, header=None)
                     berater_map = build_berater_map(bf)
 
             berater_csb_map = {}
             if berater_csb_file is not None:
                 with st.spinner("Lese Fachberater-CSB-Zuordnung..."):
-                    try: bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=0)
+                    try:
+                        bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=0)
                     except Exception:
-                        berater_csb_file.seek(0); bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=None)
+                        berater_csb_file.seek(0)
+                        bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=None)
                     berater_csb_map = build_berater_csb_map(bcf)
 
             tour_dict = {}
@@ -647,7 +710,7 @@ if excel_file and key_file:
                         entry["schluessel"]   = key_map.get(csb_clean, "")
                         entry["liefertag"]    = tag
 
-                        # Fachberater-Name ggf. aus CSB-Zuordnung
+                        # Fachberater-Name ggf. aus CSB-Zuordnung überschreiben
                         if csb_clean and csb_clean in berater_csb_map and berater_csb_map[csb_clean].get("name"):
                             entry["fachberater"] = berater_csb_map[csb_clean]["name"]
 
@@ -676,7 +739,7 @@ if excel_file and key_file:
             )
 
             st.download_button(
-                "Download HTML (extra Bold)",
+                "Download HTML",
                 data=final_html.encode("utf-8"),
                 file_name="suche.html",
                 mime="text/html",
