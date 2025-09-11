@@ -6,8 +6,12 @@ import unicodedata
 import re
 
 # =========================
-#  HTML TEMPLATE – Inter 400/600/700/800/900 (Bold UI)
-#  Mit Zero-Width-Fix in der Namens-Normalisierung (JS) + „Zurück zur Suche“
+#  TECH-LOOK VERSION (clean, flat, precise)
+#  - Beibehaltung der Pill-Farben (gelb = CSB/SAP, grün = Schlüssel, rot = Tour)
+#  - Weniger verspielt: flach, klare Linien, weniger Rundungen, keine Gradients, präzise Typografie
+#  - ProCall: callto:
+#  - „Zurück zur Suche“-Button
+#  - Umlaut-/Akzent-Suche, Zero-Width-Fix, robustes FB-Matching
 # =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -16,165 +20,153 @@ HTML_TEMPLATE = """
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kunden-Suche</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@450;600;700;900&family=Inter+Tight:wght@500;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f7f9; --surface:#ffffff; --alt:#fafbfd; --border:#d9e2ef;
-  --row-border:#e6edf5; --stripe:#f5f8fc;
-  --txt:#111827; --muted:#475569; --head:#0f172a;
-  --accent:#2563eb; --accent-weak:rgba(37,99,235,.12); --accent-strong:#1d4ed8;
+  --bg:#f5f6f8; --surface:#ffffff; --alt:#fafbfc;
+  --line:#d5d9e0; --line-strong:#c9ced6;
+  --txt:#0f172a; --muted:#334155;
+  --accent:#2563eb; --accent-strong:#1d4ed8;
 
-  --ok:#16a34a; --ok-weak:rgba(22,163,74,.12);
-  --warn:#f59e0b; --warn-weak:rgba(245,158,11,.18);
+  /* Chips */
+  --pill-yellow:#fff6cc; --pill-yellow-border:#f1d264; --pill-yellow-text:#55310b;
+  --pill-green:#dff6e8; --pill-green-border:#8ee1b2; --pill-green-text:#085a3f;
+  --pill-red:#ffe0e0;   --pill-red-border:#ffc8c8;   --pill-red-text:#6b1a1a;
 
-  --chip-fb:#0ea5e9; --chip-fb-weak:rgba(14,165,233,.12);
-  --chip-market:#8b5cf6; --chip-market-weak:rgba(139,92,246,.12);
+  /* Phone chips */
+  --chip-fb-bg:#e6f3fb;     --chip-fb-bd:#98d7f5; --chip-fb-tx:#0b4a6b;
+  --chip-market-bg:#ebe7fd; --chip-market-bd:#c9bdfa; --chip-market-tx:#342a8e;
 
-  --pill-yellow:#fef3c7; --pill-yellow-border:#fcd34d; --pill-yellow-text:#7c2d12;
-
-  /* Schlüssel-Pill: grün */
-  --pill-green:#dcfce7; --pill-green-border:#86efac; --pill-green-text:#065f46;
-
-  /* Tour-Pills: leichtes Rot */
-  --pill-red:#fee2e2; --pill-red-border:#fecaca; --pill-red-text:#7f1d1d;
-
-  --radius:8px; --shadow:0 1px 3px rgba(0,0,0,.05);
-  --fs-10:10px; --fs-11:11px; --fs-12:12px;
+  --radius:6px;
+  --fs-10:10px; --fs-11:11px; --fs-12:12px; --fs-13:13px;
 }
 
-/* Global reset – kein inneres Scrolling */
+/* Global – technischer Look: flach, scharf, präzise */
 *{box-sizing:border-box}
-html, body{margin:0; padding:0; min-height:100%; overflow:visible !important;}
+html, body{margin:0; padding:0; min-height:100%; overflow:visible !important; background:var(--bg);}
 body{
-  background:var(--bg);
-  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  font-family:"Inter Tight", Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   color:var(--txt); font-size:var(--fs-12); line-height:1.45; font-weight:600;
+  letter-spacing:0.1px;
 }
 
-/* Layout-Wrapper */
-.page{min-height:100vh; display:flex; justify-content:center; padding:12px; overflow:visible !important;}
-.container{width:100%; max-width:1400px; overflow:visible !important;}
-.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-      box-shadow:var(--shadow); overflow:visible !important;}
+/* Frame */
+.page{min-height:100vh; display:flex; justify-content:center; padding:12px;}
+.container{width:100%; max-width:1400px;}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);}
 
-/* Header */
-.header{padding:14px 12px; border-bottom:1px solid var(--border); background:var(--surface);
-  display:flex; flex-direction:column; align-items:center; gap:6px; overflow:visible !important;}
-.brand-logo{height:56px; width:auto}
-.title{font-size:14px; font-weight:900; color:#0f172a; letter-spacing:.2px}
+/* Header – neutral, technisch */
+.header{
+  padding:10px 12px; border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:12px; justify-content:center;
+}
+.brand-logo{height:44px; width:auto}
+.title{font-family:"Inter",system-ui; font-weight:900; font-size:13px; letter-spacing:.3px}
 
-/* Searchbar */
+/* Searchbar – kompakt, klar */
 .searchbar{
-  padding:8px 12px; display:grid; grid-template-columns:1fr 250px auto auto; gap:8px; align-items:center;
-  border-bottom:1px solid var(--border); background:var(--surface); overflow:visible !important;
+  padding:10px 12px; display:grid; grid-template-columns:1fr 280px auto auto; gap:10px; align-items:center;
+  border-bottom:1px solid var(--line); background:var(--surface);
 }
 @media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr} }
-@media(max-width:640px){ .searchbar{grid-template-columns:1fr} }
+@media(max-width:680px){ .searchbar{grid-template-columns:1fr} }
 
-.field{display:grid; grid-template-columns:80px 1fr; gap:6px; align-items:center}
-.label{font-weight:800; color:#0f172a; font-size:var(--fs-12); letter-spacing:.2px}
+.field{display:grid; grid-template-columns:72px 1fr; gap:8px; align-items:center}
+.label{font-weight:800; color:var(--muted); font-size:var(--fs-11); text-transform:uppercase; letter-spacing:.35px}
 .input{
-  width:100%; padding:7px 9px; border:1px solid var(--border); border-radius:7px;
-  background:linear-gradient(180deg, var(--surface), var(--alt));
-  transition:border-color .15s, box-shadow .15s, background .15s; font-size:var(--fs-12); font-weight:700;
+  width:100%; padding:7px 9px; border:1px solid var(--line); border-radius:5px;
+  background:#fff; font-size:var(--fs-12); font-weight:700;
 }
-.input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-weak); background:#fff}
-.btn{padding:7px 9px; border:1px solid var(--border); background:#fff; border-radius:7px; cursor:pointer; font-weight:800; font-size:var(--fs-12)}
-.btn:hover{background:#f3f4f6}
-.btn-danger{background:#ef4444; border-color:#ef4444; color:#fff}
-.btn-danger:hover{background:#dc2626}
-.btn-back{border:1px solid var(--accent); color:var(--accent-strong); background:#eef2ff;}
+.input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(37,99,235,.15)}
+
+.btn{
+  padding:7px 10px; border:1px solid var(--line); background:#fff; color:#111827;
+  border-radius:5px; cursor:pointer; font-weight:800; font-size:var(--fs-12); letter-spacing:.2px
+}
+.btn:hover{background:#f2f4f7}
+.btn-danger{border-color:#e11d48; background:#e11d48; color:#fff}
+.btn-danger:hover{background:#c81e44}
+.btn-back{border-color:var(--accent); color:var(--accent-strong); background:#eef2ff;}
 .btn-back:hover{background:#e0e7ff}
 
 /* Content */
-.content{padding:10px 12px; overflow:visible !important;}
+.content{padding:12px;}
 
-/* Tour banner */
-.tour-wrap{display:none; margin-bottom:8px; overflow:visible !important;}
+/* Banner (Tour/Key) – sachlich, flach */
+.tour-wrap{display:none; margin-bottom:10px}
 .tour-banner{
   display:flex; align-items:center; justify-content:space-between;
-  padding:8px 12px; border:1px solid var(--border); border-radius:8px;
-  background:#eef2ff; color:#0f172a; font-weight:900; font-size:12px; letter-spacing:.2px
+  padding:8px 12px; border:1px solid var(--line-strong); border-radius:6px;
+  background:#f0f3f8; color:#0f172a; font-weight:900; font-size:12px;
 }
-.tour-banner small{font-weight:800; color:#334155}
 
-/* Tabelle – KEIN eigener Scroller */
-.table-section{padding:6px 8px; overflow:visible !important;}
+/* Tabelle ohne interne Scrolls; mit klarer Rasterung */
+.table-section{padding:6px 0}
 table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
-  position:sticky; top:0; background:#f1f5f9; color:#0f172a; font-weight:900;
-  border-bottom:1px solid var(--row-border); padding:8px 8px; white-space:nowrap; text-align:left; z-index:2; letter-spacing:.2px
+  position:sticky; top:0; background:#f3f5f8; color:#0f172a; font-weight:900;
+  border-bottom:1px solid var(--line-strong); padding:8px 10px; white-space:nowrap; text-align:left; z-index:2
 }
-tbody td{padding:7px 8px; border-bottom:1px solid var(--row-border); vertical-align:top; text-align:left; font-weight:700}
-tbody tr:nth-child(odd){background:var(--stripe)}
-tbody tr:hover{background:#eef4ff}
+tbody td{padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; text-align:left; font-weight:700}
 
-/* 2-Zeilen-Layout je Zelle */
-.cell{display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-height:32px}
+/* 2-zeilig je Zelle, ohne Umbruchschaos */
+.cell{display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-height:36px}
 .cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
-/* Labels / Badges */
-.small-label{font-size:var(--fs-10); font-weight:900; color:#0f172a; letter-spacing:.35px; text-transform:uppercase}
+/* kleine technische Label */
+.small-label{font-family:"Inter",system-ui; font-size:var(--fs-10); font-weight:900; color:#0f172a; letter-spacing:.35px; text-transform:uppercase}
 
-/* Schlüssel / Touren – klare Trennung */
-.key-tour{display:flex; flex-direction:column; gap:6px; width:100%}
-.key-line{display:flex; align-items:center; gap:8px}
-.key-divider{height:1px; background:#e5e7eb; border:0; width:100%; margin:0}
-
-/* Schlüssel-Pill (grün) – fett */
-.badge-key{
-  background:var(--pill-green);
-  border:1px solid var(--pill-green-border);
-  color:var(--pill-green-text);
-  border-radius:999px; padding:3px 8px; font-weight:900; font-size:11px; letter-spacing:.2px
-}
-
-/* CSB/SAP Chips (gelb, klickbar) – fett */
+/* CSB/SAP – gelbe Chips, technischer Stil, mono digits */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow); color:var(--pill-yellow-text);
   border:1px solid var(--pill-yellow-border);
-  border-radius:999px; padding:3px 9px; font-weight:900; font-size:var(--fs-10);
-  text-decoration:none; line-height:1;
+  border-radius:999px; padding:3px 9px; font-weight:900; font-size:var(--fs-11);
+  text-decoration:none; line-height:1; letter-spacing:.2px
 }
-a.id-chip:hover{filter:brightness(0.97)}
+a.id-chip .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:700}
+a.id-chip:hover{filter:brightness(0.98)}
 .id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.9}
 
-/* TOUR-Pills (leichtes Rot) – Wrap statt Scroll – extra fett */
-.tour-inline{display:flex; flex-wrap:wrap; gap:4px; white-space:normal}
+/* Schlüssel grün, klar getrennt */
+.key-tour{display:flex; flex-direction:column; gap:8px; width:100%}
+.key-line{display:flex; align-items:center; gap:10px}
+.key-divider{height:1px; background:var(--line); border:0; width:100%; margin:0}
+.badge-key{
+  background:var(--pill-green);
+  border:1px solid var(--pill-green-border);
+  color:var(--pill-green-text);
+  border-radius:999px; padding:3px 8px; font-weight:900; font-size:var(--fs-11);
+}
+
+/* Tour-Pills – rot, flach, Wrap */
+.tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-block; background:var(--pill-red); border:1px solid var(--pill-red-border); color:var(--pill-red-text);
-  padding:2px 7px; border-radius:999px; font-weight:900; font-size:var(--fs-10); cursor:pointer; line-height:1.25; letter-spacing:.2px
+  padding:3px 8px; border-radius:999px; font-weight:900; font-size:var(--fs-10); cursor:pointer; line-height:1.25; letter-spacing:.15px
 }
-.tour-btn:hover{filter:brightness(0.97)}
+.tour-btn:hover{filter:brightness(0.98)}
 
-/* Telefone als klickbare Chips (ProCall/Telefon) – fett */
+/* Phone-Chips – technisch, klar */
 .phone-line{display:flex; flex-wrap:wrap; gap:6px}
 a.phone-chip{
   display:inline-flex; align-items:center; gap:6px;
-  border-radius:999px; padding:3px 9px; font-weight:900; font-size:var(--fs-10); line-height:1;
-  text-decoration:none; cursor:pointer; letter-spacing:.2px
+  border-radius:999px; padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1;
+  text-decoration:none; cursor:pointer; letter-spacing:.15px
 }
-a.phone-chip.chip-fb{background:var(--chip-fb-weak); color:#075985; border:1px solid #7dd3fc}
-a.phone-chip.chip-market{background:var(--chip-market-weak); color:#4338ca; border:1px solid #c4b5fd}
-a.phone-chip:hover{filter:brightness(0.96)}
+a.phone-chip .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:700}
+a.phone-chip.chip-fb{background:var(--chip-fb-bg); color:var(--chip-fb-tx); border:1px solid var(--chip-fb-bd)}
+a.phone-chip.chip-market{background:var(--chip-market-bg); color:var(--chip-market-tx); border:1px solid var(--chip-market-bd)}
+a.phone-chip:hover{filter:brightness(0.98)}
 .chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.9}
 
-/* Map Button */
+/* Map Button – flach, deutlich */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
-  padding:6px 11px; border-radius:999px; border:1px solid var(--accent);
+  padding:6px 11px; border-radius:5px; border:1px solid var(--accent);
   background:var(--accent); color:#fff; display:inline-block; text-align:center; letter-spacing:.2px
 }
 .table-map:hover{background:var(--accent-strong); border-color:var(--accent-strong)}
-
-/* Sicherstellen, dass nirgendwo inneres Scrollen entsteht */
-.page, .container, .card, .content, .table-section, .tour-wrap, .searchbar{max-height:none !important; height:auto !important; overflow:visible !important;}
-
-/* (Optional) Browser-Scrollbar Styling */
-::-webkit-scrollbar{width:10px; height:10px}
-::-webkit-scrollbar-thumb{background:#cbd5e1; border-radius:6px}
-::-webkit-scrollbar-thumb:hover{background:#94a3b8}
 </style>
 </head>
 <body>
@@ -192,11 +184,11 @@ a.phone-chip:hover{filter:brightness(0.96)}
           <input class="input" id="smartSearch" placeholder="Name / Ort / CSB / SAP / Tour / Fachberater / Telefon / …">
         </div>
         <div class="field">
-          <div class="label">Schluessel</div>
-          <input class="input" id="keySearch" placeholder="Exakte Schluesselnummer">
+          <div class="label">Schlüssel</div>
+          <input class="input" id="keySearch" placeholder="exakt (z. B. 40)">
         </div>
-        <button class="btn btn-back" id="btnBack" style="display:none;">⬅️ Zurück zur Suche</button>
-        <button class="btn btn-danger" id="btnReset">Zuruecksetzen</button>
+        <button class="btn btn-back" id="btnBack" style="display:none;">Zurück zur Suche</button>
+        <button class="btn btn-danger" id="btnReset">Zurücksetzen</button>
       </div>
 
       <div class="content">
@@ -212,10 +204,10 @@ a.phone-chip:hover{filter:brightness(0.96)}
             <thead>
               <tr>
                 <th>CSB / SAP</th>
-                <th>Name / Strasse</th>
+                <th>Name / Straße</th>
                 <th>PLZ / Ort</th>
-                <th>Schluessel / Touren</th>
-                <th>Fachberater / Markt Telefon</th>
+                <th>Schlüssel / Touren</th>
+                <th>Fachberater / Markttelefon</th>
                 <th>Aktion</th>
               </tr>
             </thead>
@@ -238,94 +230,23 @@ const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
 
 let allCustomers = [];
-let prevQuery = null;  // merkt vorherige Suche für "Zurück zur Suche"
-const DIAL_SCHEME = 'callto'; // ProCall
-const DEBUG_PHONE = false;    // Bei Bedarf auf true -> Konsole
+let prevQuery = null;
+const DIAL_SCHEME = 'callto';
+const DEBUG_PHONE = false;
 
+/* Normalisierung / Utils */
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
 function makePhoneChip(label, num, extraClass){
   const clean = sanitizePhone(num);
   const a = document.createElement('a');
   a.className = 'phone-chip ' + extraClass;
   a.href = `${DIAL_SCHEME}:${clean}`;
-  a.title = (label === 'FB' ? 'Fachberater' : 'Markt') + ' anrufen';
-  const tag = document.createElement('span'); tag.className='chip-tag'; tag.textContent = label;
-  a.appendChild(tag);
-  a.appendChild(document.createTextNode(' ☎ ' + num));
+  const tag = el('span','chip-tag',label);
+  const mono = el('span','mono',' '+num);
+  a.append(tag, mono);
   return a;
 }
 
-/* ======= Robust-Normalizer für Namen (JS) – inkl. Zero-Width & BOM ======= */
-function normalizeNameKey(s){
-  if(!s) return '';
-  let x = s;
-
-  // Unsichtbare entfernen (Zero-width & BOM)
-  x = x.replace(/[\\u200B-\\u200D\\uFEFF]/g, '');
-
-  // NBSP -> Space, Dashes normalisieren
-  x = x.replace(/\\u00A0/g,' ').replace(/[–—]/g,'-');
-
-  // lowercase + Umlaute → ae/oe/ue/ss
-  x = x.toLowerCase()
-       .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
-
-  // Akzente strippen
-  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
-
-  // Klammerzusätze & Satzzeichen entfernen/vereinheitlichen
-  x = x.replace(/\\(.*?\\)/g,' ');
-  x = x.replace(/[./,;:+*_#|]/g,' ');
-  x = x.replace(/-/g,' ');
-
-  // Nur Buchstaben + Spaces
-  x = x.replace(/[^a-z\\s]/g,' ');
-
-  // Spaces falten
-  x = x.replace(/\\s+/g,' ').trim();
-  return x;
-}
-function nameVariants(s){
-  const base = normalizeNameKey(s);
-  if(!base) return [];
-  const parts = base.split(' ').filter(Boolean);
-  const out = new Set([base]);
-  if(parts.length >= 2){
-    const first = parts[0], last = parts[parts.length-1];
-    out.add(`${first} ${last}`);   // "petra rose"
-    out.add(`${last} ${first}`);   // "rose petra"
-  }
-  return Array.from(out);
-}
-function pickBeraterPhone(fachberaterName){
-  if(!fachberaterName) return '';
-  const variants = nameVariants(fachberaterName);
-  if (DEBUG_PHONE){ console.log('[FB-MATCH] Original:', fachberaterName, 'Variants:', variants); }
-
-  // 1) exakte Varianten
-  for (const v of variants){
-    if (beraterIndex[v]) {
-      if (DEBUG_PHONE) console.log('[FB-MATCH] exact hit:', v, '->', beraterIndex[v]);
-      return beraterIndex[v];
-    }
-  }
-  // 2) Fallback: token-basiert (alle Teile enthalten)
-  const keys = Object.keys(beraterIndex);
-  for (const v of variants){
-    const parts = v.split(' ').filter(Boolean);
-    for (const k of keys){
-      const hit = parts.every(p => k.includes(p));
-      if (hit){
-        if (DEBUG_PHONE) console.log('[FB-MATCH] token hit:', v, 'in', k, '->', beraterIndex[k]);
-        return beraterIndex[k];
-      }
-    }
-  }
-  if (DEBUG_PHONE) console.warn('[FB-MATCH] no match for:', fachberaterName, 'norm:', normalizeNameKey(fachberaterName));
-  return '';
-}
-
-/* ======= Gemeinsame Helper ======= */
 function normDE(s){
   if(!s) return '';
   let x = s.toLowerCase();
@@ -340,6 +261,68 @@ function normalizeDigits(v){
   s = s.replace(/^0+(\\d)/,'$1');
   return s;
 }
+
+/* Name-Normalisierung (robust, inkl. Zero-Width/BOM) */
+function normalizeNameKey(s){
+  if(!s) return '';
+  let x = s;
+  x = x.replace(/[\\u200B-\\u200D\\uFEFF]/g, '');      // zero-width, BOM
+  x = x.replace(/\\u00A0/g,' ').replace(/[–—]/g,'-');  // nbsp, dashes
+  x = x.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,''); // accents
+  x = x.replace(/\\(.*?\\)/g,' ');                      // remove (...) notes
+  x = x.replace(/[./,;:+*_#|]/g,' ').replace(/-/g,' ');
+  x = x.replace(/[^a-z\\s]/g,' ');                      // letters + space only
+  x = x.replace(/\\s+/g,' ').trim();
+  return x;
+}
+function nameVariants(s){
+  const base = normalizeNameKey(s);
+  if(!base) return [];
+  const parts = base.split(' ').filter(Boolean);
+  const out = new Set([base]);
+  if(parts.length >= 2){
+    const first = parts[0], last = parts[parts.length-1];
+    out.add(`${first} ${last}`);
+    out.add(`${last} ${first}`);
+  }
+  return Array.from(out);
+}
+
+/* FB-Matching (robust + eindeutige Token) */
+function pickBeraterPhone(fachberaterName){
+  if(!fachberaterName) return '';
+  const variants = nameVariants(fachberaterName);
+  if (DEBUG_PHONE){ console.log('[FB-MATCH] Original:', fachberaterName, 'Variants:', variants); }
+
+  for (const v of variants){
+    if (beraterIndex[v]) return beraterIndex[v];
+  }
+  const keys = Object.keys(beraterIndex);
+  for (const v of variants){
+    const parts = v.split(' ').filter(Boolean);
+    for (const k of keys){
+      if (parts.every(p => k.includes(p))) return beraterIndex[k];
+    }
+  }
+  for (const v of variants){
+    const parts = v.split(' ').filter(Boolean);
+    if (!parts.length) continue;
+    const last = parts[parts.length-1];
+    const hits = keys.filter(k => k.includes(last));
+    if (hits.length === 1) return beraterIndex[hits[0]];
+  }
+  for (const v of variants){
+    const parts = v.split(' ').filter(Boolean);
+    if (!parts.length) continue;
+    const first = parts[0];
+    const hits = keys.filter(k => k.includes(first));
+    if (hits.length === 1) return beraterIndex[hits[0]];
+  }
+  return '';
+}
+
+/* Datenaufbau */
 function dedupByCSB(list){
   const seen = new Set(); const out = [];
   for (const k of list){
@@ -348,8 +331,6 @@ function dedupByCSB(list){
   }
   return out;
 }
-
-/* ======= Datenaufbau ======= */
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
@@ -368,12 +349,9 @@ function buildData(){
         const keyFromIndex = keyIndex[csb] || "";
         rec.schluessel   = normalizeDigits(rec.schluessel) || keyFromIndex;
 
-        // Fachberater-Name ggf. aus CSB-Zuordnung übernehmen
         if (beraterCSBIndex[csb] && beraterCSBIndex[csb].name){
           rec.fachberater = beraterCSBIndex[csb].name;
         }
-
-        // Telefone
         rec.fb_phone     = rec.fachberater ? pickBeraterPhone(rec.fachberater) : '';
         rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
 
@@ -385,27 +363,15 @@ function buildData(){
   allCustomers = Array.from(map.values());
 }
 
-/* ======= UI: Zellen/Chips ======= */
-function twoLineCell(top, sub){
-  const wrap = el('div','cell');
-  const a = el('div','cell-top', top);
-  const b = el('div','cell-sub', sub);
-  wrap.append(a,b);
-  return wrap;
-}
+/* UI Bausteine */
 function pushPrevQuery(){
   const val = $('#smartSearch').value.trim();
-  if (val){
-    prevQuery = val;
-    $('#btnBack').style.display = 'inline-block';
-  }
+  if (val){ prevQuery = val; $('#btnBack').style.display = 'inline-block'; }
 }
 function popPrevQuery(){
   if (prevQuery){
     $('#smartSearch').value = prevQuery;
-    prevQuery = null;
-    $('#btnBack').style.display = 'none';
-    onSmart();
+    prevQuery = null; $('#btnBack').style.display='none'; onSmart();
   }
 }
 function makeIdChip(label, value){
@@ -419,9 +385,16 @@ function makeIdChip(label, value){
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
   const tag = el('span','id-tag', label);
-  a.appendChild(tag);
-  a.appendChild(document.createTextNode(' ' + value));
+  const mono = el('span','mono', ' '+value);
+  a.append(tag, mono);
   return a;
+}
+function twoLineCell(top, sub){
+  const wrap = el('div','cell');
+  const a = el('div','cell-top', top);
+  const b = el('div','cell-sub', sub);
+  wrap.append(a,b);
+  return wrap;
 }
 
 function rowFor(k){
@@ -430,25 +403,24 @@ function rowFor(k){
   const sap = normalizeDigits(k.sap_nummer) || '-';
   const plz = normalizeDigits(k.postleitzahl) || '-';
 
-  /* CSB / SAP (gelbe Pills, klickbar) */
+  // CSB/SAP
   const td1 = document.createElement('td');
-  const wrap1 = el('div','cell');
+  const t1 = el('div','cell');
   const top1 = el('div','cell-top'); top1.appendChild(makeIdChip('CSB', csb));
   const sub1 = el('div','cell-sub'); sub1.appendChild(makeIdChip('SAP', sap));
-  wrap1.append(top1, sub1);
-  td1.appendChild(wrap1); tr.appendChild(td1);
+  t1.append(top1, sub1); td1.appendChild(t1); tr.appendChild(td1);
 
-  /* Name / Straße */
+  // Name / Straße
   const td2 = document.createElement('td');
   td2.appendChild(twoLineCell(k.name || '-', k.strasse || '-'));
   tr.appendChild(td2);
 
-  /* PLZ / Ort */
+  // PLZ / Ort
   const td3 = document.createElement('td');
   td3.appendChild(twoLineCell(plz, k.ort || '-'));
   tr.appendChild(td3);
 
-  /* Schlüssel / Touren */
+  // Schlüssel / Touren
   const td4 = document.createElement('td');
   const wrap4 = el('div','cell key-tour');
 
@@ -468,14 +440,12 @@ function rowFor(k){
     tb.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value = tnum; onSmart(); };
     tours.appendChild(tb);
   });
-  toursWrap.appendChild(toursLabel);
-  toursWrap.appendChild(tours);
+  toursWrap.append(toursLabel, tours);
 
   wrap4.append(keyLine, divider, toursWrap);
-  td4.appendChild(wrap4);
-  tr.appendChild(td4);
+  td4.appendChild(wrap4); tr.appendChild(td4);
 
-  /* Fachberater / Markt-Telefon */
+  // Fachberater / Markttelefon
   const td5 = document.createElement('td');
   const top5 = el('div','cell-top', k.fachberater || '-');
   const sub5 = el('div','cell-sub phone-line');
@@ -485,7 +455,7 @@ function rowFor(k){
   const wrap5 = el('div','cell'); wrap5.append(top5, sub5);
   td5.appendChild(wrap5); tr.appendChild(td5);
 
-  /* Aktion */
+  // Aktion
   const td6 = document.createElement('td');
   const sub6 = el('div','cell-sub');
   const a = document.createElement('a');
@@ -516,7 +486,7 @@ function renderTourTop(list, query, isExact){
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
   if (query.startsWith('Schluessel ')) {
     const key = query.replace(/^Schluessel\\s+/, '');
-    title.textContent = 'Schluessel ' + key + ' — ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
+    title.textContent = 'Schlüssel ' + key + ' — ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
   } else {
     title.textContent = (isExact?('Tour '+query):('Tour-Prefix '+query+'*')) + ' — ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
   }
@@ -532,6 +502,15 @@ function renderTourTop(list, query, isExact){
 function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourTitle').textContent=''; $('#tourExtra').textContent=''; }
 
 /* Suche */
+function dedupByCSB(list){
+  const seen = new Set(); const out = [];
+  for (const k of list){
+    const key = normalizeDigits(k.csb_nummer);
+    if (!seen.has(key)){ seen.add(key); out.push(k); }
+  }
+  return out;
+}
+
 function onSmart(){
   const qRaw = $('#smartSearch').value.trim();
   closeTourTop();
@@ -571,19 +550,17 @@ function onKey(){
   if(matches.length){ renderTourTop(matches, 'Schluessel ' + qClean, true); }
   renderTable(matches);
 }
-function debounce(fn, d=160){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
+function debounce(fn, d=140){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
 
 document.addEventListener('DOMContentLoaded', ()=>{
   if(typeof tourkundenData!=='undefined' && Object.keys(tourkundenData).length > 0){ buildData(); }
-  document.getElementById('smartSearch').addEventListener('input', debounce(onSmart, 160));
-  document.getElementById('keySearch').addEventListener('input', debounce(onKey, 160));
+  document.getElementById('smartSearch').addEventListener('input', debounce(onSmart, 140));
+  document.getElementById('keySearch').addEventListener('input', debounce(onKey, 140));
   document.getElementById('btnReset').addEventListener('click', ()=>{
     document.getElementById('smartSearch').value=''; document.getElementById('keySearch').value='';
     closeTourTop(); renderTable([]); prevQuery=null; document.getElementById('btnBack').style.display='none';
   });
-  document.getElementById('btnBack').addEventListener('click', ()=>{
-    popPrevQuery();
-  });
+  document.getElementById('btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
 });
 </script>
 </body>
@@ -591,10 +568,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
 """
 
 # =========================
-#  STREAMLIT APP
+#  STREAMLIT APP (Python)
 # =========================
-st.title("Kunden-Suchseite – Bold UI, robustes Berater-Matching")
-st.caption("CSB/SAP gelb (klickbar) • Tour rot • Schlüssel grün • Telefon-Pills (callto:) • Zurück-Button • Umlaute-Suche • kein Inline-Scroll")
+st.title("Kunden-Suchseite – Tech Look")
+st.caption("Pills & Farben wie gehabt • flach & präzise • ProCall (callto:) • Zurück-Button • robuste Suche/Matching")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -607,7 +584,7 @@ with c3:
 berater_file = st.file_uploader("OPTIONAL: Fachberater Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
 berater_csb_file = st.file_uploader("Fachberater-CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt)", type=["xlsx"])
 
-# ============== Python-Normalizer/Builder (robust – inkl. Zero-Width-Fix) ==============
+# ---------- Helpers ----------
 def normalize_digits_py(v) -> str:
     if pd.isna(v):
         return ""
@@ -619,33 +596,18 @@ def normalize_digits_py(v) -> str:
     return s if s else "0"
 
 def norm_de_py(s: str) -> str:
-    """Robuster deutscher Normalizer: Zero-Width, NBSP, Dashes, Umlaute, Klammern, Sonderzeichen."""
     if not s:
         return ""
     x = s
-
-    # 0) Unsichtbare entfernen (Zero-Width + BOM)
     x = x.replace("\u200b","").replace("\u200c","").replace("\u200d","").replace("\ufeff","")
-
-    # 1) NBSP -> Space, Dashes normalisieren
     x = x.replace("\u00A0", " ").replace("–","-").replace("—","-")
-
-    # 2) lowercase + Umlaute → ae/oe/ue/ss
     x = x.lower().replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
-
-    # 3) Akzente strippen
     x = unicodedata.normalize("NFD", x)
     x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
-
-    # 4) Klammerzusätze & Satzzeichen
     x = re.sub(r"\(.*?\)", " ", x)
     x = re.sub(r"[./,;:+*_#|]", " ", x)
     x = re.sub(r"-", " ", x)
-
-    # 5) Nur Buchstaben + Spaces
     x = re.sub(r"[^a-z\s]", " ", x)
-
-    # 6) Spaces falten
     x = " ".join(x.split())
     return x
 
@@ -663,10 +625,6 @@ def build_key_map(df: pd.DataFrame) -> dict:
     return mapping
 
 def build_berater_map(df: pd.DataFrame) -> dict:
-    """
-    A=Vorname, B=Nachname, C=Nummer  -> robuste Name-Keys -> Nummer
-    Deckt 'Petra Rose' und 'Rose Petra' ab, inkl. Zero-Width/NBSP/Titel/Kommas/etc.
-    """
     mapping = {}
     for _, row in df.iterrows():
         v = ("" if df.shape[1] < 1 or pd.isna(row.iloc[0]) else str(row.iloc[0])).strip()
@@ -674,34 +632,28 @@ def build_berater_map(df: pd.DataFrame) -> dict:
         t = ("" if df.shape[1] < 3 or pd.isna(row.iloc[2]) else str(row.iloc[2])).strip()
         if not t:
             continue
-
-        def base_norm(s: str) -> str:
-            return norm_de_py(s)
-
-        full1 = base_norm(f"{v} {n}")  # "petra rose"
-        full2 = base_norm(f"{n} {v}")  # "rose petra"
-
+        full1 = norm_de_py(f"{v} {n}")
+        full2 = norm_de_py(f"{n} {v}")
         for key in {full1, full2}:
             if key and key not in mapping:
                 mapping[key] = t
     return mapping
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
-    """A=Fachberater (Name), I=CSB, O=Telefon/Markt  -> CSB -> {name, telefon}"""
     mapping = {}
     for _, row in df.iterrows():
-        fach = str(row.iloc[0]) if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
+        fach = str(row.iloc[0]).strip() if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
         csb  = normalize_digits_py(row.iloc[8]) if df.shape[1] > 8 and not pd.isna(row.iloc[8]) else ""
-        tel  = str(row.iloc[14]) if df.shape[1] > 14 and not pd.isna(row.iloc[14]) else ""
+        tel  = str(row.iloc[14]).strip() if df.shape[1] > 14 and not pd.isna(row.iloc[14]) else ""
         if csb:
-            mapping[csb] = {"name": fach.strip(), "telefon": tel.strip()}
+            mapping[csb] = {"name": fach, "telefon": tel}
     return mapping
 
 def to_data_url(file) -> str:
     mime = file.type or ("image/png" if file.name.lower().endswith(".png") else "image/jpeg")
     return f"data:{mime};base64," + base64.b64encode(file.read()).decode("utf-8")
 
-# ============== Generate HTML ==============
+# ---------- Build HTML ----------
 if excel_file and key_file:
     if st.button("HTML erzeugen", type="primary"):
         if logo_file is None:
@@ -726,12 +678,10 @@ if excel_file and key_file:
 
             berater_map = {}
             if berater_file is not None:
-                with st.spinner("Lese Fachberater-Telefonliste..."):
-                    try:
-                        bf = pd.read_excel(berater_file, sheet_name=0, header=0)
-                    except Exception:
-                        berater_file.seek(0)
-                        bf = pd.read_excel(berater_file, sheet_name=0, header=None)
+                with st.spinner("Lese Fachberater-Telefonliste (ohne Header)..."):
+                    berater_file.seek(0)
+                    bf = pd.read_excel(berater_file, sheet_name=0, header=None)
+                    bf = bf.rename(columns={0: "Vorname", 1: "Nachname", 2: "Nummer"}).dropna(how="all")
                     berater_map = build_berater_map(bf)
 
             berater_csb_map = {}
@@ -761,13 +711,12 @@ if excel_file and key_file:
                         entry["schluessel"]   = key_map.get(csb_clean, "")
                         entry["liefertag"]    = tag
 
-                        # Fachberater-Name ggf. aus CSB-Zuordnung überschreiben
                         if csb_clean and csb_clean in berater_csb_map and berater_csb_map[csb_clean].get("name"):
                             entry["fachberater"] = berater_csb_map[csb_clean]["name"]
 
                         tour_dict.setdefault(tournr, []).append(entry)
 
-            with st.spinner("Verarbeite Quelldatei..."):
+            with st.spinner("Verarbeite Kundendatei..."):
                 for blatt in BLATTNAMEN:
                     try:
                         df = pd.read_excel(excel_file, sheet_name=blatt)
@@ -790,9 +739,9 @@ if excel_file and key_file:
             )
 
             st.download_button(
-                "Download HTML",
+                "Download HTML (Tech Look)",
                 data=final_html.encode("utf-8"),
-                file_name="suche.html",
+                file_name="suche_tech.html",
                 mime="text/html",
                 type="primary"
             )
