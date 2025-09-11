@@ -756,7 +756,7 @@ if excel_file and key_file:
             st.download_button(
                 "Download HTML (Tech Look, klare Zeilen)",
                 data=final_html.encode("utf-8"),
-                file_name="suche_tech_rows.html",
+                file_name="suche.html",
                 mime="text/html",
                 type="primary"
             )
