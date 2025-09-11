@@ -6,12 +6,11 @@ import unicodedata
 import re
 
 # =========================
-#  TECH-LOOK VERSION (clean, flat, precise)
-#  - Beibehaltung der Pill-Farben (gelb = CSB/SAP, grün = Schlüssel, rot = Tour)
-#  - Weniger verspielt: flach, klare Linien, weniger Rundungen, keine Gradients, präzise Typografie
-#  - ProCall: callto:
-#  - „Zurück zur Suche“-Button
-#  - Umlaut-/Akzent-Suche, Zero-Width-Fix, robustes FB-Matching
+#  TECH-LOOK + KLARE ZEILENABGRENZUNG
+#  - Alternierende Zeilenhintergründe
+#  - Linker Akzentstreifen je Zeile (abwechselnde Farben)
+#  - Sonst wie zuvor: Pills (gelb CSB/SAP klickbar, grün Schlüssel, rot Tour),
+#    ProCall (callto:), Zurück-Button, robuste Suche & Matching, keine Inline-Scroller
 # =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -36,6 +35,11 @@ HTML_TEMPLATE = """
   /* Phone chips */
   --chip-fb-bg:#e6f3fb;     --chip-fb-bd:#98d7f5; --chip-fb-tx:#0b4a6b;
   --chip-market-bg:#ebe7fd; --chip-market-bd:#c9bdfa; --chip-market-tx:#342a8e;
+
+  /* Row accents */
+  --row-a:#ffffff;          --row-a-left:#dbe2ea;
+  --row-b:#f3f6fa;          --row-b-left:#cfd7e2;
+  --row-hover:#eef2f7;      --row-sep:#dfe5ed;
 
   --radius:6px;
   --fs-10:10px; --fs-11:11px; --fs-12:12px; --fs-13:13px;
@@ -107,7 +111,24 @@ thead th{
   position:sticky; top:0; background:#f3f5f8; color:#0f172a; font-weight:900;
   border-bottom:1px solid var(--line-strong); padding:8px 10px; white-space:nowrap; text-align:left; z-index:2
 }
-tbody td{padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; text-align:left; font-weight:700}
+tbody td{
+  padding:10px 10px; border-bottom:1px solid var(--row-sep);
+  vertical-align:top; text-align:left; font-weight:700
+}
+
+/* Zeilen-Farbtrennung + linker Akzentstreifen */
+tbody tr{
+  background:var(--row-a);
+  box-shadow: inset 4px 0 0 var(--row-a-left);
+  transition: background .12s ease;
+}
+tbody tr:nth-child(even){
+  background:var(--row-b);
+  box-shadow: inset 4px 0 0 var(--row-b-left);
+}
+tbody tr:hover{
+  background:var(--row-hover);
+}
 
 /* 2-zeilig je Zelle, ohne Umbruchschaos */
 .cell{display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-height:36px}
@@ -129,7 +150,7 @@ a.id-chip:hover{filter:brightness(0.98)}
 .id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.9}
 
 /* Schlüssel grün, klar getrennt */
-.key-tour{display:flex; flex-direction:column; gap:8px; width:100%}
+.key-tour{display:flex; flex-direction:column; gap:10px; width:100%}
 .key-line{display:flex; align-items:center; gap:10px}
 .key-divider{height:1px; background:var(--line); border:0; width:100%; margin:0}
 .badge-key{
@@ -139,7 +160,7 @@ a.id-chip:hover{filter:brightness(0.98)}
   border-radius:999px; padding:3px 8px; font-weight:900; font-size:var(--fs-11);
 }
 
-/* Tour-Pills – rot, flach, Wrap */
+/* Tour-Pills – rot, Wrap */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-block; background:var(--pill-red); border:1px solid var(--pill-red-border); color:var(--pill-red-text);
@@ -232,7 +253,6 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 let allCustomers = [];
 let prevQuery = null;
 const DIAL_SCHEME = 'callto';
-const DEBUG_PHONE = false;
 
 /* Normalisierung / Utils */
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
@@ -246,7 +266,6 @@ function makePhoneChip(label, num, extraClass){
   a.append(tag, mono);
   return a;
 }
-
 function normDE(s){
   if(!s) return '';
   let x = s.toLowerCase();
@@ -262,17 +281,17 @@ function normalizeDigits(v){
   return s;
 }
 
-/* Name-Normalisierung (robust, inkl. Zero-Width/BOM) */
+/* Name-Normalisierung */
 function normalizeNameKey(s){
   if(!s) return '';
   let x = s;
-  x = x.replace(/[\\u200B-\\u200D\\uFEFF]/g, '');      // zero-width, BOM
-  x = x.replace(/\\u00A0/g,' ').replace(/[–—]/g,'-');  // nbsp, dashes
+  x = x.replace(/[\\u200B-\\u200D\\uFEFF]/g, '');
+  x = x.replace(/\\u00A0/g,' ').replace(/[–—]/g,'-');
   x = x.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
-  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,''); // accents
-  x = x.replace(/\\(.*?\\)/g,' ');                      // remove (...) notes
+  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+  x = x.replace(/\\(.*?\\)/g,' ');
   x = x.replace(/[./,;:+*_#|]/g,' ').replace(/-/g,' ');
-  x = x.replace(/[^a-z\\s]/g,' ');                      // letters + space only
+  x = x.replace(/[^a-z\\s]/g,' ');
   x = x.replace(/\\s+/g,' ').trim();
   return x;
 }
@@ -293,17 +312,13 @@ function nameVariants(s){
 function pickBeraterPhone(fachberaterName){
   if(!fachberaterName) return '';
   const variants = nameVariants(fachberaterName);
-  if (DEBUG_PHONE){ console.log('[FB-MATCH] Original:', fachberaterName, 'Variants:', variants); }
 
-  for (const v of variants){
-    if (beraterIndex[v]) return beraterIndex[v];
-  }
+  for (const v of variants){ if (beraterIndex[v]) return beraterIndex[v]; }
+
   const keys = Object.keys(beraterIndex);
   for (const v of variants){
     const parts = v.split(' ').filter(Boolean);
-    for (const k of keys){
-      if (parts.every(p => k.includes(p))) return beraterIndex[k];
-    }
+    for (const k of keys){ if (parts.every(p => k.includes(p))) return beraterIndex[k]; }
   }
   for (const v of variants){
     const parts = v.split(' ').filter(Boolean);
@@ -570,8 +585,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 # =========================
 #  STREAMLIT APP (Python)
 # =========================
-st.title("Kunden-Suchseite – Tech Look")
-st.caption("Pills & Farben wie gehabt • flach & präzise • ProCall (callto:) • Zurück-Button • robuste Suche/Matching")
+st.title("Kunden-Suchseite – Tech Look (klare Zeilentrennung)")
+st.caption("Alternierende Zeilen + linker Akzentstreifen • Pills & Farben wie gehabt • ProCall (callto:) • Zurück-Button • robuste Suche/Matching")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -739,9 +754,9 @@ if excel_file and key_file:
             )
 
             st.download_button(
-                "Download HTML (Tech Look)",
+                "Download HTML (Tech Look, klare Zeilen)",
                 data=final_html.encode("utf-8"),
-                file_name="suche_tech.html",
+                file_name="suche_tech_rows.html",
                 mime="text/html",
                 type="primary"
             )
