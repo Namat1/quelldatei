@@ -12,150 +12,142 @@ HTML_TEMPLATE = """
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kunden-Suche</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=Inter+Tight:wght@600;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@450;600;700;900&family=Inter+Tight:wght@500;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
 <style>
-/* ===== Tech Minimal Theme (dezent) ===== */
 :root{
-  --bg:#f6f7f9; --surface:#ffffff; --alt:#f9fafb;
-  --line:#d7dbe2; --line-2:#cdd3dc; --sep:#e7ebf2;
-  --txt:#0e1220; --muted:#2f3a4a;
-  --accent:#3b82f6; --accent-2:#2557d6;
+  --bg:#f5f6f8; --surface:#ffffff; --alt:#fafbfc;
+  --line:#d5d9e0; --line-strong:#c9ced6;
+  --txt:#0f172a; --muted:#334155;
+  --accent:#2563eb; --accent-strong:#1d4ed8;
 
-  /* Outline Pills (dezente Sättigung) */
-  --pill-yellow-bg:#fffef5; --pill-yellow-bd:#e9d98c; --pill-yellow-tx:#3b2a0a;
-  --pill-green-bg:#f4fbf7;  --pill-green-bd:#9edfb8; --pill-green-tx:#0a4b34;
-  --pill-red-bg:#fff6f6;    --pill-red-bd:#f0b8b8;  --pill-red-tx:#6b1a1a;
+  --pill-yellow:#fff6cc; --pill-yellow-border:#f1d264; --pill-yellow-text:#55310b;
+  --pill-green:#dff6e8; --pill-green-border:#8ee1b2; --pill-green-text:#085a3f;
+  --pill-red:#ffe0e0;   --pill-red-border:#ffc8c8;   --pill-red-text:#6b1a1a;
 
-  /* Tel chips */
-  --chip-fb-bg:#f2f8fd;     --chip-fb-bd:#a8d7f6; --chip-fb-tx:#103a57;
-  --chip-mk-bg:#f3f1fe;     --chip-mk-bd:#c9befa; --chip-mk-tx:#2f287e;
+  --chip-fb-bg:#e6f3fb;     --chip-fb-bd:#98d7f5; --chip-fb-tx:#0b4a6b;
+  --chip-market-bg:#ebe7fd; --chip-market-bd:#c9bdfa; --chip-market-tx:#342a8e;
 
-  --radius:5px; --radius-pill:999px;
+  --row-a:#ffffff; --row-a-left:#dbe2ea;
+  --row-b:#f3f6fa; --row-b-left:#cfd7e2;
+  --row-hover:#eef2f7; --row-sep:#dfe5ed;
+
+  --radius:6px;
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
+
 *{box-sizing:border-box}
-html,body{height:100%}
+html, body{margin:0; padding:0; min-height:100%; overflow:visible !important; background:var(--bg);}
 body{
-  margin:0; background:var(--bg);
   font-family:"Inter Tight", Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  color:var(--txt); font-size:var(--fs-12); line-height:1.4; font-weight:700;
-  letter-spacing:.1px;
+  color:var(--txt); font-size:var(--fs-12); line-height:1.45; font-weight:600;
+  letter-spacing:0.1px;
 }
 
-/* Frame */
-.page{min-height:100vh; display:flex; justify-content:center; padding:10px}
-.container{width:100%; max-width:1400px}
-.card{background:var(--surface); border:1px solid var(--line); border-radius:6px}
+.page{min-height:100vh; display:flex; justify-content:center; padding:10px;}
+.container{width:100%; max-width:1400px;}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);}
 
-/* Header */
 .header{
   padding:8px 10px; border-bottom:1px solid var(--line);
-  display:flex; align-items:center; justify-content:center; gap:10px;
+  display:flex; align-items:center; gap:10px; justify-content:center;
 }
-.brand-logo{height:42px; width:auto}
-.title{font-weight:900; letter-spacing:.3px; font-size:13px}
+.brand-logo{height:44px; width:auto}
+.title{font-family:"Inter",system-ui; font-weight:900; font-size:13px; letter-spacing:.3px}
 
-/* Searchbar */
 .searchbar{
   padding:8px 10px; display:grid; grid-template-columns:1fr 260px auto auto; gap:8px; align-items:center;
   border-bottom:1px solid var(--line); background:var(--surface);
 }
 @media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr} }
 @media(max-width:680px){ .searchbar{grid-template-columns:1fr} }
+
 .field{display:grid; grid-template-columns:70px 1fr; gap:6px; align-items:center}
-.label{font-weight:900; color:var(--muted); font-size:var(--fs-11); text-transform:uppercase; letter-spacing:.35px}
+.label{font-weight:800; color:var(--muted); font-size:var(--fs-11); text-transform:uppercase; letter-spacing:.35px}
 .input{
   width:100%; padding:6px 8px; border:1px solid var(--line); border-radius:5px;
-  background:#fff; font-size:var(--fs-12); font-weight:800;
+  background:#fff; font-size:var(--fs-12); font-weight:700;
 }
-.input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(37,99,235,.15)}
 
-/* Buttons */
 .btn{
-  padding:6px 9px; border:1px solid var(--line); background:#fff; color:#0f172a;
-  border-radius:5px; cursor:pointer; font-weight:900; font-size:var(--fs-12); letter-spacing:.2px
+  padding:6px 9px; border:1px solid var(--line); background:#fff; color:#111827;
+  border-radius:5px; cursor:pointer; font-weight:800; font-size:var(--fs-12); letter-spacing:.2px
 }
 .btn:hover{background:#f2f4f7}
-.btn-danger{border-color:#d92c4a; background:#d92c4a; color:#fff}
-.btn-danger:hover{background:#c02541}
-.btn-back{border-color:var(--accent); color:var(--accent-2); background:#eef2ff}
-.btn-back:hover{background:#e1e7ff}
+.btn-danger{border-color:#e11d48; background:#e11d48; color:#fff}
+.btn-danger:hover{background:#c81e44}
+.btn-back{border-color:var(--accent); color:var(--accent-strong); background:#eef2ff;}
+.btn-back:hover{background:#e0e7ff}
 
-/* Tour-Banner */
-.tour-wrap{display:none; margin:10px 10px 6px}
+.content{padding:10px;}
+
+.tour-wrap{display:none; margin-bottom:8px}
 .tour-banner{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding:6px 10px; border:1px dashed var(--line-2); border-radius:6px;
-  background:linear-gradient(180deg,#fafbff, #f5f7fc);
-  font-weight:900; font-size:12px; color:#111827;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 10px; border:1px solid var(--line-strong); border-radius:6px;
+  background:#f0f3f8; color:#0f172a; font-weight:900; font-size:12px;
 }
 
-/* Table */
-.table-section{padding:4px 10px 12px}
+/* Tabelle */
+.table-section{padding:4px 0}
 table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
-  position:sticky; top:0; background:linear-gradient(180deg,#f7f9fc,#f0f3f8);
-  color:#0f172a; font-weight:900; border-bottom:1px solid var(--line-2);
-  padding:7px 9px; white-space:nowrap; text-align:left; z-index:2; letter-spacing:.2px
+  position:sticky; top:0; background:#f3f5f8; color:#0f172a; font-weight:900;
+  border-bottom:1px solid var(--line-strong); padding:7px 9px; white-space:nowrap; text-align:left; z-index:2
 }
 tbody td{
-  padding:7px 9px; border-bottom:1px solid var(--sep);
-  vertical-align:top; text-align:left; font-weight:800;
-  overflow:hidden; /* verhindert Überschneidung */
+  padding:8px 9px; border-bottom:1px solid var(--row-sep); vertical-align:top; text-align:left; 
+  font-weight:700; overflow:hidden; /* verhindert Überlappung */
 }
-tbody tr{ background:#fff; box-shadow:inset 3px 0 0 #e5ebf5 }
-tbody tr:nth-child(even){ background:#fafcff; box-shadow:inset 3px 0 0 #dfe6f2 }
-tbody tr:hover{ background:#f3f6fb }
+tbody tr{ background:var(--row-a); box-shadow: inset 4px 0 0 var(--row-a-left); transition:background .12s}
+tbody tr:nth-child(even){ background:var(--row-b); box-shadow: inset 4px 0 0 var(--row-b-left) }
+tbody tr:hover{ background:var(--row-hover) }
 
-/* Two-line cells */
-.cell{display:flex; flex-direction:column; gap:2px; min-height:34px; width:100%}
+.cell{display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-height:34px; width:100%}
 .cell-top,.cell-sub{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
-/* ID chips (CSB/SAP) */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
-  background:var(--pill-yellow-bg); color:var(--pill-yellow-tx);
-  border:1px solid var(--pill-yellow-bd); border-radius:var(--radius-pill); padding:3px 8px;
+  background:var(--pill-yellow); color:var(--pill-yellow-text);
+  border:1px solid var(--pill-yellow-border); border-radius:999px; padding:3px 8px;
   font-weight:900; font-size:var(--fs-11); text-decoration:none; line-height:1; letter-spacing:.2px
 }
 a.id-chip .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:700}
-a.id-chip:hover{filter:brightness(.98)}
-.id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
+a.id-chip:hover{filter:brightness(0.98)}
+.id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.9}
 
-/* Key (green outline) */
 .badge-key{
-  display:inline-block; background:var(--pill-green-bg); border:1px solid var(--pill-green-bd);
-  color:var(--pill-green-tx); border-radius:var(--radius-pill); padding:3px 8px;
-  font-weight:900; font-size:var(--fs-11); line-height:1;
+  background:var(--pill-green); border:1px solid var(--pill-green-border); color:var(--pill-green-text);
+  border-radius:999px; padding:3px 8px; font-weight:900; font-size:var(--fs-11);
 }
 
-/* Tours (red outline) */
+/* Tour-Pills */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
-  display:inline-block; background:var(--pill-red-bg); border:1px solid var(--pill-red-bd); color:var(--pill-red-tx);
-  padding:3px 8px; border-radius:var(--radius-pill); font-weight:900; font-size:var(--fs-10); cursor:pointer; line-height:1.25; letter-spacing:.15px
+  display:inline-block; background:var(--pill-red); border:1px solid var(--pill-red-border); color:var(--pill-red-text);
+  padding:3px 8px; border-radius:999px; font-weight:900; font-size:var(--fs-10); cursor:pointer; line-height:1.25; letter-spacing:.15px
 }
-.tour-btn:hover{filter:brightness(.98)}
+.tour-btn:hover{filter:brightness(0.98)}
 
-/* Phones */
+/* Telefone */
 .phone-line{display:flex; flex-wrap:wrap; gap:6px}
 a.phone-chip{
-  display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
-  padding:3px 8px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer; letter-spacing:.15px
+  display:inline-flex; align-items:center; gap:6px;
+  border-radius:999px; padding:3px 8px; font-weight:900; font-size:var(--fs-11); line-height:1;
+  text-decoration:none; cursor:pointer; letter-spacing:.15px
 }
 a.phone-chip .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:700}
 a.phone-chip.chip-fb{background:var(--chip-fb-bg); color:var(--chip-fb-tx); border:1px solid var(--chip-fb-bd)}
-a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); border:1px solid var(--chip-mk-bd)}
-a.phone-chip:hover{filter:brightness(.98)}
-.chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
+a.phone-chip.chip-market{background:var(--chip-market-bg); color:var(--chip-market-tx); border:1px solid var(--chip-market-bd)}
+a.phone-chip:hover{filter:brightness(0.98)}
+.chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.9}
 
-/* Map button */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
   padding:6px 10px; border-radius:5px; border:1px solid var(--accent);
   background:var(--accent); color:#fff; display:inline-block; text-align:center; letter-spacing:.2px
 }
-.table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
+.table-map:hover{background:var(--accent-strong); border-color:var(--accent-strong)}
 </style>
 </head>
 <body>
@@ -180,44 +172,46 @@ a.phone-chip:hover{filter:brightness(.98)}
         <button class="btn btn-danger" id="btnReset">Zurücksetzen</button>
       </div>
 
-      <div class="tour-wrap" id="tourWrap">
-        <div class="tour-banner">
-          <span id="tourTitle"></span>
-          <small id="tourExtra"></small>
+      <div class="content">
+        <div class="tour-wrap" id="tourWrap">
+          <div class="tour-banner">
+            <span id="tourTitle"></span>
+            <small id="tourExtra"></small>
+          </div>
         </div>
-      </div>
 
-      <div class="table-section">
-        <table id="resultTable" style="display:none;">
-          <colgroup>
-            <col style="width:160px">
-            <col style="width:320px">
-            <col style="width:180px">
-            <col style="width:230px">
-            <col style="width:120px">
-            <col style="width:260px">
-            <col style="width:110px">
-          </colgroup>
-          <thead>
-          <tr>
-            <th>CSB / SAP</th>
-            <th>Name / Straße</th>
-            <th>PLZ / Ort</th>
-            <th>Touren</th>
-            <th>Schlüssel</th>
-            <th>Fachberater / Markttelefon</th>
-            <th>Aktion</th>
-          </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
+        <div class="table-section">
+          <table id="resultTable" style="display:none;">
+            <colgroup>
+              <col style="width:160px">
+              <col style="width:320px">
+              <col style="width:180px">
+              <col style="width:230px">
+              <col style="width:120px">
+              <col style="width:260px">
+              <col style="width:110px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>CSB / SAP</th>
+                <th>Name / Straße</th>
+                <th>PLZ / Ort</th>
+                <th>Touren</th>
+                <th>Schlüssel</th>
+                <th>Fachberater / Markttelefon</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
 
 <script>
-/* ==== Daten (werden von Python ersetzt) ==== */
 const tourkundenData   = {  };
 const keyIndex         = {  };
 const beraterIndex     = {  };
@@ -230,13 +224,15 @@ let allCustomers = [];
 let prevQuery = null;
 const DIAL_SCHEME = 'callto';
 
-/* Utils */
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
-function makePhoneChip(label, num, cls){
+function makePhoneChip(label, num, extraClass){
+  const clean = sanitizePhone(num);
   const a = document.createElement('a');
-  a.className = 'phone-chip '+cls;
-  a.href = `${DIAL_SCHEME}:${sanitizePhone(num)}`;
-  a.append(el('span','chip-tag',label), el('span','mono',' '+num));
+  a.className = 'phone-chip ' + extraClass;
+  a.href = `${DIAL_SCHEME}:${clean}`;
+  const tag = el('span','chip-tag',label);
+  const mono = el('span','mono',' '+num);
+  a.append(tag, mono);
   return a;
 }
 function normDE(s){
@@ -249,58 +245,93 @@ function normDE(s){
 function normalizeDigits(v){
   if(v == null) return '';
   let s = String(v).trim().replace(/\\.0$/,'');
-  s = s.replace(/[^0-9]/g,'').replace(/^0+(\\d)/,'$1');
+  s = s.replace(/[^0-9]/g,'');
+  s = s.replace(/^0+(\\d)/,'$1');
   return s;
 }
 function normalizeNameKey(s){
   if(!s) return '';
-  let x = s.replace(/[\\u200B-\\u200D\\uFEFF]/g,'').replace(/\\u00A0/g,' ');
-  x = x.replace(/[–—]/g,'-').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
-  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/\\(.*?\\)/g,' ');
-  x = x.replace(/[./,;:+*_#|]/g,' ').replace(/-/g,' ').replace(/[^a-z\\s]/g,' ').replace(/\\s+/g,' ').trim();
+  let x = s;
+  x = x.replace(/[\\u200B-\\u200D\\uFEFF]/g, '');
+  x = x.replace(/\\u00A0/g,' ').replace(/[–—]/g,'-');
+  x = x.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+  x = x.replace(/\\(.*?\\)/g,' ');
+  x = x.replace(/[./,;:+*_#|]/g,' ').replace(/-/g,' ');
+  x = x.replace(/[^a-z\\s]/g,' ');
+  x = x.replace(/\\s+/g,' ').trim();
   return x;
 }
 function nameVariants(s){
-  const base = normalizeNameKey(s); if(!base) return [];
+  const base = normalizeNameKey(s);
+  if(!base) return [];
   const parts = base.split(' ').filter(Boolean);
   const out = new Set([base]);
-  if(parts.length >= 2){ const f=parts[0], l=parts[parts.length-1]; out.add(`${f} ${l}`); out.add(`${l} ${f}`); }
+  if(parts.length >= 2){
+    const first = parts[0], last = parts[parts.length-1];
+    out.add(`${first} ${last}`);
+    out.add(`${last} ${first}`);
+  }
   return Array.from(out);
 }
-function pickBeraterPhone(name){
-  if(!name) return '';
-  const variants = nameVariants(name);
-  for(const v of variants){ if(beraterIndex[v]) return beraterIndex[v]; }
+function pickBeraterPhone(fachberaterName){
+  if(!fachberaterName) return '';
+  const variants = nameVariants(fachberaterName);
+  for (const v of variants){ if (beraterIndex[v]) return beraterIndex[v]; }
   const keys = Object.keys(beraterIndex);
-  for(const v of variants){
+  for (const v of variants){
     const parts = v.split(' ').filter(Boolean);
-    for(const k of keys){ if(parts.every(p=>k.includes(p))) return beraterIndex[k]; }
+    for (const k of keys){ if (parts.every(p => k.includes(p))) return beraterIndex[k]; }
+  }
+  for (const v of variants){
+    const parts = v.split(' ').filter(Boolean);
+    if (!parts.length) continue;
+    const last = parts[parts.length-1];
+    const hits = keys.filter(k => k.includes(last));
+    if (hits.length === 1) return beraterIndex[hits[0]];
+  }
+  for (const v of variants){
+    const parts = v.split(' ').filter(Boolean);
+    if (!parts.length) continue;
+    const first = parts[0];
+    const hits = keys.filter(k => k.includes(first));
+    if (hits.length === 1) return beraterIndex[hits[0]];
   }
   return '';
 }
+
 function dedupByCSB(list){
-  const seen=new Set(), out=[];
-  for(const k of list){ const csb=normalizeDigits(k.csb_nummer); if(!seen.has(csb)){ seen.add(csb); out.push(k); } }
+  const seen = new Set(); const out = [];
+  for (const k of list){
+    const key = normalizeDigits(k.csb_nummer);
+    if (!seen.has(key)){ seen.add(key); out.push(k); }
+  }
   return out;
 }
-
-/* Build dataset */
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
     const tourN = normalizeDigits(tour);
     list.forEach(k=>{
-      const csb = normalizeDigits(k.csb_nummer); if(!csb) return;
+      const csb = normalizeDigits(k.csb_nummer);
+      if(!csb) return;
+
       if(!map.has(csb)){
         const rec = {...k};
         rec.csb_nummer   = csb;
         rec.sap_nummer   = normalizeDigits(rec.sap_nummer);
         rec.postleitzahl = normalizeDigits(rec.postleitzahl);
-        rec.touren = [];
-        rec.schluessel  = normalizeDigits(rec.schluessel) || (keyIndex[csb]||'');
-        if (beraterCSBIndex[csb] && beraterCSBIndex[csb].name){ rec.fachberater = beraterCSBIndex[csb].name; }
+        rec.touren       = [];
+
+        const keyFromIndex = keyIndex[csb] || "";
+        rec.schluessel   = normalizeDigits(rec.schluessel) || keyFromIndex;
+
+        if (beraterCSBIndex[csb] && beraterCSBIndex[csb].name){
+          rec.fachberater = beraterCSBIndex[csb].name;
+        }
         rec.fb_phone     = rec.fachberater ? pickBeraterPhone(rec.fachberater) : '';
         rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
+
         map.set(csb, rec);
       }
       map.get(csb).touren.push({ tournummer: tourN, liefertag: k.liefertag });
@@ -309,100 +340,192 @@ function buildData(){
   allCustomers = Array.from(map.values());
 }
 
-/* UI helpers */
-function pushPrevQuery(){ const v=$('#smartSearch').value.trim(); if(v){ prevQuery=v; $('#btnBack').style.display='inline-block'; } }
-function popPrevQuery(){ if(prevQuery){ $('#smartSearch').value=prevQuery; prevQuery=null; $('#btnBack').style.display='none'; onSmart(); } }
-function makeIdChip(label, value){
-  const a=document.createElement('a'); a.className='id-chip'; a.href='javascript:void(0)';
-  a.addEventListener('click',()=>{ pushPrevQuery(); $('#smartSearch').value=value; onSmart(); });
-  a.append(el('span','id-tag',label), el('span','mono',' '+value)); return a;
+function pushPrevQuery(){
+  const val = $('#smartSearch').value.trim();
+  if (val){ prevQuery = val; $('#btnBack').style.display = 'inline-block'; }
 }
-function twoLineCell(top, sub){ const w=el('div','cell'); w.append(el('div','cell-top',top), el('div','cell-sub',sub)); return w; }
+function popPrevQuery(){
+  if (prevQuery){
+    $('#smartSearch').value = prevQuery;
+    prevQuery = null; $('#btnBack').style.display='none'; onSmart();
+  }
+}
 
-/* Row */
+function makeIdChip(label, value){
+  const a = document.createElement('a');
+  a.className = 'id-chip';
+  a.href = 'javascript:void(0)';
+  a.addEventListener('click', ()=>{
+    pushPrevQuery();
+    const input = $('#smartSearch');
+    input.value = value;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  const tag = el('span','id-tag', label);
+  const mono = el('span','mono', ' '+value);
+  a.append(tag, mono);
+  return a;
+}
+function twoLineCell(top, sub){
+  const wrap = el('div','cell');
+  const a = el('div','cell-top', top);
+  const b = el('div','cell-sub', sub);
+  wrap.append(a,b);
+  return wrap;
+}
+
+/* === Tabellenzeile === */
 function rowFor(k){
   const tr = document.createElement('tr');
-  const csb = k.csb_nummer||'-', sap=k.sap_nummer||'-', plz=k.postleitzahl||'-';
+  const csb = (k.csb_nummer||'-');
+  const sap = (k.sap_nummer||'-');
+  const plz = (k.postleitzahl||'-');
 
   // CSB / SAP
   const td1 = document.createElement('td');
-  const c1 = el('div','cell');
-  const l1 = el('div','cell-top'); l1.appendChild(makeIdChip('CSB', csb));
-  const l2 = el('div','cell-sub'); l2.appendChild(makeIdChip('SAP', sap));
-  c1.append(l1,l2); td1.append(c1); tr.append(td1);
+  const t1 = el('div','cell');
+  const top1 = el('div','cell-top'); top1.appendChild(makeIdChip('CSB', csb));
+  const sub1 = el('div','cell-sub'); sub1.appendChild(makeIdChip('SAP', sap));
+  t1.append(top1, sub1); td1.appendChild(t1); tr.appendChild(td1);
 
   // Name / Straße
-  const td2 = document.createElement('td'); td2.appendChild(twoLineCell(k.name||'-', k.strasse||'-')); tr.append(td2);
+  const td2 = document.createElement('td');
+  td2.appendChild(twoLineCell(k.name || '-', k.strasse || '-'));
+  tr.appendChild(td2);
 
   // PLZ / Ort
-  const td3 = document.createElement('td'); td3.appendChild(twoLineCell(plz, k.ort||'-')); tr.append(td3);
+  const td3 = document.createElement('td');
+  td3.appendChild(twoLineCell(plz, k.ort || '-'));
+  tr.appendChild(td3);
 
-  // Touren
-  const td4 = document.createElement('td'); const c4 = el('div','cell'); const tours=el('div','tour-inline');
-  (k.touren||[]).forEach(t=>{ const tnum=(t.tournummer||''); const b=el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')'); b.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value=tnum; onSmart(); }; tours.appendChild(b); });
-  c4.appendChild(tours); td4.appendChild(c4); tr.append(td4);
+  // Touren (eigene Spalte)
+  const tdTours = document.createElement('td');
+  const wrapTours = el('div','cell');
+  const tours = el('div','tour-inline');
+  (k.touren||[]).forEach(t=>{
+    const tnum = (t.tournummer||'');
+    const tb = el('span','tour-btn', tnum+' ('+t.liefertag.substring(0,2)+')');
+    tb.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value = tnum; onSmart(); };
+    tours.appendChild(tb);
+  });
+  wrapTours.appendChild(tours);
+  tdTours.appendChild(wrapTours);
+  tr.appendChild(tdTours);
 
-  // Schlüssel
-  const td5 = document.createElement('td'); const c5=el('div','cell'); const key=(k.schluessel||'')||(keyIndex[csb]||'');
-  c5.appendChild(el('div','cell-top', key?(''+el('span','').outerHTML):'')); if(key){ const s=el('span','badge-key',key); const wrap=el('div'); wrap.appendChild(s); c5.innerHTML=''; c5.appendChild(wrap); } else { c5.innerHTML='-'; }
-  td5.appendChild(c5); tr.append(td5);
+  // Schlüssel (eigene Spalte)
+  const tdKey = document.createElement('td');
+  const wrap4 = el('div','cell');
+  const keyDisp = (k.schluessel||'') || (keyIndex[csb]||'');
+  if(keyDisp){ wrap4.appendChild(el('div','cell-top badge-key', keyDisp)); }
+  else { wrap4.appendChild(el('div','cell-top','-')); }
+  tdKey.appendChild(wrap4);
+  tr.appendChild(tdKey);
 
   // Fachberater / Markttelefon
-  const td6=document.createElement('td'); const top6=el('div','cell-top', k.fachberater||'-'); const sub6=el('div','cell-sub phone-line');
-  if(k.fb_phone) sub6.appendChild(makePhoneChip('FB', k.fb_phone, 'chip-fb'));
-  if(k.market_phone) sub6.appendChild(makePhoneChip('Markt', k.market_phone, 'chip-market'));
-  if(!k.fb_phone && !k.market_phone) sub6.textContent='-';
-  const c6=el('div','cell'); c6.append(top6,sub6); td6.appendChild(c6); tr.append(td6);
+  const td5 = document.createElement('td');
+  const top5 = el('div','cell-top', k.fachberater || '-');
+  const sub5 = el('div','cell-sub phone-line');
+  if (k.fb_phone){     sub5.appendChild(makePhoneChip('FB', k.fb_phone, 'chip-fb')); }
+  if (k.market_phone){ sub5.appendChild(makePhoneChip('Markt', k.market_phone, 'chip-market')); }
+  if (!k.fb_phone && !k.market_phone){ sub5.textContent='-'; }
+  const wrap5 = el('div','cell'); wrap5.append(top5, sub5);
+  td5.appendChild(wrap5); tr.appendChild(td5);
 
   // Aktion
-  const td7=document.createElement('td'); const a=document.createElement('a'); a.className='table-map'; a.textContent='Map';
+  const td6 = document.createElement('td');
+  const sub6 = el('div','cell-sub');
+  const a = document.createElement('a');
+  a.className='table-map'; a.textContent='Map';
   a.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); a.target='_blank';
-  const c7=el('div','cell'); c7.append(el('div','cell-top',''), el('div','cell-sub','')); c7.lastChild.appendChild(a); td7.appendChild(c7); tr.append(td7);
+  sub6.appendChild(a);
+  const wrap6 = el('div','cell'); wrap6.append(el('div','cell-top',''), sub6);
+  td6.appendChild(wrap6); tr.appendChild(td6);
 
   return tr;
 }
+
 function renderTable(list){
-  const body=$('#tableBody'), tbl=$('#resultTable'); body.innerHTML='';
-  if(list.length){ list.forEach(k=>body.appendChild(rowFor(k))); tbl.style.display='table'; } else { tbl.style.display='none'; }
+  const body = $('#tableBody');
+  const table = $('#resultTable');
+  body.innerHTML='';
+  if(list.length){
+    list.forEach(k=> body.appendChild(rowFor(k)));
+    table.style.display='table';
+  } else {
+    table.style.display='none';
+  }
 }
 
-/* Tour-Banner */
 function renderTourTop(list, query, isExact){
-  const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
+  const wrap = $('#tourWrap'), title = $('#tourTitle'), extra = $('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
-  if(query.startsWith('Schluessel ')){ const key=query.replace(/^Schluessel\\s+/, ''); title.textContent='Schlüssel '+key+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden'); }
-  else{ title.textContent=(isExact?('Tour '+query):('Tour-Prefix '+query+'*'))+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden'); }
-  const dayCount={}; list.forEach(k=>(k.touren||[]).forEach(t=>{ const tnum=t.tournummer||''; const cond=isExact?(tnum===query):tnum.startsWith(query.replace('Schluessel ','')); if(cond||query.startsWith('Schluessel ')){ dayCount[t.liefertag]=(dayCount[t.liefertag]||0)+1; }}));
-  extra.textContent=Object.entries(dayCount).sort().map(([d,c])=>d+': '+c).join('  •  ');
+  if (query.startsWith('Schluessel ')) {
+    const key = query.replace(/^Schluessel\\s+/, '');
+    title.textContent = 'Schlüssel ' + key + ' — ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
+  } else {
+    title.textContent = (isExact?('Tour '+query):('Tour-Prefix '+query+'*')) + ' — ' + list.length + ' ' + (list.length===1?'Kunde':'Kunden');
+  }
+  const dayCount = {};
+  list.forEach(k => (k.touren||[]).forEach(t=>{
+    const tnum = (t.tournummer||'');
+    const cond = isExact ? (tnum === query) : tnum.startsWith(query.replace('Schluessel ',''));
+    if(cond || query.startsWith('Schluessel ')){ dayCount[t.liefertag] = (dayCount[t.liefertag]||0)+1; }
+  }));
+  extra.textContent = Object.entries(dayCount).sort().map(([d,c])=> d + ': ' + c).join('  •  ');
   wrap.style.display='block';
 }
 function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourTitle').textContent=''; $('#tourExtra').textContent=''; }
 
-/* Suche */
 function onSmart(){
-  const qRaw=$('#smartSearch').value.trim(); closeTourTop(); if(!qRaw){ renderTable([]); return; }
-  if(/^\\d{1,3}$/.test(qRaw)){ const n=qRaw.replace(/^0+(\\d)/,'$1'); const r=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'').startsWith(n))); renderTourTop(r,n,false); renderTable(r); return; }
-  if(/^\\d{4}$/.test(qRaw)){
-    const n=qRaw.replace(/^0+(\\d)/,'$1'); const tr=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'')===n)); const cr=allCustomers.filter(k=>(k.csb_nummer||'')===n); const r=dedupByCSB([...tr,...cr]);
-    if(tr.length) renderTourTop(tr,n,true); else closeTourTop(); renderTable(r); return;
+  const qRaw = $('#smartSearch').value.trim();
+  closeTourTop();
+  if(!qRaw){ renderTable([]); return; }
+
+  if (/^\\d{1,3}$/.test(qRaw)){
+    const qN = qRaw.replace(/^0+(\\d)/,'$1');
+    const results = allCustomers.filter(k => (k.touren||[]).some(t => (t.tournummer||'').startsWith(qN)));
+    renderTourTop(results, qN, false); renderTable(results); return;
   }
-  const q=normDE(qRaw);
-  const r=allCustomers.filter(k=>{ const fb=k.fachberater||''; const text=(k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||'')); return normDE(text).includes(q); });
-  renderTable(r);
+  if (/^\\d{4}$/.test(qRaw)){
+    const qN = qRaw.replace(/^0+(\\d)/,'$1');
+    const tourResults = allCustomers.filter(k => (k.touren||[]).some(t => (t.tournummer||'') === qN));
+    const csbResults  = allCustomers.filter(k => (k.csb_nummer||'') === qN);
+    const results = dedupByCSB([...tourResults, ...csbResults]);
+    if (tourResults.length) renderTourTop(tourResults, qN, true); else closeTourTop();
+    renderTable(results); return;
+  }
+  const qN = normDE(qRaw);
+  const results = allCustomers.filter(k=>{
+    const fb = k.fachberater || '';
+    const text = (k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||''));
+    return normDE(text).includes(qN);
+  });
+  renderTable(results);
 }
 function onKey(){
-  const q=$('#keySearch').value.trim(); closeTourTop(); if(!q){ renderTable([]); return; }
-  const n=q.replace(/[^0-9]/g,'').replace(/^0+(\\d)/,'$1'); const r=[]; for(const k of allCustomers){ const key=(k.schluessel||'')||(keyIndex[k.csb_nummer]||''); if(key===n) r.push(k); }
-  if(r.length) renderTourTop(r,'Schluessel '+n,true); renderTable(r);
+  const q = $('#keySearch').value.trim();
+  closeTourTop();
+  if(!q){ renderTable([]); return; }
+  const qClean = q.replace(/[^0-9]/g,'').replace(/^0+(\\d)/,'$1');
+  const matches = [];
+  for (const k of allCustomers){
+    const keyForRow = (k.schluessel||'') || (keyIndex[k.csb_nummer]||'');
+    if (keyForRow === qClean) matches.push(k);
+  }
+  if(matches.length){ renderTourTop(matches, 'Schluessel ' + qClean, true); }
+  renderTable(matches);
 }
-function debounce(fn,d=140){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
+function debounce(fn, d=140){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
 
 document.addEventListener('DOMContentLoaded', ()=>{
-  if(Object.keys(tourkundenData).length>0){ buildData(); }
-  $('#smartSearch').addEventListener('input', debounce(onSmart,140));
-  $('#keySearch').addEventListener('input', debounce(onKey,140));
-  $('#btnReset').addEventListener('click', ()=>{ $('#smartSearch').value=''; $('#keySearch').value=''; closeTourTop(); renderTable([]); prevQuery=null; $('#btnBack').style.display='none'; });
-  $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
+  if(typeof tourkundenData!=='undefined' && Object.keys(tourkundenData).length > 0){ buildData(); }
+  document.getElementById('smartSearch').addEventListener('input', debounce(onSmart, 140));
+  document.getElementById('keySearch').addEventListener('input', debounce(onKey, 140));
+  document.getElementById('btnReset').addEventListener('click', ()=>{
+    document.getElementById('smartSearch').value=''; document.getElementById('keySearch').value='';
+    closeTourTop(); renderTable([]); prevQuery=null; document.getElementById('btnBack').style.display='none';
+  });
+  document.getElementById('btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
 });
 </script>
 </body>
@@ -410,8 +533,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
 """
 
 # ===== Streamlit UI =====
-st.title("Kunden-Suchseite – Tech Minimal")
-st.caption("Dezente, technische Optik • Tour-Pills separat • Schlüssel grün • Telefon-Pills klickbar (callto:) • feste Spaltenbreiten & Ellipsizing.")
+
+st.title("Kunden-Suchseite – Tech Look")
+st.caption("Tour-Pills eigene Spalte, Schlüssel grün, Telefon-Pills klickbar (callto:). Fixe Spaltenbreiten & Ellipsizing (kein Überlappen).")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -422,21 +546,25 @@ with c3:
     logo_file = st.file_uploader("Logo (PNG/JPG)", type=["png","jpg","jpeg"])
 
 berater_file = st.file_uploader("OPTIONAL: Fachberater-Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
-berater_csb_file = st.file_uploader("Fachberater–CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt)", type=["xlsx"])
+berater_csb_file = st.file_uploader("Fachberater-CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt)", type=["xlsx"])
 
 def normalize_digits_py(v) -> str:
-    if pd.isna(v): return ""
-    s = str(v).strip().replace(".0","")
+    if pd.isna(v):
+        return ""
+    s = str(v).strip().replace(".0", "")
     s = "".join(ch for ch in s if ch.isdigit())
-    if not s: return ""
+    if not s:
+        return ""
     s = s.lstrip("0")
     return s if s else "0"
 
 def norm_de_py(s: str) -> str:
-    if not s: return ""
-    x = s.replace("\u200b","").replace("\u200c","").replace("\u200d","").replace("\ufeff","")
-    x = x.replace("\u00A0"," ").replace("–","-").replace("—","-").lower()
-    x = x.replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
+    if not s:
+        return ""
+    x = s
+    x = x.replace("\u200b","").replace("\u200c","").replace("\u200d","").replace("\ufeff","")
+    x = x.replace("\u00A0", " ").replace("–","-").replace("—","-")
+    x = x.lower().replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
     x = unicodedata.normalize("NFD", x)
     x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
     x = re.sub(r"\(.*?\)", " ", x)
@@ -451,36 +579,38 @@ def build_key_map(df: pd.DataFrame) -> dict:
         st.warning("Schlüsseldatei hat < 6 Spalten – nehme letzte vorhandene Spalte als Schlüssel.")
     csb_col = 0
     key_col = 5 if df.shape[1] > 5 else df.shape[1] - 1
-    out = {}
+    mapping = {}
     for _, row in df.iterrows():
         csb = normalize_digits_py(row.iloc[csb_col] if df.shape[1] > 0 else "")
         key = normalize_digits_py(row.iloc[key_col] if df.shape[1] > 0 else "")
-        if csb: out[csb] = key
-    return out
+        if csb:
+            mapping[csb] = key
+    return mapping
 
 def build_berater_map(df: pd.DataFrame) -> dict:
-    out = {}
+    mapping = {}
     for _, row in df.iterrows():
         v = ("" if df.shape[1] < 1 or pd.isna(row.iloc[0]) else str(row.iloc[0])).strip()
         n = ("" if df.shape[1] < 2 or pd.isna(row.iloc[1]) else str(row.iloc[1])).strip()
         t = ("" if df.shape[1] < 3 or pd.isna(row.iloc[2]) else str(row.iloc[2])).strip()
-        if not t: continue
-        k1 = norm_de_py(f"{v} {n}")
-        k2 = norm_de_py(f"{n} {v}")
-        for k in {k1, k2}:
-            if k and k not in out:
-                out[k] = t
-    return out
+        if not t:
+            continue
+        full1 = norm_de_py(f"{v} {n}")
+        full2 = norm_de_py(f"{n} {v}")
+        for key in {full1, full2}:
+            if key and key not in mapping:
+                mapping[key] = t
+    return mapping
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
-    out = {}
+    mapping = {}
     for _, row in df.iterrows():
         fach = str(row.iloc[0]).strip() if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
         csb  = normalize_digits_py(row.iloc[8]) if df.shape[1] > 8 and not pd.isna(row.iloc[8]) else ""
         tel  = str(row.iloc[14]).strip() if df.shape[1] > 14 and not pd.isna(row.iloc[14]) else ""
         if csb:
-            out[csb] = {"name": fach, "telefon": tel}
-    return out
+            mapping[csb] = {"name": fach, "telefon": tel}
+    return mapping
 
 def to_data_url(file) -> str:
     mime = file.type or ("image/png" if file.name.lower().endswith(".png") else "image/jpeg")
@@ -489,7 +619,7 @@ def to_data_url(file) -> str:
 if excel_file and key_file:
     if st.button("HTML erzeugen", type="primary"):
         if logo_file is None:
-            st.error("Bitte Logo (PNG/JPG) hochladen.")
+            st.error("Bitte ein Logo (PNG/JPG) hochladen.")
             st.stop()
         logo_data_url = to_data_url(logo_file)
 
@@ -510,15 +640,15 @@ if excel_file and key_file:
 
             berater_map = {}
             if berater_file is not None:
-                with st.spinner("Lese Fachberater-Telefonliste..."):
+                with st.spinner("Lese Fachberater-Telefonliste (ohne Header)..."):
                     berater_file.seek(0)
                     bf = pd.read_excel(berater_file, sheet_name=0, header=None)
-                    bf = bf.rename(columns={0:"Vorname",1:"Nachname",2:"Nummer"}).dropna(how="all")
+                    bf = bf.rename(columns={0: "Vorname", 1: "Nachname", 2: "Nummer"}).dropna(how="all")
                     berater_map = build_berater_map(bf)
 
             berater_csb_map = {}
             if berater_csb_file is not None:
-                with st.spinner("Lese Fachberater–CSB-Zuordnung..."):
+                with st.spinner("Lese Fachberater-CSB-Zuordnung..."):
                     try:
                         bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=0)
                     except Exception:
@@ -542,6 +672,7 @@ if excel_file and key_file:
                         entry["postleitzahl"] = normalize_digits_py(entry.get("postleitzahl", ""))
                         entry["schluessel"]   = key_map.get(csb_clean, "")
                         entry["liefertag"]    = tag
+
                         if csb_clean and csb_clean in berater_csb_map and berater_csb_map[csb_clean].get("name"):
                             entry["fachberater"] = berater_csb_map[csb_clean]["name"]
 
@@ -562,17 +693,17 @@ if excel_file and key_file:
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0]) if str(kv[0]).isdigit() else 0))
 
             final_html = (HTML_TEMPLATE
-              .replace("const tourkundenData   = {  }", f"const tourkundenData   = {json.dumps(sorted_tours, ensure_ascii=False)}")
-              .replace("const keyIndex         = {  }", f"const keyIndex         = {json.dumps(key_map, ensure_ascii=False)}")
-              .replace("const beraterIndex     = {  }", f"const beraterIndex     = {json.dumps(berater_map, ensure_ascii=False)}")
-              .replace("const beraterCSBIndex  = {  }", f"const beraterCSBIndex  = {json.dumps(berater_csb_map, ensure_ascii=False)}")
-              .replace("__LOGO_DATA_URL__", logo_data_url)
+                .replace("const tourkundenData   = {  }", f"const tourkundenData   = {json.dumps(sorted_tours, ensure_ascii=False)}")
+                .replace("const keyIndex         = {  }", f"const keyIndex         = {json.dumps(key_map, ensure_ascii=False)}")
+                .replace("const beraterIndex     = {  }", f"const beraterIndex     = {json.dumps(berater_map, ensure_ascii=False)}")
+                .replace("const beraterCSBIndex  = {  }", f"const beraterCSBIndex  = {json.dumps(berater_csb_map, ensure_ascii=False)}")
+                .replace("__LOGO_DATA_URL__", logo_data_url)
             )
 
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_tech_minimal.html",
+                file_name="suche.html",
                 mime="text/html",
                 type="primary"
             )
