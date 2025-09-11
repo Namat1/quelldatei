@@ -5,13 +5,6 @@ import base64
 import unicodedata
 import re
 
-# =========================
-#  TECH-LOOK (kompakt) + TOUR ALS EIGENE SPALTE
-#  - Tour-Pills stehen jetzt NICHT mehr unter "Schlüssel", sondern in eigener Spalte "Touren"
-#  - Leicht kompaktere Paddings
-#  - Keine Inline-Scroller (Seite scrollt normal)
-#  - Alle bisherigen Features bleiben erhalten
-# =========================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -27,25 +20,21 @@ HTML_TEMPLATE = """
   --txt:#0f172a; --muted:#334155;
   --accent:#2563eb; --accent-strong:#1d4ed8;
 
-  /* Chips */
   --pill-yellow:#fff6cc; --pill-yellow-border:#f1d264; --pill-yellow-text:#55310b;
   --pill-green:#dff6e8; --pill-green-border:#8ee1b2; --pill-green-text:#085a3f;
   --pill-red:#ffe0e0;   --pill-red-border:#ffc8c8;   --pill-red-text:#6b1a1a;
 
-  /* Phone chips */
   --chip-fb-bg:#e6f3fb;     --chip-fb-bd:#98d7f5; --chip-fb-tx:#0b4a6b;
   --chip-market-bg:#ebe7fd; --chip-market-bd:#c9bdfa; --chip-market-tx:#342a8e;
 
-  /* Row accents */
-  --row-a:#ffffff;          --row-a-left:#dbe2ea;
-  --row-b:#f3f6fa;          --row-b-left:#cfd7e2;
-  --row-hover:#eef2f7;      --row-sep:#dfe5ed;
+  --row-a:#ffffff; --row-a-left:#dbe2ea;
+  --row-b:#f3f6fa; --row-b-left:#cfd7e2;
+  --row-hover:#eef2f7; --row-sep:#dfe5ed;
 
   --radius:6px;
-  --fs-10:10px; --fs-11:11px; --fs-12:12px; --fs-13:13px;
+  --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
 
-/* Global */
 *{box-sizing:border-box}
 html, body{margin:0; padding:0; min-height:100%; overflow:visible !important; background:var(--bg);}
 body{
@@ -54,12 +43,10 @@ body{
   letter-spacing:0.1px;
 }
 
-/* Frame */
 .page{min-height:100vh; display:flex; justify-content:center; padding:10px;}
 .container{width:100%; max-width:1400px;}
 .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);}
 
-/* Header */
 .header{
   padding:8px 10px; border-bottom:1px solid var(--line);
   display:flex; align-items:center; gap:10px; justify-content:center;
@@ -67,7 +54,6 @@ body{
 .brand-logo{height:44px; width:auto}
 .title{font-family:"Inter",system-ui; font-weight:900; font-size:13px; letter-spacing:.3px}
 
-/* Searchbar */
 .searchbar{
   padding:8px 10px; display:grid; grid-template-columns:1fr 260px auto auto; gap:8px; align-items:center;
   border-bottom:1px solid var(--line); background:var(--surface);
@@ -93,10 +79,8 @@ body{
 .btn-back{border-color:var(--accent); color:var(--accent-strong); background:#eef2ff;}
 .btn-back:hover{background:#e0e7ff}
 
-/* Content */
 .content{padding:10px;}
 
-/* Banner (Tour/Key) */
 .tour-wrap{display:none; margin-bottom:8px}
 .tour-banner{
   display:flex; align-items:center; justify-content:space-between;
@@ -104,58 +88,39 @@ body{
   background:#f0f3f8; color:#0f172a; font-weight:900; font-size:12px;
 }
 
-/* Tabelle (ohne internen Scroll) */
+/* Tabelle */
 .table-section{padding:4px 0}
 table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
   position:sticky; top:0; background:#f3f5f8; color:#0f172a; font-weight:900;
   border-bottom:1px solid var(--line-strong); padding:7px 9px; white-space:nowrap; text-align:left; z-index:2
 }
-tbody td{
-  padding:8px 9px; border-bottom:1px solid var(--row-sep);
-  vertical-align:top; text-align:left; font-weight:700
-}
+tbody td{padding:8px 9px; border-bottom:1px solid var(--row-sep); vertical-align:top; text-align:left; font-weight:700}
 
-/* Zeilen-Abgrenzung */
-tbody tr{
-  background:var(--row-a);
-  box-shadow: inset 4px 0 0 var(--row-a-left);
-  transition: background .12s ease;
-}
-tbody tr:nth-child(even){
-  background:var(--row-b);
-  box-shadow: inset 4px 0 0 var(--row-b-left);
-}
-tbody tr:hover{ background:var(--row-hover); }
+tbody tr{ background:var(--row-a); box-shadow: inset 4px 0 0 var(--row-a-left); transition:background .12s}
+tbody tr:nth-child(even){ background:var(--row-b); box-shadow: inset 4px 0 0 var(--row-b-left) }
+tbody tr:hover{ background:var(--row-hover) }
 
-/* 2-zeilig je Zelle */
 .cell{display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-height:34px}
 .cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
-/* kleine technische Label */
 .small-label{font-family:"Inter",system-ui; font-size:var(--fs-10); font-weight:900; color:#0f172a; letter-spacing:.35px; text-transform:uppercase}
 
-/* CSB/SAP – gelbe Chips, klickbar */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow); color:var(--pill-yellow-text);
-  border:1px solid var(--pill-yellow-border);
-  border-radius:999px; padding:3px 8px; font-weight:900; font-size:var(--fs-11);
-  text-decoration:none; line-height:1; letter-spacing:.2px
+  border:1px solid var(--pill-yellow-border); border-radius:999px; padding:3px 8px;
+  font-weight:900; font-size:var(--fs-11); text-decoration:none; line-height:1; letter-spacing:.2px
 }
 a.id-chip .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:700}
 a.id-chip:hover{filter:brightness(0.98)}
 .id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.9}
 
-/* Schlüssel – grüne Pill */
 .badge-key{
-  background:var(--pill-green);
-  border:1px solid var(--pill-green-border);
-  color:var(--pill-green-text);
+  background:var(--pill-green); border:1px solid var(--pill-green-border); color:var(--pill-green-text);
   border-radius:999px; padding:3px 8px; font-weight:900; font-size:var(--fs-11);
 }
 
-/* Tour-Pills – rot, Wrap */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-block; background:var(--pill-red); border:1px solid var(--pill-red-border); color:var(--pill-red-text);
@@ -163,7 +128,6 @@ a.id-chip:hover{filter:brightness(0.98)}
 }
 .tour-btn:hover{filter:brightness(0.98)}
 
-/* Phone-Chips – ProCall klickbar */
 .phone-line{display:flex; flex-wrap:wrap; gap:6px}
 a.phone-chip{
   display:inline-flex; align-items:center; gap:6px;
@@ -176,7 +140,6 @@ a.phone-chip.chip-market{background:var(--chip-market-bg); color:var(--chip-mark
 a.phone-chip:hover{filter:brightness(0.98)}
 .chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.9}
 
-/* Map Button */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
   padding:6px 10px; border-radius:5px; border:1px solid var(--accent);
@@ -222,8 +185,8 @@ a.phone-chip:hover{filter:brightness(0.98)}
                 <th>CSB / SAP</th>
                 <th>Name / Straße</th>
                 <th>PLZ / Ort</th>
+                <th>Touren</th>        <!-- Touren JETZT vor Schlüssel -->
                 <th>Schlüssel</th>
-                <th>Touren</th>
                 <th>Fachberater / Markttelefon</th>
                 <th>Aktion</th>
               </tr>
@@ -250,7 +213,6 @@ let allCustomers = [];
 let prevQuery = null;
 const DIAL_SCHEME = 'callto';
 
-/* Utils */
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
 function makePhoneChip(label, num, extraClass){
   const clean = sanitizePhone(num);
@@ -327,7 +289,6 @@ function pickBeraterPhone(fachberaterName){
   return '';
 }
 
-/* Datenaufbau */
 function dedupByCSB(list){
   const seen = new Set(); const out = [];
   for (const k of list){
@@ -368,7 +329,6 @@ function buildData(){
   allCustomers = Array.from(map.values());
 }
 
-/* Zurück-Mechanik */
 function pushPrevQuery(){
   const val = $('#smartSearch').value.trim();
   if (val){ prevQuery = val; $('#btnBack').style.display = 'inline-block'; }
@@ -380,7 +340,6 @@ function popPrevQuery(){
   }
 }
 
-/* UI Bausteine */
 function makeIdChip(label, value){
   const a = document.createElement('a');
   a.className = 'id-chip';
@@ -404,6 +363,7 @@ function twoLineCell(top, sub){
   return wrap;
 }
 
+/* === REIHENAUFBAU (Touren vor Schlüssel!) === */
 function rowFor(k){
   const tr = document.createElement('tr');
   const csb = (k.csb_nummer||'-');
@@ -427,17 +387,7 @@ function rowFor(k){
   td3.appendChild(twoLineCell(plz, k.ort || '-'));
   tr.appendChild(td3);
 
-  // Schlüssel (nur grüne Pill)
-  const td4 = document.createElement('td');
-  const wrap4 = el('div','cell');
-  wrap4.append(el('div','small-label','Schlüssel'));
-  const keyDisp = (k.schluessel||'') || (keyIndex[csb]||'');
-  if(keyDisp){ wrap4.appendChild(el('div','cell-top badge-key', keyDisp)); }
-  else { wrap4.appendChild(el('div','cell-top','-')); }
-  td4.appendChild(wrap4);
-  tr.appendChild(td4);
-
-  // Touren (eigene Spalte, rot)
+  // TOUR-SPALTE (rot) – EIGENE SPALTE
   const tdTours = document.createElement('td');
   const wrapTours = el('div','cell');
   wrapTours.append(el('div','small-label','Touren'));
@@ -451,6 +401,16 @@ function rowFor(k){
   wrapTours.appendChild(tours);
   tdTours.appendChild(wrapTours);
   tr.appendChild(tdTours);
+
+  // SCHLÜSSEL-SPALTE (grün) – DANACH
+  const tdKey = document.createElement('td');
+  const wrap4 = el('div','cell');
+  wrap4.append(el('div','small-label','Schlüssel'));
+  const keyDisp = (k.schluessel||'') || (keyIndex[csb]||'');
+  if(keyDisp){ wrap4.appendChild(el('div','cell-top badge-key', keyDisp)); }
+  else { wrap4.appendChild(el('div','cell-top','-')); }
+  tdKey.appendChild(wrap4);
+  tr.appendChild(tdKey);
 
   // Fachberater / Markttelefon
   const td5 = document.createElement('td');
@@ -487,7 +447,6 @@ function renderTable(list){
   }
 }
 
-/* Banner */
 function renderTourTop(list, query, isExact){
   const wrap = $('#tourWrap'), title = $('#tourTitle'), extra = $('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
@@ -508,7 +467,6 @@ function renderTourTop(list, query, isExact){
 }
 function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourTitle').textContent=''; $('#tourExtra').textContent=''; }
 
-/* Suche */
 function onSmart(){
   const qRaw = $('#smartSearch').value.trim();
   closeTourTop();
@@ -565,11 +523,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </html>
 """
 
-# =========================
-#  STREAMLIT APP (Python)
-# =========================
-st.title("Kunden-Suchseite – Tech Look (Touren eigenständige Spalte)")
-st.caption("Tour-Pills stehen eigenständig. Leicht kompakter. ProCall, Zurück-Button, 4-stellig = Tour/CSB, Umlautsuche, doppelte Schlüssel, keine Inline-Scroller.")
+st.title("Kunden-Suchseite – Tech Look (Touren eigene Spalte, vor Schlüssel)")
+st.caption("Tour-Pills stehen jetzt in einer eigenen Spalte *vor* „Schlüssel“. ProCall, Zurück-Button, 4-stellig = Tour/CSB, Umlautsuche, doppelte Schlüssel, kein Inline-Scroll.")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -582,7 +537,6 @@ with c3:
 berater_file = st.file_uploader("OPTIONAL: Fachberater Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
 berater_csb_file = st.file_uploader("Fachberater-CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt)", type=["xlsx"])
 
-# ---------- Helpers ----------
 def normalize_digits_py(v) -> str:
     if pd.isna(v):
         return ""
@@ -651,7 +605,6 @@ def to_data_url(file) -> str:
     mime = file.type or ("image/png" if file.name.lower().endswith(".png") else "image/jpeg")
     return f"data:{mime};base64," + base64.b64encode(file.read()).decode("utf-8")
 
-# ---------- Build HTML ----------
 if excel_file and key_file:
     if st.button("HTML erzeugen", type="primary"):
         if logo_file is None:
@@ -737,9 +690,9 @@ if excel_file and key_file:
             )
 
             st.download_button(
-                "Download HTML (Tech Look, Touren eigenständig)",
+                "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="suche_tech_tour_column.html",
+                file_name="suche_tech_tour_vor_key.html",
                 mime="text/html",
                 type="primary"
             )
