@@ -187,7 +187,7 @@ a.addr-chip{
     <div class="card">
       <div class="header">
         <img class="brand-logo" alt="Logo" src="__LOGO_DATA_URL__">
-        <div class="title">Kunden-Suche</div>
+       
       </div>
 
       <div class="searchbar">
