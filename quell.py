@@ -14,25 +14,20 @@ HTML_TEMPLATE = """
 <title>Kunden-Suche</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&family=Inter+Tight:wght@700;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
 <style>
-/* ===== Tech-Lab (heller Header, knallige Pills, starke Zeilentrennung) ===== */
 :root{
   --bg:#f3f6fb; --surface:#ffffff; --alt:#f9fbff;
   --grid:#cfd7e6; --grid-2:#bfc9dd; --head-grid:#b3bfd6;
   --txt:#0c1220; --muted:#293346;
-
   --accent:#2563eb; --accent-2:#1f4fd3;
 
-  /* Knalligere Outline-Pills */
   --pill-yellow-bg:#fff3b0; --pill-yellow-bd:#f59e0b; --pill-yellow-tx:#4a3001;
   --pill-green-bg:#d1fae5; --pill-green-bd:#10b981; --pill-green-tx:#065f46;
   --pill-red-bg:#ffe4e6;   --pill-red-bd:#fb7185;  --pill-red-tx:#7f1d1d;
 
-  /* Tel chips kräftiger */
   --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;
   --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;
 
-  --row-sep:#e6edff;  /* starke horizontale Trennlinien */
-
+  --row-sep:#e6edff;
   --radius:6px; --radius-pill:999px;
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
@@ -46,10 +41,10 @@ body{
 
 /* Frame */
 .page{min-height:100vh; display:flex; justify-content:center; padding:10px}
-.container{width:100%; max-width:1500px} /* etwas breiter für mehr Platz */
+.container{width:100%; max-width:1500px}
 .card{background:var(--surface); border:1px solid var(--grid); border-radius:8px; overflow:hidden}
 
-/* Heller Header (Logo sichtbar) */
+/* Header */
 .header{
   padding:10px 12px;
   background:linear-gradient(180deg,#ffffff 0%, #f4f7fe 100%);
@@ -73,8 +68,6 @@ body{
   font-size:var(--fs-12); font-weight:900;
 }
 .input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(37,99,235,.16)}
-
-/* Buttons */
 .btn{padding:7px 10px; border:1px solid var(--grid); background:#fff; color:#0f172a; border-radius:6px; cursor:pointer; font-weight:900; font-size:var(--fs-12)}
 .btn:hover{background:#f2f5f9}
 .btn-danger{border-color:#d7263d; background:#d7263d; color:#fff}
@@ -108,22 +101,17 @@ tbody td{
   background:#fff;
 }
 tbody td:last-child{border-right:none}
-
-/* Stärkere farbliche Abgrenzung je Kunde */
 tbody tr:nth-child(odd) td{background:#f8fbff}
 tbody tr:nth-child(even) td{background:#ffffff}
-/* dicker „Gutter“ zwischen den Zeilen */
 tbody tr+tr td{border-top:6px solid var(--row-sep)}
 tbody tr:hover td{background:#eef4ff}
 
-/* Zellen: zweizeilig, kein Überschneiden */
+/* Zellen */
 .cell{display:flex; flex-direction:column; gap:2px; min-height:36px; width:100%}
 .cell-top,.cell-sub{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-
-/* Monospace Zahlen */
 .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:700}
 
-/* ID-Chips (gelb, klickbar) */
+/* Chips */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow-bg); color:var(--pill-yellow-tx);
@@ -134,7 +122,6 @@ a.id-chip{
 a.id-chip:hover{filter:brightness(.97)}
 .id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
-/* Schlüssel (grün, separat) */
 .badge-key{
   display:inline-block; background:var(--pill-green-bg); border:1.5px solid var(--pill-green-bd);
   color:var(--pill-green-tx); border-radius:var(--radius-pill); padding:3px 9px;
@@ -142,7 +129,6 @@ a.id-chip:hover{filter:brightness(.97)}
   box-shadow:0 0 0 2px rgba(16,185,129,.12) inset;
 }
 
-/* Touren (rot, eigene Spalte) */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-block; background:var(--pill-red-bg); border:1.5px solid var(--pill-red-bd); color:var(--pill-red-tx);
@@ -151,7 +137,6 @@ a.id-chip:hover{filter:brightness(.97)}
 }
 .tour-btn:hover{filter:brightness(.97)}
 
-/* Telefon-Chips kräftig */
 .phone-line{display:flex; flex-wrap:wrap; gap:6px}
 a.phone-chip{
   display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
@@ -162,7 +147,6 @@ a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); 
 a.phone-chip:hover{filter:brightness(.97)}
 .chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
-/* Map Button */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
   padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
@@ -170,20 +154,16 @@ a.phone-chip:hover{filter:brightness(.97)}
 }
 .table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
 
-/* Adress-Pill (klickbar -> Google Maps) */
 a.addr-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:#eef4ff; color:#0c2a6b; border:1.5px solid #7aa2ff;
   border-radius:var(--radius-pill);
-  padding:2px 8px;               /* kompakter */
-  font-weight:900; font-size:var(--fs-10);  /* kleiner, damit nichts abschneidet */
+  padding:2px 8px;
+  font-weight:900; font-size:var(--fs-10);
   text-decoration:none; line-height:1;
 }
 a.addr-chip:hover{filter:brightness(.97)}
-.addr-dot{
-  width:7px; height:7px; border-radius:50%; background:#ff2c86; display:inline-block;
-  box-shadow:0 0 0 2px rgba(255,44,134,.18);
-}
+.addr-dot{ width:7px; height:7px; border-radius:50%; background:#ff2c86; display:inline-block; box-shadow:0 0 0 2px rgba(255,44,134,.18); }
 .addr-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px}
 </style>
 </head>
@@ -219,19 +199,17 @@ a.addr-chip:hover{filter:brightness(.97)}
       <div class="table-section">
         <table id="resultTable" style="display:none;">
           <colgroup>
-            <col style="width:180px">
-            <col style="width:440px">  <!-- breiter, damit die Adresse-Pill nicht abgeschnitten wird -->
-            <col style="width:200px">  <!-- etwas schmaler kompensiert -->
-            <col style="width:280px">
-            <col style="width:120px">
-            <col style="width:270px">
-            <col style="width:110px">
+            <col style="width:180px">   <!-- CSB/SAP -->
+            <col style="width:640px">   <!-- Name / Straße + Adress-Pill (mehr Platz, da PLZ/Ort-Spalte entfällt) -->
+            <col style="width:280px">   <!-- Touren -->
+            <col style="width:120px">   <!-- Schlüssel -->
+            <col style="width:270px">   <!-- Fachberater / Markttelefon -->
+            <col style="width:110px">   <!-- Aktion -->
           </colgroup>
           <thead>
             <tr>
               <th>CSB / SAP</th>
               <th>Name / Straße</th>
-              <th>PLZ / Ort</th>
               <th>Touren</th>
               <th>Schlüssel</th>
               <th>Fachberater / Markttelefon</th>
@@ -246,7 +224,6 @@ a.addr-chip:hover{filter:brightness(.97)}
 </div>
 
 <script>
-/* ===== Daten (von Python ersetzt) ===== */
 const tourkundenData   = {  };
 const keyIndex         = {  };
 const beraterIndex     = {  };
@@ -259,7 +236,6 @@ let allCustomers = [];
 let prevQuery = null;
 const DIAL_SCHEME = 'callto';
 
-/* Utils */
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
 function makePhoneChip(label, num, cls){
   const a = document.createElement('a');
@@ -313,7 +289,6 @@ function dedupByCSB(list){
   return out;
 }
 
-/* Build data */
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
@@ -338,11 +313,9 @@ function buildData(){
   allCustomers = Array.from(map.values());
 }
 
-/* Navigation for "Zurück zur Suche" */
 function pushPrevQuery(){ const v=$('#smartSearch').value.trim(); if(v){ prevQuery=v; $('#btnBack').style.display='inline-block'; } }
 function popPrevQuery(){ if(prevQuery){ $('#smartSearch').value=prevQuery; prevQuery=null; $('#btnBack').style.display='none'; onSmart(); } }
 
-/* UI builders */
 function makeIdChip(label, value){
   const a=document.createElement('a'); a.className='id-chip'; a.href='javascript:void(0)'; a.title=label+' '+value+' suchen';
   a.addEventListener('click',()=>{ pushPrevQuery(); $('#smartSearch').value=value; onSmart(); });
@@ -350,49 +323,40 @@ function makeIdChip(label, value){
 }
 function twoLineCell(top, sub){ const w=el('div','cell'); w.append(el('div','cell-top',top), el('div','cell-sub',sub)); return w; }
 
-/* Row rendering */
 function rowFor(k){
   const tr = document.createElement('tr');
   const csb = k.csb_nummer||'-', sap=k.sap_nummer||'-', plz=k.postleitzahl||'-';
+  const addr = `${k.strasse||''}${k.strasse?', ':''}${plz} ${k.ort||''}`.trim();
+  const mapUrl = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(addr);
 
-  // CSB / SAP
+  /* CSB / SAP */
   const td1 = document.createElement('td');
   const c1 = el('div','cell');
   const l1 = el('div','cell-top'); l1.appendChild(makeIdChip('CSB', csb));
   const l2 = el('div','cell-sub'); l2.appendChild(makeIdChip('SAP', sap));
   c1.append(l1,l2); td1.append(c1); tr.append(td1);
 
-  // Name / Straße + Adress-Pill
+  /* Name / Straße + Adress-Pill */
   const td2 = document.createElement('td');
-  const nameTop = k.name||'-';
-  const addr = `${k.strasse||''}${k.strasse?', ':''}${plz} ${k.ort||''}`.trim();
   const c2 = el('div','cell');
-  const top2 = el('div','cell-top', nameTop);
+  const top2 = el('div','cell-top', k.name||'-');
   const sub2 = el('div','cell-sub');
-  const mapUrl = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(addr);
-  const addrA = document.createElement('a');
-  addrA.className='addr-chip';
-  addrA.href=mapUrl; addrA.target='_blank';
-  addrA.title='Adresse: '+addr; /* voller Tooltip */
-  addrA.append(el('span','addr-dot',''), el('span','addr-tag','Adresse'), el('span','mono',' '+addr));
-  sub2.appendChild(addrA);
-  c2.append(top2, sub2);
-  td2.appendChild(c2);
-  tr.append(td2);
+  const aAddr = document.createElement('a');
+  aAddr.className='addr-chip'; aAddr.href=mapUrl; aAddr.target='_blank'; aAddr.title='Adresse: '+addr;
+  aAddr.append(el('span','addr-dot',''), el('span','addr-tag','Adresse'), el('span','mono',' '+addr));
+  sub2.appendChild(aAddr);
+  c2.append(top2, sub2); td2.appendChild(c2); tr.append(td2);
 
-  // PLZ / Ort
-  const td3 = document.createElement('td'); td3.appendChild(twoLineCell(plz, k.ort||'-')); tr.append(td3);
-
-  // Touren (eigenständig)
+  /* Touren */
   const td4 = document.createElement('td'); const c4 = el('div','cell'); const tours=el('div','tour-inline');
   (k.touren||[]).forEach(t=>{ const tnum=(t.tournummer||''); const b=el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')'); b.title='Tour '+tnum; b.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value=tnum; onSmart(); }; tours.appendChild(b); });
   c4.appendChild(tours); td4.appendChild(c4); tr.append(td4);
 
-  // Schlüssel
+  /* Schlüssel */
   const td5 = document.createElement('td'); const key=(k.schluessel||'')||(keyIndex[csb]||'');
   td5.appendChild(key ? el('span','badge-key',key) : el('span','', '-')); tr.append(td5);
 
-  // Fachberater / Markttelefon
+  /* Fachberater / Markttelefon */
   const td6=document.createElement('td'); const c6=el('div','cell');
   const top6=el('div','cell-top', k.fachberater||'-'); const sub6=el('div','cell-sub phone-line');
   if(k.fb_phone) sub6.appendChild(makePhoneChip('FB', k.fb_phone, 'chip-fb'));
@@ -400,19 +364,19 @@ function rowFor(k){
   if(!k.fb_phone && !k.market_phone) sub6.textContent='-';
   c6.append(top6,sub6); td6.appendChild(c6); tr.append(td6);
 
-  // Aktion (Map Button)
+  /* Aktion (Map) */
   const td7=document.createElement('td'); const a=document.createElement('a'); a.className='table-map'; a.textContent='Map';
-  a.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); a.target='_blank';
+  a.href=mapUrl; a.target='_blank';
   const c7=el('div','cell'); c7.append(el('div','cell-top',''), el('div','cell-sub','')); c7.lastChild.appendChild(a); td7.appendChild(c7); tr.append(td7);
 
   return tr;
 }
+
 function renderTable(list){
   const body=$('#tableBody'), tbl=$('#resultTable'); body.innerHTML='';
   if(list.length){ list.forEach(k=>body.appendChild(rowFor(k))); tbl.style.display='table'; } else { tbl.style.display='none'; }
 }
 
-/* Tour-Banner */
 function renderTourTop(list, query, isExact){
   const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
@@ -424,7 +388,6 @@ function renderTourTop(list, query, isExact){
 }
 function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourTitle').textContent=''; $('#tourExtra').textContent=''; }
 
-/* Suche */
 function onSmart(){
   const qRaw=$('#smartSearch').value.trim(); closeTourTop(); if(!qRaw){ renderTable([]); return; }
   if(/^\\d{1,3}$/.test(qRaw)){ const n=qRaw.replace(/^0+(\\d)/,'$1'); const r=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'').startsWith(n))); renderTourTop(r,n,false); renderTable(r); return; }
@@ -457,7 +420,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – Tech-Lab (heller Header & knallige Pills)")
-st.caption("Dezenter, technischer Look • klare Zeilentrenner • Telefon- & Adress-Pills klickbar (callto:/Maps).")
+st.caption("PLZ/Ort-Spalte entfernt – Adresse in klickbarer Pill (Google Maps).")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
