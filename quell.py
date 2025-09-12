@@ -43,7 +43,7 @@ body{
 
 /* Frame */
 .page{min-height:100vh; display:flex; justify-content:center; padding:10px}
-.container{width:100%; max-width:1400px}
+.container{width:100%; max-width:1800px}
 .card{background:var(--surface); border:1px solid var(--grid); border-radius:8px; overflow:hidden}
 
 /* Header */
@@ -213,13 +213,14 @@ a.addr-chip{
       <div class="table-section">
         <table id="resultTable" style="display:none;">
           <colgroup>
-            <col style="width:210px">
-            <col style="width:520px">
-            <col style="width:260px">   <!-- Touren -->
-            <col style="width:80px">    <!-- Schlüssel schmaler -->
-            <col style="width:460px">   <!-- Fachberater / Markt breiter -->
-            <col style="width:110px">
-          </colgroup>
+            <col style="width:210px">  <!-- CSB / SAP -->
+            <col style="width:520px">  <!-- Name / Adresse -->
+            <col style="width:260px">  <!-- Touren -->
+            <col style="width:120px">  <!-- Schlüssel (war 80px) -->
+            <col style="width:460px">  <!-- Fachberater / Markt -->
+            <col style="width:110px">  <!-- Aktion -->
+        </colgroup>
+
           <thead>
             <tr>
               <th>CSB / SAP</th>
