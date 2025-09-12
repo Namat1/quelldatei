@@ -161,7 +161,6 @@ a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); 
 a.mail-chip{background:#e6f7f4; color:#065f46; border:1.5px solid #10b981; max-width:100%}
 a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.97)}
 .chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
-/* NEU: Mail-Text darf umbrechen */
 .mail-chip .txt{white-space:normal; word-break:break-all; line-height:1.2}
 
 /* Adresse-Pill */
@@ -173,7 +172,7 @@ a.addr-chip{
 .addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
 .addr-dot{width:6px; height:6px; background:#ff2d55; border-radius:999px; display:inline-block}
 
-/* Map Button */
+/* (Map-Button Styles bleiben erhalten, werden aber nicht mehr genutzt) */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
   padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
@@ -219,7 +218,6 @@ a.addr-chip{
             <col style="width:260px">
             <col style="width:110px">
             <col style="width:380px">  <!-- breiter für Mail-Pills -->
-            <col style="width:110px">
           </colgroup>
           <thead>
             <tr>
@@ -228,7 +226,6 @@ a.addr-chip{
               <th>Touren</th>
               <th>Schlüssel</th>
               <th>Fachberater / Markt</th>
-              <th>Aktion</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -358,9 +355,7 @@ function makeAddressChip(name, strasse, plz, ort){
   const txt = `${strasse||''}, ${plz||''} ${ort||''}`.replace(/^,\\s*/, '').trim();
   const url = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(`${name||''}, ${txt}`);
   const a = document.createElement('a'); a.className='addr-chip'; a.href=url; a.target='_blank'; a.title='Adresse in Google Maps öffnen (klickbar)';
-  a.append(el('span','addr-dot',''), el('span','chip-tag','Adresse'), (()=>{
-    const s=document.createElement('span'); s.className='txt'; s.textContent=' '+txt; return s;
-  })());
+  a.append(el('span','addr-dot',''), el('span','chip-tag','Adresse'), (()=>{ const s=document.createElement('span'); s.className='txt'; s.textContent=' '+txt; return s; })());
   return a;
 }
 
@@ -400,10 +395,6 @@ function rowFor(k){
   const m2 = makeMailChip('Mail', mkMail);                 if(m2) col.appendChild(m2);
   if(!col.childNodes.length) col.textContent='-';
   td6.appendChild(col); tr.append(td6);
-
-  const td7=document.createElement('td'); const a=document.createElement('a'); a.className='table-map'; a.textContent='Map';
-  a.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); a.target='_blank';
-  const c7=el('div','cell'); const s7=el('div','cell-sub'); s7.appendChild(a); c7.append(el('div','cell-top',''), s7); td7.appendChild(c7); tr.append(td7);
 
   return tr;
 }
