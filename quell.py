@@ -142,24 +142,20 @@ a.id-chip:hover{filter:brightness(.97)}
 }
 .tour-btn:hover{filter:brightness(.97)}
 
-/* Kontakte */
-.phone-line{display:flex; flex-wrap:wrap; gap:6px}
-a.phone-chip{
-  display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
+/* Kontakte: jetzt UNTEREINANDER */
+.phone-line{
+  display:flex; flex-direction:column; align-items:flex-start; gap:6px;
+}
+a.phone-chip, a.mail-chip{
+  display:block;  /* block = voller Zeilenumbruch */
+  border-radius:var(--radius-pill);
   padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer
 }
 a.phone-chip.chip-fb{background:var(--chip-fb-bg); color:var(--chip-fb-tx); border:1.5px solid var(--chip-fb-bd)}
 a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); border:1.5px solid var(--chip-mk-bd)}
-a.phone-chip:hover{filter:brightness(.97)}
+a.mail-chip{background:var(--chip-mail-bg); color:var(--chip-mail-tx); border:1.5px solid var(--chip-mail-bd)}
+a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.97)}
 .chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
-
-/* Mail chip */
-a.mail-chip{
-  display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
-  padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none;
-  background:var(--chip-mail-bg); color:var(--chip-mail-tx); border:1.5px solid var(--chip-mail-bd);
-}
-a.mail-chip:hover{filter:brightness(.97)}
 
 /* Map */
 .table-map{
@@ -385,7 +381,7 @@ function rowFor(k){
   const td5 = document.createElement('td'); const key=(k.schluessel||'')||(keyIndex[csb]||'');
   td5.appendChild(key ? el('span','badge-key',key) : el('span','', '-')); tr.append(td5);
 
-  /* Fachberater / Markt */
+  /* Fachberater / Markt (Pills UNTEREINANDER) */
   const td6=document.createElement('td'); const c6=el('div','cell');
   const top6=el('div','cell-top', k.fachberater||'-'); const sub6=el('div','cell-sub phone-line');
   if(k.fb_phone)     sub6.appendChild(makePhoneChip('FB',    k.fb_phone,    'chip-fb'));
@@ -452,7 +448,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – Tech-Lab")
-st.caption("Markt-Telefon **und E-Mail** (Spalte X) aus der Zuordnung; klickbare Pills (callto:, mailto:).")
+st.caption("Kontakt-Pills jetzt **untereinander** (FB, Markt-Telefon, Markt-Mail).")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -515,11 +511,11 @@ def build_berater_map(df: pd.DataFrame) -> dict:
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
     """
-    Erwartete Spalten:
-      A = Fachberater-Name (frei),
-      I = CSB (Index 8),
-      O = Markt-Telefon (Index 14),
-      X = Markt-Mail (Index 23)
+    Spalten:
+      A = Fachberater (0)
+      I = CSB (8)
+      O = Markt-Telefon (14)
+      X = Markt-Mail (23)
     """
     out = {}
     for _, row in df.iterrows():
