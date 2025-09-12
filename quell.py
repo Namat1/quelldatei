@@ -21,12 +21,10 @@ HTML_TEMPLATE = """
 
   --accent:#2563eb; --accent-2:#1f4fd3;
 
-  /* Knallige Pills */
   --pill-yellow-bg:#fff3b0; --pill-yellow-bd:#f59e0b; --pill-yellow-tx:#4a3001;
   --pill-green-bg:#d1fae5; --pill-green-bd:#10b981; --pill-green-tx:#065f46;
   --pill-red-bg:#ffe4e6;   --pill-red-bd:#fb7185;  --pill-red-tx:#7f1d1d;
 
-  /* Tel/Mail Chips */
   --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;
   --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;
 
@@ -83,11 +81,7 @@ body{
 
 /* Tour-Banner (große Pill) */
 .tour-wrap{display:none; padding:10px 12px 0}
-.tour-banner{
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  padding:0;
-  background:transparent; border:none;
-}
+.tour-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0; background:transparent; border:none;}
 .tour-pill{
   display:inline-flex; align-items:center; gap:10px;
   background:#ffedd5; color:#7c2d12;
@@ -97,7 +91,7 @@ body{
 }
 .tour-stats{font-weight:900; font-size:11px; color:#334155}
 
-/* Tabelle (ohne Inline-Scroll) */
+/* Tabelle */
 .table-section{padding:6px 12px 14px}
 table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
@@ -121,14 +115,14 @@ tbody tr:nth-child(even) td{background:#ffffff}
 tbody tr+tr td{border-top:6px solid var(--row-sep)}
 tbody tr:hover td{background:#eef4ff}
 
-/* Zellen: zweizeilig */
+/* Zellen */
 .cell{display:flex; flex-direction:column; gap:4px; min-height:38px; width:100%}
 .cell-top,.cell-sub{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
 /* Monospace Zahlen */
 .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:700}
 
-/* ID-Chips (gelb, klickbar) */
+/* ID-Chips */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow-bg); color:var(--pill-yellow-tx);
@@ -139,7 +133,7 @@ a.id-chip{
 a.id-chip:hover{filter:brightness(.97)}
 .id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
-/* Schlüssel (grün) */
+/* Schlüssel */
 .badge-key{
   display:inline-block; background:var(--pill-green-bg); border:1.5px solid var(--pill-green-bd);
   color:var(--pill-green-tx); border-radius:var(--radius-pill); padding:3px 9px;
@@ -147,7 +141,7 @@ a.id-chip:hover{filter:brightness(.97)}
   box-shadow:0 0 0 2px rgba(16,185,129,.12) inset;
 }
 
-/* Touren (rot, eigene Spalte) */
+/* Touren */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-block; background:var(--pill-red-bg); border:1.5px solid var(--pill-red-bd); color:var(--pill-red-tx);
@@ -160,13 +154,15 @@ a.id-chip:hover{filter:brightness(.97)}
 .phone-col{display:flex; flex-direction:column; gap:6px}
 a.phone-chip, a.mail-chip{
   display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
-  padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer; width:max-content;
+  padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer; width:max-content; max-width:100%;
 }
 a.phone-chip.chip-fb{background:var(--chip-fb-bg); color:var(--chip-fb-tx); border:1.5px solid var(--chip-fb-bd)}
 a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); border:1.5px solid var(--chip-mk-bd)}
-a.mail-chip{background:#e6f7f4; color:#065f46; border:1.5px solid #10b981}
+a.mail-chip{background:#e6f7f4; color:#065f46; border:1.5px solid #10b981; max-width:100%}
 a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.97)}
 .chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
+/* NEU: Mail-Text darf umbrechen */
+.mail-chip .txt{white-space:normal; word-break:break-all; line-height:1.2}
 
 /* Adresse-Pill */
 a.addr-chip{
@@ -219,11 +215,11 @@ a.addr-chip{
         <table id="resultTable" style="display:none;">
           <colgroup>
             <col style="width:210px">
-            <col style="width:520px">  <!-- Name / Adresse breiter -->
-            <col style="width:260px">  <!-- Touren -->
-            <col style="width:110px">  <!-- Schlüssel -->
-            <col style="width:320px">  <!-- FB/Markt (Mail breiter) -->
-            <col style="width:110px">  <!-- Aktion -->
+            <col style="width:520px">
+            <col style="width:260px">
+            <col style="width:110px">
+            <col style="width:380px">  <!-- breiter für Mail-Pills -->
+            <col style="width:110px">
           </colgroup>
           <thead>
             <tr>
@@ -243,7 +239,6 @@ a.addr-chip{
 </div>
 
 <script>
-/* ===== Daten von Python ===== */
 const tourkundenData   = {  };
 const keyIndex         = {  };
 const beraterIndex     = {  };
@@ -256,7 +251,6 @@ let allCustomers = [];
 let prevQuery = null;
 const DIAL_SCHEME = 'callto';
 
-/* Utils */
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
 function makePhoneChip(label, num, cls){
   if(!num) return null;
@@ -271,7 +265,8 @@ function makeMailChip(label, addr){
   const a = document.createElement('a');
   a.className = 'mail-chip';
   a.href = `mailto:${addr}`;
-  a.append(el('span','chip-tag',label), el('span','mono',' '+addr));
+  const txt = document.createElement('span'); txt.className='txt mono'; txt.textContent=' '+addr;
+  a.append(el('span','chip-tag',label), txt);
   return a;
 }
 function normDE(s){
@@ -325,7 +320,6 @@ function dedupByCSB(list){
   return out;
 }
 
-/* Build data */
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
@@ -351,11 +345,9 @@ function buildData(){
   allCustomers = Array.from(map.values());
 }
 
-/* Back nav */
 function pushPrevQuery(){ const v=$('#smartSearch').value.trim(); if(v){ prevQuery=v; $('#btnBack').style.display='inline-block'; } }
 function popPrevQuery(){ if(prevQuery){ $('#smartSearch').value=prevQuery; prevQuery=null; $('#btnBack').style.display='none'; onSmart(); } }
 
-/* UI bits */
 function makeIdChip(label, value){
   const a=document.createElement('a'); a.className='id-chip'; a.href='javascript:void(0)'; a.title=label+' '+value+' suchen';
   a.addEventListener('click',()=>{ pushPrevQuery(); $('#smartSearch').value=value; onSmart(); });
@@ -372,19 +364,16 @@ function makeAddressChip(name, strasse, plz, ort){
   return a;
 }
 
-/* Row rendering */
 function rowFor(k){
   const tr = document.createElement('tr');
   const csb = k.csb_nummer||'-', sap=k.sap_nummer||'-', plz=k.postleitzahl||'-';
 
-  /* CSB / SAP */
   const td1 = document.createElement('td');
   const c1 = el('div','cell');
   const l1 = el('div','cell-top'); l1.appendChild(makeIdChip('CSB', csb));
   const l2 = el('div','cell-sub'); l2.appendChild(makeIdChip('SAP', sap));
   c1.append(l1,l2); td1.append(c1); tr.append(td1);
 
-  /* Name / Adresse (Pill, klickbar) */
   const td2 = document.createElement('td');
   const c2 = el('div','cell');
   c2.append(el('div','cell-top', k.name||'-'));
@@ -393,16 +382,13 @@ function rowFor(k){
   c2.append(line2);
   td2.append(c2); tr.append(td2);
 
-  /* Touren (eigenständig) */
   const td4 = document.createElement('td'); const c4 = el('div','cell'); const tours=el('div','tour-inline');
   (k.touren||[]).forEach(t=>{ const tnum=(t.tournummer||''); const b=el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')'); b.title='Tour '+tnum; b.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value=tnum; onSmart(); }; tours.appendChild(b); });
   c4.appendChild(tours); td4.appendChild(c4); tr.append(td4);
 
-  /* Schlüssel */
   const td5 = document.createElement('td'); const key=(k.schluessel||'')||(keyIndex[csb]||'');
   td5.appendChild(key ? el('span','badge-key',key) : el('span','', '-')); tr.append(td5);
 
-  /* Fachberater / Markt – nur Pills (kein Name) untereinander */
   const td6=document.createElement('td'); const col=el('div','phone-col');
   const fbPhone = k.fb_phone;
   const fbMail  = k.fachberater ? fbEmailFromName(k.fachberater) : '';
@@ -415,7 +401,6 @@ function rowFor(k){
   if(!col.childNodes.length) col.textContent='-';
   td6.appendChild(col); tr.append(td6);
 
-  /* Aktion */
   const td7=document.createElement('td'); const a=document.createElement('a'); a.className='table-map'; a.textContent='Map';
   a.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); a.target='_blank';
   const c7=el('div','cell'); const s7=el('div','cell-sub'); s7.appendChild(a); c7.append(el('div','cell-top',''), s7); td7.appendChild(c7); tr.append(td7);
@@ -427,7 +412,6 @@ function renderTable(list){
   if(list.length){ list.forEach(k=>body.appendChild(rowFor(k))); tbl.style.display='table'; } else { tbl.style.display='none'; }
 }
 
-/* Tour-Banner */
 function renderTourTop(list, query, isExact){
   const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
@@ -439,7 +423,6 @@ function renderTourTop(list, query, isExact){
 }
 function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourTitle').textContent=''; $('#tourExtra').textContent=''; }
 
-/* Suche */
 function onSmart(){
   const qRaw=$('#smartSearch').value.trim(); closeTourTop(); if(!qRaw){ renderTable([]); return; }
   if(/^\\d{1,3}$/.test(qRaw)){ const n=qRaw.replace(/^0+(\\d)/,'$1'); const r=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'').startsWith(n))); renderTourTop(r,n,false); renderTable(r); return; }
