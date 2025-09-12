@@ -43,7 +43,7 @@ body{
 
 /* Frame */
 .page{min-height:100vh; display:flex; justify-content:center; padding:10px}
-.container{width:100%; max-width:1400px}
+.container{width:100%; max-width:1480px}
 .card{background:var(--surface); border:1px solid var(--grid); border-radius:8px; overflow:hidden}
 
 /* Header */
@@ -216,8 +216,8 @@ a.addr-chip{
             <col style="width:210px">
             <col style="width:520px">
             <col style="width:260px">
-            <col style="width:110px">
-            <col style="width:380px">  <!-- breiter für Mail-Pills -->
+            <col style="width:105px">   <!-- Schlüssel ~5% kleiner -->
+            <col style="width:418px">   <!-- Fachberater/Markt ~10% größer -->
           </colgroup>
           <thead>
             <tr>
