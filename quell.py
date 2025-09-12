@@ -26,9 +26,9 @@ HTML_TEMPLATE = """
   --pill-red-bg:#ffe4e6;   --pill-red-bd:#fb7185;  --pill-red-tx:#7f1d1d;
 
   /* Contact chips */
-  --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;   /* Fachberater Tel */
-  --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;   /* Markt Tel */
-  --chip-mail-bg:#ecfeff; --chip-mail-bd:#06b6d4; --chip-mail-tx:#065f46; /* Markt Mail */
+  --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;
+  --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;
+  --chip-mail-bg:#ecfeff; --chip-mail-bd:#06b6d4; --chip-mail-tx:#065f46;
 
   --row-sep:#e6edff;
   --radius:6px; --radius-pill:999px;
@@ -44,7 +44,7 @@ body{
 
 /* Frame */
 .page{min-height:100vh; display:flex; justify-content:center; padding:10px}
-.container{width:100%; max-width:1500px}
+.container{width:100%; max-width:1600px}
 .card{background:var(--surface); border:1px solid var(--grid); border-radius:8px; overflow:hidden}
 
 /* Header */
@@ -142,12 +142,12 @@ a.id-chip:hover{filter:brightness(.97)}
 }
 .tour-btn:hover{filter:brightness(.97)}
 
-/* Kontakte: jetzt UNTEREINANDER */
+/* Kontakte – untereinander */
 .phone-line{
   display:flex; flex-direction:column; align-items:flex-start; gap:6px;
 }
 a.phone-chip, a.mail-chip{
-  display:block;  /* block = voller Zeilenumbruch */
+  display:block;
   border-radius:var(--radius-pill);
   padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer
 }
@@ -215,7 +215,7 @@ a.addr-chip:hover{filter:brightness(.97)}
             <col style="width:640px">
             <col style="width:280px">
             <col style="width:120px">
-            <col style="width:320px">
+            <col style="width:420px">  <!-- breitere Mail-/Kontakt-Spalte -->
             <col style="width:110px">
           </colgroup>
           <thead>
@@ -381,7 +381,7 @@ function rowFor(k){
   const td5 = document.createElement('td'); const key=(k.schluessel||'')||(keyIndex[csb]||'');
   td5.appendChild(key ? el('span','badge-key',key) : el('span','', '-')); tr.append(td5);
 
-  /* Fachberater / Markt (Pills UNTEREINANDER) */
+  /* Fachberater / Markt (untereinander) */
   const td6=document.createElement('td'); const c6=el('div','cell');
   const top6=el('div','cell-top', k.fachberater||'-'); const sub6=el('div','cell-sub phone-line');
   if(k.fb_phone)     sub6.appendChild(makePhoneChip('FB',    k.fb_phone,    'chip-fb'));
@@ -448,7 +448,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – Tech-Lab")
-st.caption("Kontakt-Pills jetzt **untereinander** (FB, Markt-Telefon, Markt-Mail).")
+st.caption("Kontaktspalte verbreitert für Mails. Telefon/Mail-Pills untereinander.")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -511,11 +511,7 @@ def build_berater_map(df: pd.DataFrame) -> dict:
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
     """
-    Spalten:
-      A = Fachberater (0)
-      I = CSB (8)
-      O = Markt-Telefon (14)
-      X = Markt-Mail (23)
+    A = Fachberater (0) | I = CSB (8) | O = Markt-Telefon (14) | X = Markt-Mail (23)
     """
     out = {}
     for _, row in df.iterrows():
