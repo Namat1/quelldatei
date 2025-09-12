@@ -20,12 +20,15 @@ HTML_TEMPLATE = """
   --txt:#0c1220; --muted:#293346;
   --accent:#2563eb; --accent-2:#1f4fd3;
 
+  /* Pills */
   --pill-yellow-bg:#fff3b0; --pill-yellow-bd:#f59e0b; --pill-yellow-tx:#4a3001;
   --pill-green-bg:#d1fae5; --pill-green-bd:#10b981; --pill-green-tx:#065f46;
   --pill-red-bg:#ffe4e6;   --pill-red-bd:#fb7185;  --pill-red-tx:#7f1d1d;
 
-  --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;
-  --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;
+  /* Contact chips */
+  --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;   /* Fachberater Tel */
+  --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;   /* Markt Tel */
+  --chip-mail-bg:#ecfeff; --chip-mail-bd:#06b6d4; --chip-mail-tx:#065f46; /* Markt Mail */
 
   --row-sep:#e6edff;
   --radius:6px; --radius-pill:999px;
@@ -111,7 +114,7 @@ tbody tr:hover td{background:#eef4ff}
 .cell-top,.cell-sub{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:700}
 
-/* Chips */
+/* ID Chips */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow-bg); color:var(--pill-yellow-tx);
@@ -122,6 +125,7 @@ a.id-chip{
 a.id-chip:hover{filter:brightness(.97)}
 .id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
+/* Schlüssel */
 .badge-key{
   display:inline-block; background:var(--pill-green-bg); border:1.5px solid var(--pill-green-bd);
   color:var(--pill-green-tx); border-radius:var(--radius-pill); padding:3px 9px;
@@ -129,6 +133,7 @@ a.id-chip:hover{filter:brightness(.97)}
   box-shadow:0 0 0 2px rgba(16,185,129,.12) inset;
 }
 
+/* Touren */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-block; background:var(--pill-red-bg); border:1.5px solid var(--pill-red-bd); color:var(--pill-red-tx);
@@ -137,6 +142,7 @@ a.id-chip:hover{filter:brightness(.97)}
 }
 .tour-btn:hover{filter:brightness(.97)}
 
+/* Kontakte */
 .phone-line{display:flex; flex-wrap:wrap; gap:6px}
 a.phone-chip{
   display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
@@ -147,6 +153,15 @@ a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); 
 a.phone-chip:hover{filter:brightness(.97)}
 .chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
+/* Mail chip */
+a.mail-chip{
+  display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
+  padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none;
+  background:var(--chip-mail-bg); color:var(--chip-mail-tx); border:1.5px solid var(--chip-mail-bd);
+}
+a.mail-chip:hover{filter:brightness(.97)}
+
+/* Map */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
   padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
@@ -154,6 +169,7 @@ a.phone-chip:hover{filter:brightness(.97)}
 }
 .table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
 
+/* Adresse (Google Maps) */
 a.addr-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:#eef4ff; color:#0c2a6b; border:1.5px solid #7aa2ff;
@@ -199,12 +215,12 @@ a.addr-chip:hover{filter:brightness(.97)}
       <div class="table-section">
         <table id="resultTable" style="display:none;">
           <colgroup>
-            <col style="width:180px">   <!-- CSB/SAP -->
-            <col style="width:640px">   <!-- Name / Straße + Adress-Pill (mehr Platz, da PLZ/Ort-Spalte entfällt) -->
-            <col style="width:280px">   <!-- Touren -->
-            <col style="width:120px">   <!-- Schlüssel -->
-            <col style="width:270px">   <!-- Fachberater / Markttelefon -->
-            <col style="width:110px">   <!-- Aktion -->
+            <col style="width:180px">
+            <col style="width:640px">
+            <col style="width:280px">
+            <col style="width:120px">
+            <col style="width:320px">
+            <col style="width:110px">
           </colgroup>
           <thead>
             <tr>
@@ -212,7 +228,7 @@ a.addr-chip:hover{filter:brightness(.97)}
               <th>Name / Straße</th>
               <th>Touren</th>
               <th>Schlüssel</th>
-              <th>Fachberater / Markttelefon</th>
+              <th>Fachberater / Markt</th>
               <th>Aktion</th>
             </tr>
           </thead>
@@ -236,12 +252,20 @@ let allCustomers = [];
 let prevQuery = null;
 const DIAL_SCHEME = 'callto';
 
+/* Helpers */
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
 function makePhoneChip(label, num, cls){
   const a = document.createElement('a');
   a.className = 'phone-chip '+cls;
   a.href = `${DIAL_SCHEME}:${sanitizePhone(num)}`;
   a.append(el('span','chip-tag',label), el('span','mono',' '+num));
+  return a;
+}
+function makeMailChip(label, mail){
+  const a = document.createElement('a');
+  a.className = 'mail-chip';
+  a.href = `mailto:${(mail||'').trim()}`;
+  a.append(el('span','chip-tag',label), el('span','mono',' '+mail));
   return a;
 }
 function normDE(s){
@@ -289,6 +313,7 @@ function dedupByCSB(list){
   return out;
 }
 
+/* Build allCustomers */
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
@@ -305,6 +330,7 @@ function buildData(){
         if (beraterCSBIndex[csb] && beraterCSBIndex[csb].name){ rec.fachberater = beraterCSBIndex[csb].name; }
         rec.fb_phone     = rec.fachberater ? pickBeraterPhone(rec.fachberater) : '';
         rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
+        rec.market_email = (beraterCSBIndex[csb] && beraterCSBIndex[csb].email) ? beraterCSBIndex[csb].email : '';
         map.set(csb, rec);
       }
       map.get(csb).touren.push({ tournummer: tourN, liefertag: k.liefertag });
@@ -313,9 +339,11 @@ function buildData(){
   allCustomers = Array.from(map.values());
 }
 
+/* Back button */
 function pushPrevQuery(){ const v=$('#smartSearch').value.trim(); if(v){ prevQuery=v; $('#btnBack').style.display='inline-block'; } }
 function popPrevQuery(){ if(prevQuery){ $('#smartSearch').value=prevQuery; prevQuery=null; $('#btnBack').style.display='none'; onSmart(); } }
 
+/* UI helpers */
 function makeIdChip(label, value){
   const a=document.createElement('a'); a.className='id-chip'; a.href='javascript:void(0)'; a.title=label+' '+value+' suchen';
   a.addEventListener('click',()=>{ pushPrevQuery(); $('#smartSearch').value=value; onSmart(); });
@@ -323,6 +351,7 @@ function makeIdChip(label, value){
 }
 function twoLineCell(top, sub){ const w=el('div','cell'); w.append(el('div','cell-top',top), el('div','cell-sub',sub)); return w; }
 
+/* Row */
 function rowFor(k){
   const tr = document.createElement('tr');
   const csb = k.csb_nummer||'-', sap=k.sap_nummer||'-', plz=k.postleitzahl||'-';
@@ -336,7 +365,7 @@ function rowFor(k){
   const l2 = el('div','cell-sub'); l2.appendChild(makeIdChip('SAP', sap));
   c1.append(l1,l2); td1.append(c1); tr.append(td1);
 
-  /* Name / Straße + Adress-Pill */
+  /* Name / Straße + Address pill */
   const td2 = document.createElement('td');
   const c2 = el('div','cell');
   const top2 = el('div','cell-top', k.name||'-');
@@ -356,12 +385,13 @@ function rowFor(k){
   const td5 = document.createElement('td'); const key=(k.schluessel||'')||(keyIndex[csb]||'');
   td5.appendChild(key ? el('span','badge-key',key) : el('span','', '-')); tr.append(td5);
 
-  /* Fachberater / Markttelefon */
+  /* Fachberater / Markt */
   const td6=document.createElement('td'); const c6=el('div','cell');
   const top6=el('div','cell-top', k.fachberater||'-'); const sub6=el('div','cell-sub phone-line');
-  if(k.fb_phone) sub6.appendChild(makePhoneChip('FB', k.fb_phone, 'chip-fb'));
-  if(k.market_phone) sub6.appendChild(makePhoneChip('Markt', k.market_phone, 'chip-market'));
-  if(!k.fb_phone && !k.market_phone) sub6.textContent='-';
+  if(k.fb_phone)     sub6.appendChild(makePhoneChip('FB',    k.fb_phone,    'chip-fb'));
+  if(k.market_phone) sub6.appendChild(makePhoneChip('Markt', k.market_phone,'chip-market'));
+  if(k.market_email) sub6.appendChild(makeMailChip('Mail',   k.market_email));
+  if(!k.fb_phone && !k.market_phone && !k.market_email) sub6.textContent='-';
   c6.append(top6,sub6); td6.appendChild(c6); tr.append(td6);
 
   /* Aktion (Map) */
@@ -377,6 +407,7 @@ function renderTable(list){
   if(list.length){ list.forEach(k=>body.appendChild(rowFor(k))); tbl.style.display='table'; } else { tbl.style.display='none'; }
 }
 
+/* Tour-Banner */
 function renderTourTop(list, query, isExact){
   const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
@@ -388,6 +419,7 @@ function renderTourTop(list, query, isExact){
 }
 function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourTitle').textContent=''; $('#tourExtra').textContent=''; }
 
+/* Suche */
 function onSmart(){
   const qRaw=$('#smartSearch').value.trim(); closeTourTop(); if(!qRaw){ renderTable([]); return; }
   if(/^\\d{1,3}$/.test(qRaw)){ const n=qRaw.replace(/^0+(\\d)/,'$1'); const r=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'').startsWith(n))); renderTourTop(r,n,false); renderTable(r); return; }
@@ -396,7 +428,7 @@ function onSmart(){
     if(tr.length) renderTourTop(tr,n,true); else closeTourTop(); renderTable(r); return;
   }
   const q=normDE(qRaw);
-  const r=allCustomers.filter(k=>{ const fb=k.fachberater||''; const text=(k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||'')); return normDE(text).includes(q); });
+  const r=allCustomers.filter(k=>{ const fb=k.fachberater||''; const text=(k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||'')+' '+(k.market_email||'')); return normDE(text).includes(q); });
   renderTable(r);
 }
 function onKey(){
@@ -419,8 +451,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 """
 
 # ===== Streamlit-Wrapper =====
-st.title("Kunden-Suche – Tech-Lab (heller Header & knallige Pills)")
-st.caption("PLZ/Ort-Spalte entfernt – Adresse in klickbarer Pill (Google Maps).")
+st.title("Kunden-Suche – Tech-Lab")
+st.caption("Markt-Telefon **und E-Mail** (Spalte X) aus der Zuordnung; klickbare Pills (callto:, mailto:).")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -431,7 +463,7 @@ with c3:
     logo_file = st.file_uploader("Logo (PNG/JPG)", type=["png","jpg","jpeg"])
 
 berater_file = st.file_uploader("OPTIONAL: Fachberater-Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
-berater_csb_file = st.file_uploader("Fachberater–CSB-Zuordnung (A=Fachberater, I=CSB, O=Telefon/Markt)", type=["xlsx"])
+berater_csb_file = st.file_uploader("Fachberater–CSB-Zuordnung (A=Fachberater, I=CSB, O=Markt-Telefon, X=Markt-Mail)", type=["xlsx"])
 
 def normalize_digits_py(v) -> str:
     if pd.isna(v): return ""
@@ -482,13 +514,21 @@ def build_berater_map(df: pd.DataFrame) -> dict:
     return out
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
+    """
+    Erwartete Spalten:
+      A = Fachberater-Name (frei),
+      I = CSB (Index 8),
+      O = Markt-Telefon (Index 14),
+      X = Markt-Mail (Index 23)
+    """
     out = {}
     for _, row in df.iterrows():
         fach = str(row.iloc[0]).strip() if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
         csb  = normalize_digits_py(row.iloc[8]) if df.shape[1] > 8 and not pd.isna(row.iloc[8]) else ""
         tel  = str(row.iloc[14]).strip() if df.shape[1] > 14 and not pd.isna(row.iloc[14]) else ""
+        mail = str(row.iloc[23]).strip() if df.shape[1] > 23 and not pd.isna(row.iloc[23]) else ""
         if csb:
-            out[csb] = {"name": fach, "telefon": tel}
+            out[csb] = {"name": fach, "telefon": tel, "email": mail}
     return out
 
 def to_data_url(file) -> str:
@@ -588,4 +628,4 @@ if excel_file and key_file:
         except Exception as e:
             st.error(f"Fehler: {e}")
 else:
-    st.info("Bitte Quelldatei, Schlüsseldatei und Logo hochladen. Optional: Fachberater-Telefonliste & CSB-Zuordnung.")
+    st.info("Bitte Quelldatei, Schlüsseldatei und Logo hochladen. Optional: Fachberater-Telefonliste & CSB-Zuordnung (mit Markt-Mail in Spalte X).")
