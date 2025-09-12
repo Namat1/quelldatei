@@ -53,7 +53,8 @@ body{
   color:#0b1226; display:flex; align-items:center; justify-content:center; gap:10px;
   border-bottom:1px solid var(--grid);
 }
-.brand-logo{height:44px; width:auto}
+.brand-logo{height:56px; width:auto}  /* größer als zuvor (44px) */
+/* .title bleibt ungenutzt, kann bestehen bleiben */
 .title{font-weight:900; letter-spacing:.35px; font-size:13px; text-transform:uppercase}
 
 /* Searchbar */
@@ -187,7 +188,6 @@ a.addr-chip{
     <div class="card">
       <div class="header">
         <img class="brand-logo" alt="Logo" src="__LOGO_DATA_URL__">
-       
       </div>
 
       <div class="searchbar">
