@@ -5,15 +5,6 @@ import base64
 import unicodedata
 import re
 
-# ===== Vollständige App – technisch, heller Header, knallige Pills
-# - KEINE "Aktion"-Spalte mehr
-# - Addressen-Pill (klickbar -> Google Maps)
-# - Touren in eigener Spalte
-# - CSB/SAP gelbe Pills (klickbar für Suche)
-# - Schlüssel grüne Pill
-# - Telefon-Pills (FB/Markt) + Mail-Pills, alles untereinander
-# - "Zurück zur Suche"-Button
-# - Container wieder schmaler (1400px)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -27,19 +18,18 @@ HTML_TEMPLATE = """
   --bg:#f3f6fb; --surface:#ffffff; --alt:#f9fbff;
   --grid:#cfd7e6; --grid-2:#bfc9dd; --head-grid:#b3bfd6;
   --txt:#0c1220; --muted:#293346;
+
   --accent:#2563eb; --accent-2:#1f4fd3;
 
-  /* Pills */
   --pill-yellow-bg:#fff3b0; --pill-yellow-bd:#f59e0b; --pill-yellow-tx:#4a3001;
   --pill-green-bg:#d1fae5; --pill-green-bd:#10b981; --pill-green-tx:#065f46;
   --pill-red-bg:#ffe4e6;   --pill-red-bd:#fb7185;  --pill-red-tx:#7f1d1d;
 
-  /* Tel/Mail chips */
   --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;
   --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;
-  --chip-mail-bg:#eef2ff; --chip-mail-bd:#6366f1; --chip-mail-tx:#1e1b4b;
 
   --row-sep:#e6edff;
+
   --radius:6px; --radius-pill:999px;
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
@@ -53,7 +43,7 @@ body{
 
 /* Frame */
 .page{min-height:100vh; display:flex; justify-content:center; padding:10px}
-.container{width:100%; max-width:1400px} /* <<< Container-Breite */
+.container{width:100%; max-width:1400px}
 .card{background:var(--surface); border:1px solid var(--grid); border-radius:8px; overflow:hidden}
 
 /* Header */
@@ -91,12 +81,15 @@ body{
 
 /* Tour-Banner */
 .tour-wrap{display:none; padding:10px 12px 0}
-.tour-banner{
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  padding:8px 10px; border:1px dashed var(--head-grid); border-radius:6px;
-  background:linear-gradient(180deg,#fbfcff,#f4f7fd);
-  font-weight:900; font-size:12px; color:#0f172a;
+.tour-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0; background:transparent; border:none;}
+.tour-pill{
+  display:inline-flex; align-items:center; gap:10px;
+  background:#ffedd5; color:#7c2d12;
+  border:2px solid #fb923c; border-radius:999px; padding:8px 14px;
+  font-weight:900; font-size:13px; letter-spacing:.2px;
+  box-shadow:0 0 0 3px rgba(251,146,60,.18) inset;
 }
+.tour-stats{font-weight:900; font-size:11px; color:#334155}
 
 /* Tabelle */
 .table-section{padding:6px 12px 14px}
@@ -116,74 +109,76 @@ tbody td{
 }
 tbody td:last-child{border-right:none}
 
-/* Zeilentrennung je Kunde */
+/* Zeilenabgrenzung */
 tbody tr:nth-child(odd) td{background:#f8fbff}
 tbody tr:nth-child(even) td{background:#ffffff}
 tbody tr+tr td{border-top:6px solid var(--row-sep)}
 tbody tr:hover td{background:#eef4ff}
 
 /* Zellen */
-.cell{display:flex; flex-direction:column; gap:6px; width:100%}
-.stack{display:flex; flex-direction:column; gap:6px}
+.cell{display:flex; flex-direction:column; gap:4px; min-height:38px; width:100%}
 .cell-top,.cell-sub{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
 /* Monospace Zahlen */
 .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:700}
 
-/* ID-Chips (gelb) */
+/* ID-Chips */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow-bg); color:var(--pill-yellow-tx);
   border:1.5px solid var(--pill-yellow-bd); border-radius:var(--radius-pill); padding:3px 9px;
   font-weight:900; font-size:var(--fs-11); text-decoration:none; line-height:1;
-  box-shadow:0 0 0 2px rgba(245,158,11,.12) inset; width:fit-content;
+  box-shadow:0 0 0 2px rgba(245,158,11,.12) inset;
 }
 a.id-chip:hover{filter:brightness(.97)}
 .id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
-/* Adresse als Pill (klickbar -> Maps) */
-a.addr-chip{
-  display:inline-flex; align-items:center; gap:6px; width:fit-content;
-  background:#fff; border:1.5px dashed var(--grid-2); color:#0f172a;
-  border-radius:var(--radius-pill); padding:4px 10px; text-decoration:none; font-weight:900; font-size:var(--fs-11);
-}
-a.addr-chip:hover{background:#f7faff}
-
-/* Schlüssel (grün) */
+/* Schlüssel */
 .badge-key{
   display:inline-block; background:var(--pill-green-bg); border:1.5px solid var(--pill-green-bd);
   color:var(--pill-green-tx); border-radius:var(--radius-pill); padding:3px 9px;
   font-weight:900; font-size:var(--fs-11); line-height:1;
-  box-shadow:0 0 0 2px rgba(16,185,129,.12) inset; width:fit-content;
+  box-shadow:0 0 0 2px rgba(16,185,129,.12) inset;
 }
 
-/* Touren (rot) */
-.tour-inline{display:flex; flex-direction:column; gap:6px}
+/* Touren */
+.tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-block; background:var(--pill-red-bg); border:1.5px solid var(--pill-red-bd); color:var(--pill-red-tx);
   padding:3px 9px; border-radius:var(--radius-pill); font-weight:900; font-size:var(--fs-10); cursor:pointer; line-height:1.25; letter-spacing:.15px;
-  box-shadow:0 0 0 2px rgba(251,113,133,.12) inset; width:fit-content;
+  box-shadow:0 0 0 2px rgba(251,113,133,.12) inset;
 }
 .tour-btn:hover{filter:brightness(.97)}
 
-/* Telefon & Mail – untereinander */
+/* Telefon-/Mail-Chips untereinander */
+.phone-col{display:flex; flex-direction:column; gap:6px}
 a.phone-chip, a.mail-chip{
   display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
-  padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer; width:fit-content;
+  padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer; width:max-content; max-width:100%;
 }
 a.phone-chip.chip-fb{background:var(--chip-fb-bg); color:var(--chip-fb-tx); border:1.5px solid var(--chip-fb-bd)}
 a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); border:1.5px solid var(--chip-mk-bd)}
-a.mail-chip{background:var(--chip-mail-bg); color:var(--chip-mail-tx); border:1.5px solid var(--chip-mail-bd)}
+a.mail-chip{background:#e6f7f4; color:#065f46; border:1.5px solid #10b981; max-width:100%}
 a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.97)}
 .chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
-.mail-text{max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block}
+.mail-chip .txt{white-space:normal; word-break:break-all; line-height:1.2}
 
-/* Tour-Banner-Pill (etwas größer) */
-.banner-pill{
-  display:inline-flex; align-items:center; gap:8px;
-  background:#fff7ed; color:#7c2d12; border:2px solid #fdba74; border-radius:999px;
-  padding:6px 12px; font-weight:900;
+/* Adresse-Pill */
+a.addr-chip{
+  display:inline-flex; align-items:center; gap:8px; max-width:100%;
+  background:#e0ecff; color:#0b3a8a; border:1.5px solid #60a5fa; border-radius:999px; padding:4px 10px;
+  text-decoration:none; font-weight:900; font-size:var(--fs-11);
 }
+.addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
+.addr-dot{width:6px; height:6px; background:#ff2d55; border-radius:999px; display:inline-block}
+
+/* Map Button */
+.table-map{
+  text-decoration:none; font-weight:900; font-size:var(--fs-11);
+  padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
+  background:var(--accent); color:#fff; display:inline-block; text-align:center; letter-spacing:.2px
+}
+.table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
 </style>
 </head>
 <body>
@@ -210,19 +205,20 @@ a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.97)}
 
       <div class="tour-wrap" id="tourWrap">
         <div class="tour-banner">
-          <span class="banner-pill" id="tourTitle"></span>
-          <small id="tourExtra"></small>
+          <span class="tour-pill" id="tourTitle"></span>
+          <small class="tour-stats" id="tourExtra"></small>
         </div>
       </div>
 
       <div class="table-section">
         <table id="resultTable" style="display:none;">
           <colgroup>
-            <col style="width:220px">  <!-- CSB / SAP -->
-            <col style="width:560px">  <!-- Name / Adresse -->
-            <col style="width:280px">  <!-- Touren -->
-            <col style="width:120px">  <!-- Schlüssel -->
-            <col style="width:520px">  <!-- Fachberater / Markt (Tel + Mail) -->
+            <col style="width:210px">
+            <col style="width:520px">
+            <col style="width:260px">   <!-- Touren -->
+            <col style="width:80px">    <!-- Schlüssel schmaler -->
+            <col style="width:460px">   <!-- Fachberater / Markt breiter -->
+            <col style="width:110px">
           </colgroup>
           <thead>
             <tr>
@@ -231,6 +227,7 @@ a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.97)}
               <th>Touren</th>
               <th>Schlüssel</th>
               <th>Fachberater / Markt</th>
+              <th>Aktion</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -241,11 +238,10 @@ a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.97)}
 </div>
 
 <script>
-/* ===== Daten (von Python ersetzt) ===== */
 const tourkundenData   = {  };
 const keyIndex         = {  };
-const beraterIndex     = {  };  // nameKey -> phone
-const beraterCSBIndex  = {  };  // csb -> { name, telefon, email_market }
+const beraterIndex     = {  };
+const beraterCSBIndex  = {  };
 
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
@@ -263,15 +259,13 @@ function makePhoneChip(label, num, cls){
   a.append(el('span','chip-tag',label), el('span','mono',' '+num));
   return a;
 }
-function makeMailChip(label, mail){
-  if(!mail) return null;
+function makeMailChip(label, addr){
+  if(!addr) return null;
   const a = document.createElement('a');
   a.className = 'mail-chip';
-  a.href = `mailto:${mail}`;
-  a.title = mail;
-  a.append(el('span','chip-tag',label), (()=>{
-    const s = document.createElement('span'); s.className='mail-text'; s.textContent=' '+mail; return s;
-  })());
+  a.href = `mailto:${addr}`;
+  const txt = document.createElement('span'); txt.className='txt mono'; txt.textContent=' '+addr;
+  a.append(el('span','chip-tag',label), txt);
   return a;
 }
 function normDE(s){
@@ -302,6 +296,12 @@ function nameVariants(s){
   if(parts.length >= 2){ const f=parts[0], l=parts[parts.length-1]; out.add(`${f} ${l}`); out.add(`${l} ${f}`); }
   return Array.from(out);
 }
+function fbEmailFromName(name){
+  const parts = normalizeNameKey(name).split(' ').filter(Boolean);
+  if(parts.length<2) return '';
+  const vor = parts[0]; const nach = parts[parts.length-1];
+  return `${vor}.${nach}@edeka.de`.replace(/\s+/g,'');
+}
 function pickBeraterPhone(name){
   if(!name) return '';
   const variants = nameVariants(name);
@@ -318,6 +318,7 @@ function dedupByCSB(list){
   for(const k of list){ const csb=normalizeDigits(k.csb_nummer); if(!seen.has(csb)){ seen.add(csb); out.push(k); } }
   return out;
 }
+
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
@@ -334,17 +335,7 @@ function buildData(){
         if (beraterCSBIndex[csb] && beraterCSBIndex[csb].name){ rec.fachberater = beraterCSBIndex[csb].name; }
         rec.fb_phone     = rec.fachberater ? pickBeraterPhone(rec.fachberater) : '';
         rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
-        rec.market_mail  = (beraterCSBIndex[csb] && beraterCSBIndex[csb].email_market) ? beraterCSBIndex[csb].email_market : '';
-        // Fachberater-Mail (Vorname.Nachname@edeka.de), nur wenn Name vorhanden & kein Sonderfall:
-        if(rec.fachberater){
-          const nk = normalizeNameKey(rec.fachberater).split(' ');
-          if(nk.length>=2){
-            const vor = nk[0], nach = nk[nk.length-1];
-            rec.fb_mail = `${vor}.${nach}@edeka.de`;
-          } else {
-            rec.fb_mail = '';
-          }
-        } else rec.fb_mail = '';
+        rec.market_email = (beraterCSBIndex[csb] && beraterCSBIndex[csb].email) ? beraterCSBIndex[csb].email : '';
         map.set(csb, rec);
       }
       map.get(csb).touren.push({ tournummer: tourN, liefertag: k.liefertag });
@@ -352,85 +343,66 @@ function buildData(){
   }
   allCustomers = Array.from(map.values());
 }
-/* Back-Navigation */
+
 function pushPrevQuery(){ const v=$('#smartSearch').value.trim(); if(v){ prevQuery=v; $('#btnBack').style.display='inline-block'; } }
 function popPrevQuery(){ if(prevQuery){ $('#smartSearch').value=prevQuery; prevQuery=null; $('#btnBack').style.display='none'; onSmart(); } }
 
-/* UI builders */
 function makeIdChip(label, value){
   const a=document.createElement('a'); a.className='id-chip'; a.href='javascript:void(0)'; a.title=label+' '+value+' suchen';
   a.addEventListener('click',()=>{ pushPrevQuery(); $('#smartSearch').value=value; onSmart(); });
   a.append(el('span','id-tag',label), el('span','mono',' '+value)); return a;
 }
-function makeAddrChip(name, strasse, plz, ort){
-  const url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((name||'')+', '+(strasse||'')+', '+(plz||'')+' '+(ort||''));
-  const a=document.createElement('a'); a.className='addr-chip'; a.href=url; a.target='_blank'; a.title='Klick: Google Maps';
-  const text=(strasse||'-')+', '+(plz||'')+' '+(ort||'-');
-  a.append(el('span','chip-tag','Adresse'), el('span','', ' '+text));
+function twoLineCell(top, sub){ const w=el('div','cell'); w.append(el('div','cell-top',top), el('div','cell-sub',sub)); return w; }
+function makeAddressChip(name, strasse, plz, ort){
+  const txt = `${strasse||''}, ${plz||''} ${ort||''}`.replace(/^,\\s*/, '').trim();
+  const url = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(`${name||''}, ${txt}`);
+  const a = document.createElement('a'); a.className='addr-chip'; a.href=url; a.target='_blank'; a.title='Adresse in Google Maps öffnen (klickbar)';
+  a.append(el('span','addr-dot',''), el('span','chip-tag','Adresse'), (()=>{
+    const s=document.createElement('span'); s.className='txt'; s.textContent=' '+txt; return s;
+  })());
   return a;
 }
-function twoLineCell(topNode, subNode){
-  const w=el('div','cell');
-  const s=el('div','stack');
-  if(topNode) s.appendChild(topNode);
-  if(subNode) s.appendChild(subNode);
-  w.appendChild(s);
-  return w;
-}
 
-/* Rendering */
 function rowFor(k){
   const tr = document.createElement('tr');
   const csb = k.csb_nummer||'-', sap=k.sap_nummer||'-', plz=k.postleitzahl||'-';
 
-  // CSB / SAP (untereinander, klickbare gelbe Pills)
   const td1 = document.createElement('td');
   const c1 = el('div','cell');
-  const st1 = el('div','stack');
-  st1.appendChild(makeIdChip('CSB', csb));
-  st1.appendChild(makeIdChip('SAP', sap));
-  c1.append(st1); td1.append(c1); tr.append(td1);
+  const l1 = el('div','cell-top'); l1.appendChild(makeIdChip('CSB', csb));
+  const l2 = el('div','cell-sub'); l2.appendChild(makeIdChip('SAP', sap));
+  c1.append(l1,l2); td1.append(c1); tr.append(td1);
 
-  // Name / Adresse (Adresse als Pill)
   const td2 = document.createElement('td');
-  const nameTop = el('div','cell-top', k.name||'-');
-  nameTop.style.fontWeight='900';
-  const addrPill = makeAddrChip(k.name||'', k.strasse||'', plz, k.ort||'');
-  td2.appendChild(twoLineCell(nameTop, addrPill));
-  tr.append(td2);
+  const c2 = el('div','cell');
+  c2.append(el('div','cell-top', k.name||'-'));
+  const addrPill = makeAddressChip(k.name||'', k.strasse||'', plz, k.ort||'');
+  const line2 = el('div','cell-sub'); line2.appendChild(addrPill);
+  c2.append(line2);
+  td2.append(c2); tr.append(td2);
 
-  // Touren (eigene Spalte, vertikal gestapelt)
-  const td3 = document.createElement('td');
-  const tourStack = el('div','tour-inline');
-  (k.touren||[]).forEach(t=>{
-    const tnum=(t.tournummer||'');
-    const b=el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')');
-    b.title='Tour '+tnum; b.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value=tnum; onSmart(); };
-    tourStack.appendChild(b);
-  });
-  td3.appendChild(tourStack);
-  tr.append(td3);
+  const td4 = document.createElement('td'); const c4 = el('div','cell'); const tours=el('div','tour-inline');
+  (k.touren||[]).forEach(t=>{ const tnum=(t.tournummer||''); const b=el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')'); b.title='Tour '+tnum; b.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value=tnum; onSmart(); }; tours.appendChild(b); });
+  c4.appendChild(tours); td4.appendChild(c4); tr.append(td4);
 
-  // Schlüssel (kleiner)
-  const td4 = document.createElement('td');
-  const key=(k.schluessel||'')||(keyIndex[csb]||'');
-  td4.appendChild(key ? el('span','badge-key',key) : el('span','', '-'));
-  tr.append(td4);
+  const td5 = document.createElement('td'); const key=(k.schluessel||'')||(keyIndex[csb]||'');
+  td5.appendChild(key ? el('span','badge-key',key) : el('span','', '-')); tr.append(td5);
 
-  // Fachberater / Markt: alle Pills untereinander (FB-Tel, FB-Mail, Markt-Tel, Markt-Mail)
-  const td5=document.createElement('td');
-  const s5=el('div','stack');
-  const fbTel = makePhoneChip('FB', k.fb_phone, 'chip-fb');
-  const fbMail = makeMailChip('FB', k.fb_mail);
-  const mkTel = makePhoneChip('Markt', k.market_phone, 'chip-market');
-  const mkMail = makeMailChip('Markt', k.market_mail);
-  if(fbTel) s5.appendChild(fbTel);
-  if(fbMail) s5.appendChild(fbMail);
-  if(mkTel) s5.appendChild(mkTel);
-  if(mkMail) s5.appendChild(mkMail);
-  if(!fbTel && !fbMail && !mkTel && !mkMail) s5.appendChild(el('div','cell-sub','-'));
-  td5.appendChild(s5);
-  tr.append(td5);
+  const td6=document.createElement('td'); const col=el('div','phone-col');
+  const fbPhone = k.fb_phone;
+  const fbMail  = k.fachberater ? fbEmailFromName(k.fachberater) : '';
+  const mkPhone = k.market_phone;
+  const mkMail  = k.market_email || '';
+  const p1 = makePhoneChip('FB', fbPhone, 'chip-fb');      if(p1) col.appendChild(p1);
+  const m1 = makeMailChip('FB Mail', fbMail);              if(m1) col.appendChild(m1);
+  const p2 = makePhoneChip('Markt', mkPhone,'chip-market');if(p2) col.appendChild(p2);
+  const m2 = makeMailChip('Mail', mkMail);                 if(m2) col.appendChild(m2);
+  if(!col.childNodes.length) col.textContent='-';
+  td6.appendChild(col); tr.append(td6);
+
+  const td7=document.createElement('td'); const a=document.createElement('a'); a.className='table-map'; a.textContent='Map';
+  a.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((k.name||'')+', '+(k.strasse||'')+', '+plz+' '+(k.ort||'')); a.target='_blank';
+  const c7=el('div','cell'); const s7=el('div','cell-sub'); s7.appendChild(a); c7.append(el('div','cell-top',''), s7); td7.appendChild(c7); tr.append(td7);
 
   return tr;
 }
@@ -439,7 +411,6 @@ function renderTable(list){
   if(list.length){ list.forEach(k=>body.appendChild(rowFor(k))); tbl.style.display='table'; } else { tbl.style.display='none'; }
 }
 
-/* Tour-Banner */
 function renderTourTop(list, query, isExact){
   const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
@@ -451,7 +422,6 @@ function renderTourTop(list, query, isExact){
 }
 function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourTitle').textContent=''; $('#tourExtra').textContent=''; }
 
-/* Suche */
 function onSmart(){
   const qRaw=$('#smartSearch').value.trim(); closeTourTop(); if(!qRaw){ renderTable([]); return; }
   if(/^\\d{1,3}$/.test(qRaw)){ const n=qRaw.replace(/^0+(\\d)/,'$1'); const r=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'').startsWith(n))); renderTourTop(r,n,false); renderTable(r); return; }
@@ -460,7 +430,7 @@ function onSmart(){
     if(tr.length) renderTourTop(tr,n,true); else closeTourTop(); renderTable(r); return;
   }
   const q=normDE(qRaw);
-  const r=allCustomers.filter(k=>{ const fb=k.fachberater||''; const text=(k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||'')+' '+(k.fb_mail||'')+' '+(k.market_mail||'')); return normDE(text).includes(q); });
+  const r=allCustomers.filter(k=>{ const fb=k.fachberater||''; const text=(k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||'')+' '+(k.market_email||'')); return normDE(text).includes(q); });
   renderTable(r);
 }
 function onKey(){
@@ -483,8 +453,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 """
 
 # ===== Streamlit-Wrapper =====
-st.title("Kunden-Suche – technisch & kompakt (ohne Aktionsspalte)")
-st.caption("CSB/SAP gelbe Pills • Touren rot • Schlüssel grün • Adresse klickbar • Telefon/Mail-Pills gestapelt • 4-stellig = Tour ODER CSB")
+st.title("Kunden-Suche – Tech-Lab (heller Header, knallige Pills)")
+st.caption("Umlaut-Suche • 4-stellig = Tour oder CSB • Schlüssel exakte Suche • Telefon/Mail-Pills klickbar • Adresse-Pill (Google Maps)")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -495,7 +465,7 @@ with c3:
     logo_file = st.file_uploader("Logo (PNG/JPG)", type=["png","jpg","jpeg"])
 
 berater_file = st.file_uploader("OPTIONAL: Fachberater-Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
-berater_csb_file = st.file_uploader("Fachberater–CSB-Zuordnung (A=Fachberater, I=CSB, O=Markt-Telefon, X=Markt-Mail)", type=["xlsx"])
+berater_csb_file = st.file_uploader("Fachberater–CSB-Zuordnung (A=Fachberater, I=CSB, O=Markt-Tel, X=Markt-Mail)", type=["xlsx"])
 
 def normalize_digits_py(v) -> str:
     if pd.isna(v): return ""
@@ -532,7 +502,6 @@ def build_key_map(df: pd.DataFrame) -> dict:
     return out
 
 def build_berater_map(df: pd.DataFrame) -> dict:
-    # A=Vorname, B=Nachname, C=Nummer
     out = {}
     for _, row in df.iterrows():
         v = ("" if df.shape[1] < 1 or pd.isna(row.iloc[0]) else str(row.iloc[0])).strip()
@@ -547,7 +516,7 @@ def build_berater_map(df: pd.DataFrame) -> dict:
     return out
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
-    # A=Fachberater (Name), I=CSB (index 8), O=Markt-Telefon (index 14), X=Markt-Mail (index 23)
+    # A = Fachberater-Name, I = CSB, O = Markt-Telefon, X = Markt-Mail
     out = {}
     for _, row in df.iterrows():
         fach = str(row.iloc[0]).strip() if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
@@ -555,7 +524,7 @@ def build_berater_csb_map(df: pd.DataFrame) -> dict:
         tel  = str(row.iloc[14]).strip() if df.shape[1] > 14 and not pd.isna(row.iloc[14]) else ""
         mail = str(row.iloc[23]).strip() if df.shape[1] > 23 and not pd.isna(row.iloc[23]) else ""
         if csb:
-            out[csb] = {"name": fach, "telefon": tel, "email_market": mail}
+            out[csb] = {"name": fach, "telefon": tel, "email": mail}
     return out
 
 def to_data_url(file) -> str:
