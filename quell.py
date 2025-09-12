@@ -79,7 +79,7 @@ body{
 .btn-back{border-color:var(--accent); color:var(--accent-2); background:#eef2ff}
 .btn-back:hover{background:#e2e8ff}
 
-/* Tour-Banner (große Pill) */
+/* Tour-Banner */
 .tour-wrap{display:none; padding:10px 12px 0}
 .tour-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0; background:transparent; border:none;}
 .tour-pill{
@@ -161,7 +161,6 @@ a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); 
 a.mail-chip{background:#e6f7f4; color:#065f46; border:1.5px solid #10b981; max-width:100%}
 a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.97)}
 .chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
-/* NEU: Mail-Text darf umbrechen */
 .mail-chip .txt{white-space:normal; word-break:break-all; line-height:1.2}
 
 /* Adresse-Pill */
@@ -216,9 +215,9 @@ a.addr-chip{
           <colgroup>
             <col style="width:210px">
             <col style="width:520px">
-            <col style="width:260px">
-            <col style="width:110px">
-            <col style="width:380px">  <!-- breiter für Mail-Pills -->
+            <col style="width:260px">   <!-- Touren -->
+            <col style="width:80px">    <!-- Schlüssel schmaler -->
+            <col style="width:460px">   <!-- Fachberater / Markt breiter -->
             <col style="width:110px">
           </colgroup>
           <thead>
