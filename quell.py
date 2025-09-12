@@ -20,12 +20,10 @@ HTML_TEMPLATE = """
   --txt:#0c1220; --muted:#293346;
   --accent:#2563eb; --accent-2:#1f4fd3;
 
-  /* Pills */
   --pill-yellow-bg:#fff3b0; --pill-yellow-bd:#f59e0b; --pill-yellow-tx:#4a3001;
   --pill-green-bg:#d1fae5; --pill-green-bd:#10b981; --pill-green-tx:#065f46;
   --pill-red-bg:#ffe4e6;   --pill-red-bd:#fb7185;  --pill-red-tx:#7f1d1d;
 
-  /* Contact chips */
   --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;
   --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;
   --chip-mail-bg:#ecfeff; --chip-mail-bd:#06b6d4; --chip-mail-tx:#065f46;
@@ -143,12 +141,9 @@ a.id-chip:hover{filter:brightness(.97)}
 .tour-btn:hover{filter:brightness(.97)}
 
 /* Kontakte – untereinander */
-.phone-line{
-  display:flex; flex-direction:column; align-items:flex-start; gap:6px;
-}
+.phone-line{ display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
 a.phone-chip, a.mail-chip{
-  display:block;
-  border-radius:var(--radius-pill);
+  display:block; border-radius:var(--radius-pill);
   padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer
 }
 a.phone-chip.chip-fb{background:var(--chip-fb-bg); color:var(--chip-fb-tx); border:1.5px solid var(--chip-fb-bd)}
@@ -215,7 +210,7 @@ a.addr-chip:hover{filter:brightness(.97)}
             <col style="width:640px">
             <col style="width:280px">
             <col style="width:120px">
-            <col style="width:420px">  <!-- breitere Mail-/Kontakt-Spalte -->
+            <col style="width:420px">
             <col style="width:110px">
           </colgroup>
           <thead>
@@ -303,6 +298,25 @@ function pickBeraterPhone(name){
   }
   return '';
 }
+/* NEW: Fachberater-Mail aus Name → vorname.nachname@edeka.de */
+function deUmlaut(s){ return s.replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss'); }
+function fbEmailFromName(name){
+  if(!name) return '';
+  let x = name.toLowerCase().trim();
+  x = x.replace(/[\\u200B-\\u200D\\uFEFF]/g,'').replace(/\\u00A0/g,' ');
+  x = x.replace(/\\(.*?\\)/g,' ').replace(/[.,;:+*_#|]/g,' ');
+  x = x.replace(/\\b(hr\\.?|herr|frau|dr\\.?|prof\\.?|team|bereich|abteilung)\\b/g,' ');
+  x = x.replace(/[–—-]/g,' ');
+  x = deUmlaut(x);
+  x = x.replace(/[^a-z\\s]/g,' ').replace(/\\s+/g,' ').trim();
+  if(!x) return '';
+  const parts = x.split(' ').filter(Boolean);
+  if(parts.length < 1) return '';
+  const first = parts[0];
+  const last  = parts.length > 1 ? parts.slice(1).join('') : '';
+  if(!first || !last) return '';
+  return `${first}.${last}@edeka.de`;
+}
 function dedupByCSB(list){
   const seen=new Set(), out=[];
   for(const k of list){ const csb=normalizeDigits(k.csb_nummer); if(!seen.has(csb)){ seen.add(csb); out.push(k); } }
@@ -361,13 +375,13 @@ function rowFor(k){
   const l2 = el('div','cell-sub'); l2.appendChild(makeIdChip('SAP', sap));
   c1.append(l1,l2); td1.append(c1); tr.append(td1);
 
-  /* Name / Straße + Address pill */
+  /* Name / Adresse als Pill */
   const td2 = document.createElement('td');
   const c2 = el('div','cell');
   const top2 = el('div','cell-top', k.name||'-');
   const sub2 = el('div','cell-sub');
   const aAddr = document.createElement('a');
-  aAddr.className='addr-chip'; aAddr.href=mapUrl; aAddr.target='_blank'; aAddr.title='Adresse: '+addr;
+  aAddr.className='addr-chip'; aAddr.href=mapUrl; aAddr.target='_blank'; aAddr.title='Adresse klicken → Google Maps';
   aAddr.append(el('span','addr-dot',''), el('span','addr-tag','Adresse'), el('span','mono',' '+addr));
   sub2.appendChild(aAddr);
   c2.append(top2, sub2); td2.appendChild(c2); tr.append(td2);
@@ -385,9 +399,11 @@ function rowFor(k){
   const td6=document.createElement('td'); const c6=el('div','cell');
   const top6=el('div','cell-top', k.fachberater||'-'); const sub6=el('div','cell-sub phone-line');
   if(k.fb_phone)     sub6.appendChild(makePhoneChip('FB',    k.fb_phone,    'chip-fb'));
+  const fbMail = k.fachberater ? fbEmailFromName(k.fachberater) : '';
+  if(fbMail)         sub6.appendChild(makeMailChip('FB Mail', fbMail));
   if(k.market_phone) sub6.appendChild(makePhoneChip('Markt', k.market_phone,'chip-market'));
   if(k.market_email) sub6.appendChild(makeMailChip('Mail',   k.market_email));
-  if(!k.fb_phone && !k.market_phone && !k.market_email) sub6.textContent='-';
+  if(!k.fb_phone && !fbMail && !k.market_phone && !k.market_email) sub6.textContent='-';
   c6.append(top6,sub6); td6.appendChild(c6); tr.append(td6);
 
   /* Aktion (Map) */
@@ -448,7 +464,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – Tech-Lab")
-st.caption("Kontaktspalte verbreitert für Mails. Telefon/Mail-Pills untereinander.")
+st.caption("Fachberater-Mail wird automatisch aus dem Namen gebildet: vorname.nachname@edeka.de")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
