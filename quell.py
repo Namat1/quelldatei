@@ -12,690 +12,432 @@ HTML_TEMPLATE = """
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kunden-Suche</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&family=Inter+Tight:wght@700;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f3f6fb; --surface:#ffffff; --alt:#f9fbff;
+  --grid:#cfd7e6; --grid-2:#bfc9dd; --head-grid:#b3bfd6;
+  --txt:#0c1220; --muted:#293346;
+
+  --accent:#2563eb; --accent-2:#1f4fd3;
+
+  --pill-yellow-bg:#fff3b0; --pill-yellow-bd:#f59e0b; --pill-yellow-tx:#4a3001;
+  --pill-green-bg:#d1fae5; --pill-green-bd:#10b981; --pill-green-tx:#065f46;
+  --pill-red-bg:#ffe4e6;   --pill-red-bd:#fb7185;  --pill-red-tx:#7f1d1d;
+
+  --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;
+  --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;
+
+  --row-sep:#e6edff;
+
+  --radius:6px; --radius-pill:999px;
+  --fs-10:10px; --fs-11:11px; --fs-12:12px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
 body{
-  font-family:Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size:13px;
-  line-height:1.4;
-  color:#1a1a1a;
-  background:#fff;
+  margin:0; background:var(--bg);
+  font-family:"Inter Tight", Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color:var(--txt); font-size:var(--fs-12); line-height:1.35; font-weight:800; letter-spacing:.1px;
 }
 
-/* Container */
-.wrapper{max-width:1600px;margin:0 auto;padding:8px}
+/* Frame */
+.page{min-height:100vh; display:flex; justify-content:center; padding:10px}
+.container{width:100%; max-width:1480px}
+.card{background:var(--surface); border:1px solid var(--grid); border-radius:8px; overflow:hidden}
 
 /* Header */
 .header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:12px 16px;
-  background:#fff;
-  border-bottom:2px solid #e5e5e5;
-  margin-bottom:8px;
+  padding:10px 12px;
+  background:linear-gradient(180deg,#ffffff 0%, #f4f7fe 100%);
+  color:#0b1226; display:flex; align-items:center; justify-content:center; gap:10px;
+  border-bottom:1px solid var(--grid);
 }
-.logo{height:48px;width:auto}
-.btn-print{
-  padding:6px 16px;
-  background:#2563eb;
-  color:#fff;
-  border:none;
-  border-radius:4px;
-  font-size:13px;
-  font-weight:500;
-  cursor:pointer;
-}
-.btn-print:hover{background:#1d4ed8}
+.brand-logo{height:56px; width:auto}  /* größer als zuvor (44px) */
+/* .title bleibt ungenutzt, kann bestehen bleiben */
+.title{font-weight:900; letter-spacing:.35px; font-size:13px; text-transform:uppercase}
 
-/* Suchbereich */
-.search-bar{
-  display:flex;
-  gap:8px;
-  padding:8px 16px;
-  background:#f9f9f9;
-  border:1px solid #e5e5e5;
-  margin-bottom:8px;
-  flex-wrap:wrap;
+/* Searchbar */
+.searchbar{
+  padding:8px 12px; display:grid; grid-template-columns:1fr 260px auto auto; gap:8px; align-items:center;
+  border-bottom:1px solid var(--grid); background:var(--surface);
 }
-.search-field{flex:1;min-width:200px;display:flex;align-items:center;gap:8px}
-.search-label{
-  font-size:11px;
-  font-weight:600;
-  text-transform:uppercase;
-  color:#666;
-  white-space:nowrap;
+@media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr} }
+@media(max-width:680px){ .searchbar{grid-template-columns:1fr} }
+.field{display:grid; grid-template-columns:74px 1fr; gap:6px; align-items:center}
+.label{font-weight:900; color:var(--muted); font-size:var(--fs-11); text-transform:uppercase; letter-spacing:.35px}
+.input{
+  width:100%; padding:7px 9px; border:1px solid var(--grid); border-radius:6px; background:#fff;
+  font-size:var(--fs-12); font-weight:900;
 }
-.search-input{
-  flex:1;
-  padding:5px 8px;
-  border:1px solid #d0d0d0;
-  border-radius:3px;
-  font-size:13px;
-  background:#fff;
-}
-.search-input:focus{outline:none;border-color:#2563eb}
-.btn{
-  padding:5px 12px;
-  border:1px solid #d0d0d0;
-  background:#fff;
-  border-radius:3px;
-  font-size:13px;
-  font-weight:500;
-  cursor:pointer;
-}
-.btn:hover{background:#f5f5f5}
-.btn-reset{background:#dc2626;color:#fff;border-color:#dc2626}
-.btn-reset:hover{background:#b91c1c}
-.btn-back{background:#f0f9ff;color:#2563eb;border-color:#2563eb}
+.input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(37,99,235,.16)}
 
-/* Tour-Info */
-.tour-info{
-  display:none;
-  padding:8px 16px;
-  background:#fffbeb;
-  border:1px solid #fbbf24;
-  margin-bottom:8px;
-  font-size:13px;
+/* Buttons */
+.btn{padding:7px 10px; border:1px solid var(--grid); background:#fff; color:#0f172a; border-radius:6px; cursor:pointer; font-weight:900; font-size:var(--fs-12)}
+.btn:hover{background:#f2f5f9}
+.btn-danger{border-color:#d7263d; background:#d7263d; color:#fff}
+.btn-danger:hover{background:#bf1f33}
+.btn-back{border-color:var(--accent); color:var(--accent-2); background:#eef2ff}
+.btn-back:hover{background:#e2e8ff}
+
+/* Tour-Banner (große Pill) */
+.tour-wrap{display:none; padding:10px 12px 0}
+.tour-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0; background:transparent; border:none;}
+.tour-pill{
+  display:inline-flex; align-items:center; gap:10px;
+  background:#ffedd5; color:#7c2d12;
+  border:2px solid #fb923c; border-radius:999px; padding:8px 14px;
+  font-weight:900; font-size:13px; letter-spacing:.2px;
+  box-shadow:0 0 0 3px rgba(251,146,60,.18) inset;
 }
-.tour-title{font-weight:600;color:#92400e}
-.tour-stats{color:#78350f;margin-left:16px;font-size:12px}
+.tour-stats{font-weight:900; font-size:11px; color:#334155}
 
 /* Tabelle */
-.table-container{
-  background:#fff;
-  border:1px solid #e5e5e5;
-  overflow:hidden;
-}
-.table-scroll{
-  max-height:calc(100vh - 200px);
-  overflow:auto;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:12px;
-}
+.table-section{padding:6px 12px 14px}
+table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
-  position:sticky;
-  top:0;
-  background:#f5f5f5;
-  font-weight:600;
-  text-align:left;
-  padding:8px;
-  border-bottom:2px solid #d0d0d0;
-  font-size:11px;
-  text-transform:uppercase;
-  color:#333;
-  z-index:10;
+  position:sticky; top:0; z-index:2;
+  background:linear-gradient(180deg,#f7f9fe,#eef2f8);
+  color:#0f172a; font-weight:900; text-transform:uppercase; letter-spacing:.25px;
+  border-bottom:2px solid var(--head-grid); border-right:1px solid var(--head-grid);
+  padding:8px 9px; white-space:nowrap; text-align:left;
 }
+thead th:last-child{border-right:none}
 tbody td{
-  padding:6px 8px;
-  border-bottom:1px solid #e5e5e5;
-  vertical-align:top;
+  padding:8px 9px; vertical-align:top; font-weight:800;
+  border-bottom:1px solid var(--grid); border-right:1px solid var(--grid);
   background:#fff;
 }
-tbody tr:hover td{background:#f9fafb}
+tbody td:last-child{border-right:none}
 
-/* Kompakte Zellen */
-.cell-wrap{display:flex;flex-direction:column;gap:2px}
-.cell-main{font-weight:500;color:#1a1a1a}
-.cell-sub{font-size:11px;color:#666}
+/* Zeilenabgrenzung */
+tbody tr:nth-child(odd) td{background:#f8fbff}
+tbody tr:nth-child(even) td{background:#ffffff}
+tbody tr+tr td{border-top:6px solid var(--row-sep)}
+tbody tr:hover td{background:#eef4ff}
 
-/* IDs */
-.id-chip{
-  display:inline-block;
-  padding:2px 6px;
-  background:#fef3c7;
-  border:1px solid #fbbf24;
-  border-radius:3px;
-  font-size:11px;
-  font-weight:500;
-  color:#78350f;
-  text-decoration:none;
-  cursor:pointer;
+/* Zellen */
+.cell{display:flex; flex-direction:column; gap:4px; min-height:38px; width:100%}
+.cell-top,.cell-sub{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+/* Monospace Zahlen */
+.mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:700}
+
+/* ID-Chips */
+a.id-chip{
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--pill-yellow-bg); color:var(--pill-yellow-tx);
+  border:1.5px solid var(--pill-yellow-bd); border-radius:var(--radius-pill); padding:3px 9px;
+  font-weight:900; font-size:var(--fs-11); text-decoration:none; line-height:1;
+  box-shadow:0 0 0 2px rgba(245,158,11,.12) inset;
 }
-.id-chip:hover{background:#fed7aa}
-.id-label{font-size:10px;opacity:0.8}
+a.id-chip:hover{filter:brightness(.97)}
+.id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
 /* Schlüssel */
-.key-badge{
-  display:inline-block;
-  padding:2px 6px;
-  background:#d1fae5;
-  border:1px solid #10b981;
-  border-radius:3px;
-  font-size:11px;
-  font-weight:500;
-  color:#065f46;
+.badge-key{
+  display:inline-block; background:var(--pill-green-bg); border:1.5px solid var(--pill-green-bd);
+  color:var(--pill-green-tx); border-radius:var(--radius-pill); padding:3px 9px;
+  font-weight:900; font-size:var(--fs-11); line-height:1;
+  box-shadow:0 0 0 2px rgba(16,185,129,.12) inset;
 }
 
 /* Touren */
-.tour-tags{display:flex;flex-wrap:wrap;gap:4px}
-.tour-tag{
-  display:inline-block;
-  padding:2px 6px;
-  background:#fee2e2;
-  border:1px solid #f87171;
-  border-radius:3px;
-  font-size:10px;
-  font-weight:500;
-  color:#7f1d1d;
-  cursor:pointer;
+.tour-inline{display:flex; flex-wrap:wrap; gap:6px}
+.tour-btn{
+  display:inline-block; background:var(--pill-red-bg); border:1.5px solid var(--pill-red-bd); color:var(--pill-red-tx);
+  padding:3px 9px; border-radius:var(--radius-pill); font-weight:900; font-size:var(--fs-10); cursor:pointer; line-height:1.25; letter-spacing:.15px;
+  box-shadow:0 0 0 2px rgba(251,113,133,.12) inset;
 }
-.tour-tag:hover{background:#fecaca}
+.tour-btn:hover{filter:brightness(.97)}
 
-/* Kontakt-Pills */
-.contact-list{display:flex;flex-direction:column;gap:3px}
-.contact-chip{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  padding:2px 6px;
-  border:1px solid;
-  border-radius:3px;
-  font-size:11px;
-  text-decoration:none;
-  max-width:100%;
+/* Telefon-/Mail-Chips untereinander */
+.phone-col{display:flex; flex-direction:column; gap:6px}
+a.phone-chip, a.mail-chip{
+  display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
+  padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer; width:max-content; max-width:100%;
 }
-.chip-fb{background:#eff6ff;border-color:#3b82f6;color:#1e3a8a}
-.chip-market{background:#f3e8ff;border-color:#9333ea;color:#581c87}
-.chip-mail{background:#f0fdfa;border-color:#14b8a6;color:#134e4a}
-.contact-label{font-size:9px;font-weight:600;text-transform:uppercase;opacity:0.8}
-.contact-value{font-family:'JetBrains Mono',monospace;font-size:11px}
+a.phone-chip.chip-fb{background:var(--chip-fb-bg); color:var(--chip-fb-tx); border:1.5px solid var(--chip-fb-bd)}
+a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); border:1.5px solid var(--chip-mk-bd)}
+a.mail-chip{background:#e6f7f4; color:#065f46; border:1.5px solid #10b981; max-width:100%}
+a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.97)}
+.chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
+.mail-chip .txt{white-space:normal; word-break:break-all; line-height:1.2}
 
-/* Adresse */
-.addr-link{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  padding:2px 6px;
-  background:#f0f9ff;
-  border:1px solid #60a5fa;
-  border-radius:3px;
-  font-size:11px;
-  color:#1e3a8a;
-  text-decoration:none;
+/* Adresse-Pill */
+a.addr-chip{
+  display:inline-flex; align-items:center; gap:8px; max-width:100%;
+  background:#e0ecff; color:#0b3a8a; border:1.5px solid #60a5fa; border-radius:999px; padding:4px 10px;
+  text-decoration:none; font-weight:900; font-size:var(--fs-11);
 }
-.addr-link:hover{background:#e0f2fe}
-.addr-icon{font-size:10px}
+.addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
+.addr-dot{width:6px; height:6px; background:#ff2d55; border-radius:999px; display:inline-block}
 
-/* Spaltenbreiten */
-.col-id{width:180px}
-.col-name{width:380px}
-.col-tour{width:200px}
-.col-key{width:80px}
-.col-contact{width:340px}
-
-/* Druckoptimierung */
-@media print {
-  body{font-size:10px}
-  .header{border-bottom:1px solid #000;page-break-after:avoid}
-  .btn-print,.btn,.search-bar{display:none !important}
-  .tour-info{border:1px solid #000;page-break-after:avoid}
-  .table-scroll{max-height:none;overflow:visible}
-  table{font-size:9px;page-break-inside:auto}
-  thead{display:table-header-group}
-  tbody tr{page-break-inside:avoid;page-break-after:auto}
-  tbody td{padding:4px;border-bottom:1px solid #ccc}
-  .id-chip,.key-badge,.tour-tag,.contact-chip,.addr-link{
-    border:1px solid #000 !important;
-    background:none !important;
-    padding:1px 3px;
-  }
-  a{text-decoration:none;color:#000}
+/* (Map-Button Styles bleiben erhalten, werden aber nicht mehr genutzt) */
+.table-map{
+  text-decoration:none; font-weight:900; font-size:var(--fs-11);
+  padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
+  background:var(--accent); color:#fff; display:inline-block; text-align:center; letter-spacing:.2px
 }
-
-/* Scrollbar optimiert */
-.table-scroll::-webkit-scrollbar{width:8px;height:8px}
-.table-scroll::-webkit-scrollbar-track{background:#f5f5f5}
-.table-scroll::-webkit-scrollbar-thumb{background:#c0c0c0;border-radius:4px}
-.table-scroll::-webkit-scrollbar-thumb:hover{background:#999}
+.table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
 </style>
 </head>
 <body>
-<div class="wrapper">
-  <div class="header">
-    <img class="logo" src="__LOGO_DATA_URL__" alt="Logo">
-    <button class="btn-print" onclick="window.print()">Drucken</button>
-  </div>
+<div class="page">
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <img class="brand-logo" alt="Logo" src="__LOGO_DATA_URL__">
+      </div>
 
-  <div class="search-bar">
-    <div class="search-field">
-      <span class="search-label">Suche</span>
-      <input class="search-input" id="smartSearch" placeholder="Name, Ort, CSB, SAP, Tour, Fachberater...">
-    </div>
-    <div class="search-field">
-      <span class="search-label">Schlüssel</span>
-      <input class="search-input" id="keySearch" placeholder="z.B. 40">
-    </div>
-    <button class="btn btn-back" id="btnBack" style="display:none">← Zurück</button>
-    <button class="btn btn-reset" id="btnReset">Zurücksetzen</button>
-  </div>
+      <div class="searchbar">
+        <div class="field">
+          <div class="label">Suche</div>
+          <input class="input" id="smartSearch" placeholder="Name / Ort / CSB / SAP / Tour / Fachberater / Telefon / …">
+        </div>
+        <div class="field">
+          <div class="label">Schlüssel</div>
+          <input class="input" id="keySearch" placeholder="exakt (z. B. 40)">
+        </div>
+        <button class="btn btn-back" id="btnBack" style="display:none;">Zurück zur Suche</button>
+        <button class="btn btn-danger" id="btnReset">Zurücksetzen</button>
+      </div>
 
-  <div class="tour-info" id="tourInfo">
-    <span class="tour-title" id="tourTitle"></span>
-    <span class="tour-stats" id="tourStats"></span>
-  </div>
+      <div class="tour-wrap" id="tourWrap">
+        <div class="tour-banner">
+          <span class="tour-pill" id="tourTitle"></span>
+          <small class="tour-stats" id="tourExtra"></small>
+        </div>
+      </div>
 
-  <div class="table-container">
-    <div class="table-scroll">
-      <table id="dataTable" style="display:none">
-        <thead>
-          <tr>
-            <th class="col-id">CSB / SAP</th>
-            <th class="col-name">Name / Adresse</th>
-            <th class="col-tour">Touren</th>
-            <th class="col-key">Schlüssel</th>
-            <th class="col-contact">Fachberater / Kontakt</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+      <div class="table-section">
+        <table id="resultTable" style="display:none;">
+          <colgroup>
+            <col style="width:210px">
+            <col style="width:520px">
+            <col style="width:260px">
+            <col style="width:105px">   <!-- Schlüssel ~5% kleiner -->
+            <col style="width:418px">   <!-- Fachberater/Markt ~10% größer -->
+          </colgroup>
+          <thead>
+            <tr>
+              <th>CSB / SAP</th>
+              <th>Name / Adresse</th>
+              <th>Touren</th>
+              <th>Schlüssel</th>
+              <th>Fachberater / Markt</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-const tourkundenData = {};
-const keyIndex = {};
-const beraterIndex = {};
-const beraterCSBIndex = {};
+const tourkundenData   = {  };
+const keyIndex         = {  };
+const beraterIndex     = {  };
+const beraterCSBIndex  = {  };
 
 const $ = s => document.querySelector(s);
-const el = (tag, cls, txt) => {
-  const e = document.createElement(tag);
-  if(cls) e.className = cls;
-  if(txt !== undefined) e.textContent = txt;
-  return e;
-};
+const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
 
 let allCustomers = [];
 let prevQuery = null;
+const DIAL_SCHEME = 'callto';
 
-function sanitizePhone(n) {
-  return (n||'').toString().trim().replace(/[^\\d+]/g,'');
+function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
+function makePhoneChip(label, num, cls){
+  if(!num) return null;
+  const a = document.createElement('a');
+  a.className = 'phone-chip '+cls;
+  a.href = `${DIAL_SCHEME}:${sanitizePhone(num)}`;
+  a.append(el('span','chip-tag',label), el('span','mono',' '+num));
+  return a;
 }
-
-function normDE(s) {
+function makeMailChip(label, addr){
+  if(!addr) return null;
+  const a = document.createElement('a');
+  a.className = 'mail-chip';
+  a.href = `mailto:${addr}`;
+  const txt = document.createElement('span'); txt.className='txt mono'; txt.textContent=' '+addr;
+  a.append(el('span','chip-tag',label), txt);
+  return a;
+}
+function normDE(s){
   if(!s) return '';
-  return s.toLowerCase()
-    .replace(/ä/g,'ae').replace(/ö/g,'oe')
-    .replace(/ü/g,'ue').replace(/ß/g,'ss')
-    .normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')
-    .replace(/\\s+/g,' ').trim();
+  let x = s.toLowerCase();
+  x = x.replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+  return x.replace(/\\s+/g,' ').trim();
 }
-
-function normalizeDigits(v) {
+function normalizeDigits(v){
   if(v == null) return '';
   let s = String(v).trim().replace(/\\.0$/,'');
-  return s.replace(/[^0-9]/g,'').replace(/^0+(\\d)/,'$1');
+  s = s.replace(/[^0-9]/g,'').replace(/^0+(\\d)/,'$1');
+  return s;
 }
-
-function normalizeNameKey(s) {
+function normalizeNameKey(s){
   if(!s) return '';
-  return s.replace(/[\\u200B-\\u200D\\uFEFF]/g,'')
-    .replace(/\\u00A0/g,' ').toLowerCase()
-    .replace(/ä/g,'ae').replace(/ö/g,'oe')
-    .replace(/ü/g,'ue').replace(/ß/g,'ss')
-    .normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')
-    .replace(/\\(.*?\\)/g,' ').replace(/[^a-z\\s]/g,' ')
-    .replace(/\\s+/g,' ').trim();
+  let x = s.replace(/[\\u200B-\\u200D\\uFEFF]/g,'').replace(/\\u00A0/g,' ').replace(/[–—]/g,'-').toLowerCase();
+  x = x.replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+  x = x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/\\(.*?\\)/g,' ');
+  x = x.replace(/[./,;:+*_#|]/g,' ').replace(/-/g,' ').replace(/[^a-z\\s]/g,' ').replace(/\\s+/g,' ').trim();
+  return x;
 }
-
-function nameVariants(s) {
-  const base = normalizeNameKey(s);
-  if(!base) return [];
+function nameVariants(s){
+  const base = normalizeNameKey(s); if(!base) return [];
   const parts = base.split(' ').filter(Boolean);
   const out = new Set([base]);
-  if(parts.length >= 2) {
-    out.add(`${parts[0]} ${parts[parts.length-1]}`);
-    out.add(`${parts[parts.length-1]} ${parts[0]}`);
-  }
+  if(parts.length >= 2){ const f=parts[0], l=parts[parts.length-1]; out.add(`${f} ${l}`); out.add(`${l} ${f}`); }
   return Array.from(out);
 }
-
-function fbEmailFromName(name) {
+function fbEmailFromName(name){
   const parts = normalizeNameKey(name).split(' ').filter(Boolean);
-  if(parts.length < 2) return '';
-  return `${parts[0]}.${parts[parts.length-1]}@edeka.de`;
+  if(parts.length<2) return '';
+  const vor = parts[0]; const nach = parts[parts.length-1];
+  return `${vor}.${nach}@edeka.de`.replace(/\s+/g,'');
 }
-
-function pickBeraterPhone(name) {
+function pickBeraterPhone(name){
   if(!name) return '';
   const variants = nameVariants(name);
-  for(const v of variants) {
-    if(beraterIndex[v]) return beraterIndex[v];
+  for(const v of variants){ if(beraterIndex[v]) return beraterIndex[v]; }
+  const keys = Object.keys(beraterIndex);
+  for(const v of variants){
+    const parts = v.split(' ').filter(Boolean);
+    for(const k of keys){ if(parts.every(p=>k.includes(p))) return beraterIndex[k]; }
   }
   return '';
 }
-
-function dedupByCSB(list) {
-  const seen = new Set();
-  return list.filter(k => {
-    const csb = normalizeDigits(k.csb_nummer);
-    if(seen.has(csb)) return false;
-    seen.add(csb);
-    return true;
-  });
+function dedupByCSB(list){
+  const seen=new Set(), out=[];
+  for(const k of list){ const csb=normalizeDigits(k.csb_nummer); if(!seen.has(csb)){ seen.add(csb); out.push(k); } }
+  return out;
 }
 
-function buildData() {
+function buildData(){
   const map = new Map();
-  for(const [tour, list] of Object.entries(tourkundenData)) {
+  for(const [tour, list] of Object.entries(tourkundenData)){
     const tourN = normalizeDigits(tour);
-    list.forEach(k => {
-      const csb = normalizeDigits(k.csb_nummer);
-      if(!csb) return;
-      
-      if(!map.has(csb)) {
+    list.forEach(k=>{
+      const csb = normalizeDigits(k.csb_nummer); if(!csb) return;
+      if(!map.has(csb)){
         const rec = {...k};
-        rec.csb_nummer = csb;
-        rec.sap_nummer = normalizeDigits(rec.sap_nummer);
+        rec.csb_nummer   = csb;
+        rec.sap_nummer   = normalizeDigits(rec.sap_nummer);
         rec.postleitzahl = normalizeDigits(rec.postleitzahl);
         rec.touren = [];
-        rec.schluessel = normalizeDigits(rec.schluessel) || keyIndex[csb] || '';
-        if(beraterCSBIndex[csb] && beraterCSBIndex[csb].name) {
-          rec.fachberater = beraterCSBIndex[csb].name;
-        }
-        rec.fb_phone = rec.fachberater ? pickBeraterPhone(rec.fachberater) : '';
-        rec.market_phone = beraterCSBIndex[csb]?.telefon || '';
-        rec.market_email = beraterCSBIndex[csb]?.email || '';
+        rec.schluessel  = normalizeDigits(rec.schluessel) || (keyIndex[csb]||'');
+        if (beraterCSBIndex[csb] && beraterCSBIndex[csb].name){ rec.fachberater = beraterCSBIndex[csb].name; }
+        rec.fb_phone     = rec.fachberater ? pickBeraterPhone(rec.fachberater) : '';
+        rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
+        rec.market_email = (beraterCSBIndex[csb] && beraterCSBIndex[csb].email) ? beraterCSBIndex[csb].email : '';
         map.set(csb, rec);
       }
-      map.get(csb).touren.push({tournummer: tourN, liefertag: k.liefertag});
+      map.get(csb).touren.push({ tournummer: tourN, liefertag: k.liefertag });
     });
   }
   allCustomers = Array.from(map.values());
 }
 
-function createRow(k) {
+function pushPrevQuery(){ const v=$('#smartSearch').value.trim(); if(v){ prevQuery=v; $('#btnBack').style.display='inline-block'; } }
+function popPrevQuery(){ if(prevQuery){ $('#smartSearch').value=prevQuery; prevQuery=null; $('#btnBack').style.display='none'; onSmart(); } }
+
+function makeIdChip(label, value){
+  const a=document.createElement('a'); a.className='id-chip'; a.href='javascript:void(0)'; a.title=label+' '+value+' suchen';
+  a.addEventListener('click',()=>{ pushPrevQuery(); $('#smartSearch').value=value; onSmart(); });
+  a.append(el('span','id-tag',label), el('span','mono',' '+value)); return a;
+}
+function twoLineCell(top, sub){ const w=el('div','cell'); w.append(el('div','cell-top',top), el('div','cell-sub',sub)); return w; }
+function makeAddressChip(name, strasse, plz, ort){
+  const txt = `${strasse||''}, ${plz||''} ${ort||''}`.replace(/^,\\s*/, '').trim();
+  const url = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(`${name||''}, ${txt}`);
+  const a = document.createElement('a'); a.className='addr-chip'; a.href=url; a.target='_blank'; a.title='Adresse in Google Maps öffnen (klickbar)';
+  a.append(el('span','addr-dot',''), el('span','chip-tag','Adresse'), (()=>{ const s=document.createElement('span'); s.className='txt'; s.textContent=' '+txt; return s; })());
+  return a;
+}
+
+function rowFor(k){
   const tr = document.createElement('tr');
-  const csb = k.csb_nummer || '-';
-  const sap = k.sap_nummer || '-';
-  const plz = k.postleitzahl || '-';
-  
-  // CSB/SAP
+  const csb = k.csb_nummer||'-', sap=k.sap_nummer||'-', plz=k.postleitzahl||'-';
+
   const td1 = document.createElement('td');
-  const wrap1 = el('div', 'cell-wrap');
-  const csb_chip = document.createElement('a');
-  csb_chip.className = 'id-chip';
-  csb_chip.href = '#';
-  csb_chip.innerHTML = `<span class="id-label">CSB</span> ${csb}`;
-  csb_chip.onclick = e => {
-    e.preventDefault();
-    pushPrevQuery();
-    $('#smartSearch').value = csb;
-    onSmart();
-  };
-  const sap_chip = document.createElement('a');
-  sap_chip.className = 'id-chip';
-  sap_chip.href = '#';
-  sap_chip.innerHTML = `<span class="id-label">SAP</span> ${sap}`;
-  sap_chip.onclick = e => {
-    e.preventDefault();
-    pushPrevQuery();
-    $('#smartSearch').value = sap;
-    onSmart();
-  };
-  wrap1.appendChild(el('div', 'cell-main')).appendChild(csb_chip);
-  wrap1.appendChild(el('div', 'cell-sub')).appendChild(sap_chip);
-  td1.appendChild(wrap1);
-  tr.appendChild(td1);
-  
-  // Name/Adresse
+  const c1 = el('div','cell');
+  const l1 = el('div','cell-top'); l1.appendChild(makeIdChip('CSB', csb));
+  const l2 = el('div','cell-sub'); l2.appendChild(makeIdChip('SAP', sap));
+  c1.append(l1,l2); td1.append(c1); tr.append(td1);
+
   const td2 = document.createElement('td');
-  const wrap2 = el('div', 'cell-wrap');
-  wrap2.appendChild(el('div', 'cell-main', k.name || '-'));
-  const addr = `${k.strasse||''}, ${plz} ${k.ort||''}`.replace(/^,\\s*/,'').trim();
-  const addr_link = document.createElement('a');
-  addr_link.className = 'addr-link';
-  addr_link.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((k.name||'')+', '+addr)}`;
-  addr_link.target = '_blank';
-  addr_link.innerHTML = `<span class="addr-icon">📍</span> ${addr}`;
-  wrap2.appendChild(el('div', 'cell-sub')).appendChild(addr_link);
-  td2.appendChild(wrap2);
-  tr.appendChild(td2);
-  
-  // Touren
-  const td3 = document.createElement('td');
-  const tours = el('div', 'tour-tags');
-  (k.touren || []).forEach(t => {
-    const tag = el('span', 'tour-tag', `${t.tournummer} (${t.liefertag.substring(0,2)})`);
-    tag.onclick = () => {
-      pushPrevQuery();
-      $('#smartSearch').value = t.tournummer;
-      onSmart();
-    };
-    tours.appendChild(tag);
-  });
-  td3.appendChild(tours);
-  tr.appendChild(td3);
-  
-  // Schlüssel
-  const td4 = document.createElement('td');
-  const key = k.schluessel || keyIndex[csb] || '';
-  td4.appendChild(key ? el('span', 'key-badge', key) : el('span', '', '-'));
-  tr.appendChild(td4);
-  
-  // Kontakt
-  const td5 = document.createElement('td');
-  const contacts = el('div', 'contact-list');
-  
-  if(k.fb_phone) {
-    const a = document.createElement('a');
-    a.className = 'contact-chip chip-fb';
-    a.href = `callto:${sanitizePhone(k.fb_phone)}`;
-    a.innerHTML = `<span class="contact-label">FB</span> <span class="contact-value">${k.fb_phone}</span>`;
-    contacts.appendChild(a);
-  }
-  
-  const fbMail = k.fachberater ? fbEmailFromName(k.fachberater) : '';
-  if(fbMail) {
-    const a = document.createElement('a');
-    a.className = 'contact-chip chip-mail';
-    a.href = `mailto:${fbMail}`;
-    a.innerHTML = `<span class="contact-label">FB Mail</span> <span class="contact-value">${fbMail}</span>`;
-    contacts.appendChild(a);
-  }
-  
-  if(k.market_phone) {
-    const a = document.createElement('a');
-    a.className = 'contact-chip chip-market';
-    a.href = `callto:${sanitizePhone(k.market_phone)}`;
-    a.innerHTML = `<span class="contact-label">Markt</span> <span class="contact-value">${k.market_phone}</span>`;
-    contacts.appendChild(a);
-  }
-  
-  if(k.market_email) {
-    const a = document.createElement('a');
-    a.className = 'contact-chip chip-mail';
-    a.href = `mailto:${k.market_email}`;
-    a.innerHTML = `<span class="contact-label">Mail</span> <span class="contact-value">${k.market_email}</span>`;
-    contacts.appendChild(a);
-  }
-  
-  if(!contacts.children.length) contacts.textContent = '-';
-  td5.appendChild(contacts);
-  tr.appendChild(td5);
-  
+  const c2 = el('div','cell');
+  c2.append(el('div','cell-top', k.name||'-'));
+  const addrPill = makeAddressChip(k.name||'', k.strasse||'', plz, k.ort||'');
+  const line2 = el('div','cell-sub'); line2.appendChild(addrPill);
+  c2.append(line2);
+  td2.append(c2); tr.append(td2);
+
+  const td4 = document.createElement('td'); const c4 = el('div','cell'); const tours=el('div','tour-inline');
+  (k.touren||[]).forEach(t=>{ const tnum=(t.tournummer||''); const b=el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')'); b.title='Tour '+tnum; b.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value=tnum; onSmart(); }; tours.appendChild(b); });
+  c4.appendChild(tours); td4.appendChild(c4); tr.append(td4);
+
+  const td5 = document.createElement('td'); const key=(k.schluessel||'')||(keyIndex[csb]||'');
+  td5.appendChild(key ? el('span','badge-key',key) : el('span','', '-')); tr.append(td5);
+
+  const td6=document.createElement('td'); const col=el('div','phone-col');
+  const fbPhone = k.fb_phone;
+  const fbMail  = k.fachberater ? fbEmailFromName(k.fachberater) : '';
+  const mkPhone = k.market_phone;
+  const mkMail  = k.market_email || '';
+  const p1 = makePhoneChip('FB', fbPhone, 'chip-fb');      if(p1) col.appendChild(p1);
+  const m1 = makeMailChip('FB Mail', fbMail);              if(m1) col.appendChild(m1);
+  const p2 = makePhoneChip('Markt', mkPhone,'chip-market');if(p2) col.appendChild(p2);
+  const m2 = makeMailChip('Mail', mkMail);                 if(m2) col.appendChild(m2);
+  if(!col.childNodes.length) col.textContent='-';
+  td6.appendChild(col); tr.append(td6);
+
   return tr;
 }
-
-function renderTable(list) {
-  const body = $('#tableBody');
-  const table = $('#dataTable');
-  body.innerHTML = '';
-  
-  if(list.length) {
-    list.forEach(k => body.appendChild(createRow(k)));
-    table.style.display = 'table';
-  } else {
-    table.style.display = 'none';
-  }
+function renderTable(list){
+  const body=$('#tableBody'), tbl=$('#resultTable'); body.innerHTML='';
+  if(list.length){ list.forEach(k=>body.appendChild(rowFor(k))); tbl.style.display='table'; } else { tbl.style.display='none'; }
 }
 
-function showTourInfo(list, query, exact) {
-  const info = $('#tourInfo');
-  const title = $('#tourTitle');
-  const stats = $('#tourStats');
-  
-  if(!list.length) {
-    info.style.display = 'none';
-    return;
-  }
-  
-  if(query.startsWith('Schluessel ')) {
-    const key = query.replace(/^Schluessel\\s+/, '');
-    title.textContent = `Schlüssel ${key}: ${list.length} Kunde(n)`;
-  } else {
-    title.textContent = `Tour ${exact ? query : query+'*'}: ${list.length} Kunde(n)`;
-  }
-  
-  const days = {};
-  list.forEach(k => {
-    (k.touren || []).forEach(t => {
-      if(query.startsWith('Schluessel ') || 
-         (exact ? t.tournummer === query : t.tournummer.startsWith(query))) {
-        days[t.liefertag] = (days[t.liefertag] || 0) + 1;
-      }
-    });
-  });
-  
-  stats.textContent = Object.entries(days).sort()
-    .map(([d,c]) => `${d}: ${c}`).join(' • ');
-  info.style.display = 'block';
+function renderTourTop(list, query, isExact){
+  const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
+  if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
+  if(query.startsWith('Schluessel ')){ const key=query.replace(/^Schluessel\\s+/, ''); title.textContent='Schlüssel '+key+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden'); }
+  else{ title.textContent=(isExact?('Tour '+query):('Tour-Prefix '+query+'*'))+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden'); }
+  const dayCount={}; list.forEach(k=>(k.touren||[]).forEach(t=>{ const tnum=t.tournummer||''; const cond=isExact?(tnum===query):tnum.startsWith(query.replace('Schluessel ','')); if(cond||query.startsWith('Schluessel ')){ dayCount[t.liefertag]=(dayCount[t.liefertag]||0)+1; }}));
+  extra.textContent=Object.entries(dayCount).sort().map(([d,c])=>d+': '+c).join('  •  ');
+  wrap.style.display='block';
 }
+function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourTitle').textContent=''; $('#tourExtra').textContent=''; }
 
-function hideTourInfo() {
-  $('#tourInfo').style.display = 'none';
-}
-
-function pushPrevQuery() {
-  const v = $('#smartSearch').value.trim();
-  if(v) {
-    prevQuery = v;
-    $('#btnBack').style.display = 'inline-block';
+function onSmart(){
+  const qRaw=$('#smartSearch').value.trim(); closeTourTop(); if(!qRaw){ renderTable([]); return; }
+  if(/^\\d{1,3}$/.test(qRaw)){ const n=qRaw.replace(/^0+(\\d)/,'$1'); const r=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'').startsWith(n))); renderTourTop(r,n,false); renderTable(r); return; }
+  if(/^\\d{4}$/.test(qRaw)){
+    const n=qRaw.replace(/^0+(\\d)/,'$1'); const tr=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'')===n)); const cr=allCustomers.filter(k=>(k.csb_nummer||'')===n); const r=dedupByCSB([...tr,...cr]);
+    if(tr.length) renderTourTop(tr,n,true); else closeTourTop(); renderTable(r); return;
   }
-}
-
-function popPrevQuery() {
-  if(prevQuery) {
-    $('#smartSearch').value = prevQuery;
-    prevQuery = null;
-    $('#btnBack').style.display = 'none';
-    onSmart();
-  }
-}
-
-function onSmart() {
-  const qRaw = $('#smartSearch').value.trim();
-  hideTourInfo();
-  
-  if(!qRaw) {
-    renderTable([]);
-    return;
-  }
-  
-  // 1-3 stellig: Tour-Prefix
-  if(/^\\d{1,3}$/.test(qRaw)) {
-    const n = qRaw.replace(/^0+(\\d)/, '$1');
-    const r = allCustomers.filter(k => 
-      (k.touren || []).some(t => t.tournummer.startsWith(n))
-    );
-    showTourInfo(r, n, false);
-    renderTable(r);
-    return;
-  }
-  
-  // 4-stellig: Tour oder CSB
-  if(/^\\d{4}$/.test(qRaw)) {
-    const n = qRaw.replace(/^0+(\\d)/, '$1');
-    const tourResults = allCustomers.filter(k => 
-      (k.touren || []).some(t => t.tournummer === n)
-    );
-    const csbResults = allCustomers.filter(k => k.csb_nummer === n);
-    const r = dedupByCSB([...tourResults, ...csbResults]);
-    if(tourResults.length) showTourInfo(tourResults, n, true);
-    renderTable(r);
-    return;
-  }
-  
-  // Textsuche
-  const q = normDE(qRaw);
-  const r = allCustomers.filter(k => {
-    const text = [
-      k.name, k.strasse, k.ort,
-      k.csb_nummer, k.sap_nummer,
-      k.fachberater || '',
-      k.schluessel || '',
-      k.fb_phone || '',
-      k.market_phone || '',
-      k.market_email || ''
-    ].join(' ');
-    return normDE(text).includes(q);
-  });
+  const q=normDE(qRaw);
+  const r=allCustomers.filter(k=>{ const fb=k.fachberater||''; const text=(k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||'')+' '+(k.market_email||'')); return normDE(text).includes(q); });
   renderTable(r);
 }
-
-function onKey() {
-  const q = $('#keySearch').value.trim();
-  hideTourInfo();
-  
-  if(!q) {
-    renderTable([]);
-    return;
-  }
-  
-  const n = q.replace(/[^0-9]/g, '').replace(/^0+(\\d)/, '$1');
-  const r = allCustomers.filter(k => {
-    const key = k.schluessel || keyIndex[k.csb_nummer] || '';
-    return key === n;
-  });
-  
-  if(r.length) showTourInfo(r, 'Schluessel ' + n, true);
-  renderTable(r);
+function onKey(){
+  const q=$('#keySearch').value.trim(); closeTourTop(); if(!q){ renderTable([]); return; }
+  const n=q.replace(/[^0-9]/g,'').replace(/^0+(\\d)/,'$1'); const r=[]; for(const k of allCustomers){ const key=(k.schluessel||'')||(keyIndex[k.csb_nummer]||''); if(key===n) r.push(k); }
+  if(r.length) renderTourTop(r,'Schluessel '+n,true); renderTable(r);
 }
+function debounce(fn,d=140){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
 
-function debounce(fn, delay = 150) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
-  };
-}
-
-// Tastatur-Shortcuts
-document.addEventListener('keydown', e => {
-  if(e.key === 'Escape') {
-    $('#btnReset').click();
-  }
-  if((e.ctrlKey || e.metaKey) && e.key === 'k') {
-    e.preventDefault();
-    $('#smartSearch').focus();
-  }
-});
-
-// Init
-document.addEventListener('DOMContentLoaded', () => {
-  if(Object.keys(tourkundenData).length > 0) {
-    buildData();
-  }
-  
-  $('#smartSearch').addEventListener('input', debounce(onSmart));
-  $('#keySearch').addEventListener('input', debounce(onKey));
-  $('#btnReset').addEventListener('click', () => {
-    $('#smartSearch').value = '';
-    $('#keySearch').value = '';
-    hideTourInfo();
-    renderTable([]);
-    prevQuery = null;
-    $('#btnBack').style.display = 'none';
-  });
-  $('#btnBack').addEventListener('click', popPrevQuery);
-  
-  $('#smartSearch').focus();
+document.addEventListener('DOMContentLoaded', ()=>{
+  if(Object.keys(tourkundenData).length>0){ buildData(); }
+  $('#smartSearch').addEventListener('input', debounce(onSmart,140));
+  $('#keySearch').addEventListener('input', debounce(onKey,140));
+  $('#btnReset').addEventListener('click', ()=>{ $('#smartSearch').value=''; $('#keySearch').value=''; closeTourTop(); renderTable([]); prevQuery=null; $('#btnBack').style.display='none'; });
+  $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
 });
 </script>
 </body>
@@ -703,8 +445,8 @@ document.addEventListener('DOMContentLoaded', () => {
 """
 
 # ===== Streamlit-Wrapper =====
-st.title("Kunden-Suche – Optimiert")
-st.caption("Klares Design • Druck-optimiert • Kompakt • Alle Funktionen erhalten")
+st.title("Kunden-Suche – Tech-Lab (heller Header, knallige Pills)")
+st.caption("Umlaut-Suche • 4-stellig = Tour oder CSB • Schlüssel exakte Suche • Telefon/Mail-Pills klickbar • Adresse-Pill (Google Maps)")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
@@ -857,17 +599,17 @@ if excel_file and key_file:
             sorted_tours = dict(sorted(tour_dict.items(), key=lambda kv: int(kv[0]) if str(kv[0]).isdigit() else 0))
 
             final_html = (HTML_TEMPLATE
-              .replace("const tourkundenData = {}", f"const tourkundenData = {json.dumps(sorted_tours, ensure_ascii=False)}")
-              .replace("const keyIndex = {}", f"const keyIndex = {json.dumps(key_map, ensure_ascii=False)}")
-              .replace("const beraterIndex = {}", f"const beraterIndex = {json.dumps(berater_map, ensure_ascii=False)}")
-              .replace("const beraterCSBIndex = {}", f"const beraterCSBIndex = {json.dumps(berater_csb_map, ensure_ascii=False)}")
+              .replace("const tourkundenData   = {  }", f"const tourkundenData   = {json.dumps(sorted_tours, ensure_ascii=False)}")
+              .replace("const keyIndex         = {  }", f"const keyIndex         = {json.dumps(key_map, ensure_ascii=False)}")
+              .replace("const beraterIndex     = {  }", f"const beraterIndex     = {json.dumps(berater_map, ensure_ascii=False)}")
+              .replace("const beraterCSBIndex  = {  }", f"const beraterCSBIndex  = {json.dumps(berater_csb_map, ensure_ascii=False)}")
               .replace("__LOGO_DATA_URL__", logo_data_url)
             )
 
             st.download_button(
                 "Download HTML",
                 data=final_html.encode("utf-8"),
-                file_name="kunden_suche.html",
+                file_name="suche.html",
                 mime="text/html",
                 type="primary"
             )
