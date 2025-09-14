@@ -173,7 +173,7 @@ a.addr-chip{
 .addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
 .addr-dot{width:6px; height:6px; background:#ff2d55; border-radius:999px; display:inline-block}
 
-/* Map-Button (derzeit ungenutzt) */
+/* Map-Button */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
   padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
@@ -182,43 +182,58 @@ a.addr-chip{
 .table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
 
 /* ==========================
-   PRINT STYLES (NEU & CLEAN)
+   PRINT STYLES (stabil & 1 Seite)
    ========================== */
-#printArea{ display:none; } /* Bildschirm: versteckt */
+#printArea{ display:none; } /* Screen: versteckt */
 
 @media print {
   @page { size: A4 portrait; margin: 12mm; }
-  html, body { background:#fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
-  /* Nur den Print-Container zeigen */
-  body * { visibility: hidden !important; }
-  #printArea, #printArea * { visibility: visible !important; }
-
-  /* WICHTIG: sichtbar machen! */
-  #printArea { 
-    display:block !important; 
-    position: static !important;
-    inset: auto !important;
-    padding: 0;
-    margin: 0;
+  html, body {
+    background:#fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    height: auto !important;
   }
 
-  /* Cleanes Drucklayout */
+  body * { visibility: hidden !important; }
+
+  #printArea, #printArea * {
+    visibility: visible !important;
+  }
+  #printArea {
+    display:block !important;
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: auto !important;
+    padding: 0; margin: 0;
+    overflow: visible !important;
+  }
+
   .p-wrap{
     font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     color:#111827; font-weight:600; letter-spacing:0; line-height:1.3;
     transform: scale(var(--print-scale)); transform-origin: top left;
     width: 100%;
+    break-inside: avoid;
   }
   .p-head{
-    display:flex; align-items:center; gap:12px; margin-bottom:8px; border-bottom:1px solid #e5e7eb; padding-bottom:6px;
+    display:flex; align-items:center; gap:12px; margin-bottom:8px;
+    border-bottom:1px solid #e5e7eb; padding-bottom:6px;
+    break-inside: avoid;
   }
   .p-head .p-logo{ height: 38px; }
   .p-head .p-title{ font-size:16px; font-weight:900; }
+
   .p-meta{
-    display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:#374151; margin: 2px 0 10px 50px;
+    display:flex; gap:10px; flex-wrap:wrap; font-size:11px; color:#374151;
+    margin: 4px 0 10px 50px;
+    break-inside: avoid;
   }
-  .p-meta .tag{ background:#f3f4f6; padding:2px 8px; border-radius:999px; border:1px solid #e5e7eb; }
+  .p-meta .tag{
+    background:#f3f4f6; padding:2px 8px; border-radius:999px; border:1px solid #e5e7eb;
+  }
 
   .p-table{
     width:100%; border-collapse: collapse; table-layout: fixed; font-size:11px;
@@ -237,13 +252,13 @@ a.addr-chip{
   .p-k{ width:92px; color:#6b7280; font-weight:800; }
   .p-v{ flex:1 1 auto; font-weight:900; }
 
-  .p-list .p-table th:nth-child(1){ width:108px; }
-  .p-list .p-table th:nth-child(2){ width:auto; }
-  .p-list .p-table th:nth-child(3){ width:126px; }
-  .p-list .p-table th:nth-child(4){ width:210px; }
+  .p-list .p-table th:nth-child(1){ width:108px; } /* CSB/SAP */
+  .p-list .p-table th:nth-child(2){ width:auto; }  /* Name/Adresse */
+  .p-list .p-table th:nth-child(3){ width:126px; } /* Schlüssel */
+  .p-list .p-table th:nth-child(4){ width:210px; } /* Fachberater/Markt */
 }
 
-/* Bildschirm: versteckter Print-Container, damit wir ihn füllen können */
+/* Screen: außerhalb der Seite parken, damit wir vorher messen können */
 #printArea{
   position: fixed; left:-99999px; top:-99999px; width: 210mm; /* A4-Breite für Messung */
 }
@@ -320,6 +335,7 @@ let prevQuery = null;
 let lastContext = { kind:'list', label:'Aktuelle Ansicht', value:'' };
 const DIAL_SCHEME = 'callto';
 
+/* Utils */
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
 function makePhoneChip(label, num, cls){
   if(!num) return null;
@@ -389,6 +405,7 @@ function dedupByCSB(list){
   return out;
 }
 
+/* Daten vorbereiten */
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
@@ -414,9 +431,11 @@ function buildData(){
   allCustomers = Array.from(map.values());
 }
 
+/* State-Helpers */
 function pushPrevQuery(){ const v=$('#smartSearch').value.trim(); if(v){ prevQuery=v; $('#btnBack').style.display='inline-block'; } }
 function popPrevQuery(){ if(prevQuery){ $('#smartSearch').value=prevQuery; prevQuery=null; $('#btnBack').style.display='none'; onSmart(); } }
 
+/* UI Builder */
 function makeIdChip(label, value){
   const a=document.createElement('a'); a.className='id-chip'; a.href='javascript:void(0)'; a.title=label+' '+value+' suchen';
   a.addEventListener('click',()=>{ pushPrevQuery(); $('#smartSearch').value=value; onSmart(); });
@@ -435,7 +454,7 @@ function rowFor(k){
   const tr = document.createElement('tr');
   const csb = k.csb_nummer||'-', sap=k.sap_nummer||'-', plz=k.postleitzahl||'-';
 
-  // NEU: CSB an die Zeile hängen – robust für Druckauswahl
+  /* Wichtig für Druck: CSB an Zeile heften */
   tr.dataset.csb = csb;
 
   const td1 = document.createElement('td');
@@ -473,13 +492,12 @@ function rowFor(k){
 
   return tr;
 }
-
 function renderTable(list){
   const body=$('#tableBody'), tbl=$('#resultTable'); body.innerHTML='';
   if(list.length){ list.forEach(k=>body.appendChild(rowFor(k))); tbl.style.display='table'; } else { tbl.style.display='none'; }
 }
 
-/* Tour-Header / Kontext */
+/* Kontextanzeige */
 function renderTourTop(list, query, isExact){
   const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
   if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; lastContext={kind:'list',label:'Aktuelle Ansicht',value:''}; return; }
@@ -498,7 +516,7 @@ function renderTourTop(list, query, isExact){
     const ok = cond || lastContext.kind==='key';
     if(ok){ dayCount[t.liefertag]=(dayCount[t.liefertag]||0)+1; }
   }));
-  $('#tourExtra').textContent=Object.entries(dayCount).sort().map(([d,c])=>d+': '+c).join('  •  ');
+  extra.textContent=Object.entries(dayCount).sort().map(([d,c])=>d+': '+c).join('  •  ');
   wrap.style.display='block';
 }
 function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourTitle').textContent=''; $('#tourExtra').textContent=''; }
@@ -542,7 +560,19 @@ function onKey(){
 }
 function debounce(fn,d=140){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
 
-/* ---------- PRINT: dedizierter Druck-Container ---------- */
+/* ----- PRINT HILFSFUNKTIONEN ----- */
+function abbrevDay(d){
+  const m = {Montag:'Mo', Dienstag:'Di', Mittwoch:'Mi', Donnerstag:'Do', Freitag:'Fr', Samstag:'Sa'};
+  return m[d] || (d?d.substring(0,2):'');
+}
+function getDayStats(list){
+  const cnt = {Mo:0, Di:0, Mi:0, Do:0, Fr:0, Sa:0};
+  (list||[]).forEach(k => (k.touren||[]).forEach(t => {
+    const ab = abbrevDay(t.liefertag||'');
+    if (cnt.hasOwnProperty(ab)) cnt[ab] += 1;
+  }));
+  return Object.entries(cnt).filter(([,v])=>v>0).map(([k,v])=>`${k}: ${v}`).join(' · ');
+}
 function makeMetaTag(label, value){ const s=el('span','tag'); s.textContent=label+': '+value; return s; }
 
 function buildPrintAreaFromList(list){
@@ -558,6 +588,8 @@ function buildPrintAreaFromList(list){
   if (lastContext.kind==='tour') meta.append(makeMetaTag('Kontext', lastContext.label));
   if (lastContext.kind==='key')  meta.append(makeMetaTag('Kontext', lastContext.label));
   meta.append(makeMetaTag('Einträge', String(list.length)));
+  const tstats = getDayStats(list);
+  if (tstats) meta.append(makeMetaTag('Tage', tstats));
   root.append(meta);
 
   const table = el('table','p-table');
@@ -570,14 +602,20 @@ function buildPrintAreaFromList(list){
     const tr = el('tr','');
     const td1 = el('td','');
     td1.innerHTML = '<div><strong>'+ (k.csb_nummer||'-') +'</strong></div><div>'+ (k.sap_nummer||'-') +'</div>';
+
     const td2 = el('td','');
     const addr = [(k.strasse||''),(k.postleitzahl||''),(k.ort||'')].filter(Boolean).join(', ');
-    const tours = (k.touren||[]).map(t=> (t.tournummer||'')+' ('+(t.liefertag||'').substring(0,2)+')').join(' · ');
-    td2.innerHTML = '<div><strong>'+ (k.name||'-') +'</strong></div><div>'+ addr +'</div><div style="margin-top:2px; font-size:10px; color:#4b5563">'+tours+'</div>';
+    const tours = (k.touren||[]).map(t=> (t.tournummer||'')+' ('+abbrevDay(t.liefertag||'')+')').join(' · ');
+    td2.innerHTML = '<div><strong>'+ (k.name||'-') +'</strong></div><div>'+ addr +'</div>'
+                  + (tours?'<div style="margin-top:2px; font-size:10px; color:#4b5563">'+tours+'</div>':'');
+
     const td3 = el('td',''); td3.textContent = (k.schluessel||'') || (keyIndex[k.csb_nummer]||'-');
+
     const td4 = el('td','');
     const fbMail = k.fachberater ? ( (function(){
-      const parts = (k.fachberater||'').toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,'').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').split(/\\s+/).filter(Boolean);
+      const parts = (k.fachberater||'').toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,'')
+        .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+        .split(/\\s+/).filter(Boolean);
       return parts.length>=2 ? parts[0]+'.'+parts[parts.length-1]+'@edeka.de' : '';
     })() ) : '';
     td4.innerHTML =
@@ -605,9 +643,11 @@ function buildPrintAreaFromOne(k){
   const meta = el('div','p-meta');
   meta.append(makeMetaTag('CSB', k.csb_nummer||'-'));
   if(k.sap_nummer) meta.append(makeMetaTag('SAP', k.sap_nummer));
-  const tours = (k.touren||[]).map(t=> (t.tournummer||'')+' ('+(t.liefertag||'').substring(0,2)+')').join(' · ');
+  const tours = (k.touren||[]).map(t=> (t.tournummer||'')+' ('+abbrevDay(t.liefertag||'')+')').join(' · ');
   if(tours) meta.append(makeMetaTag('Touren', tours));
   if(k.schluessel || keyIndex[k.csb_nummer]) meta.append(makeMetaTag('Schlüssel', (k.schluessel||'')||(keyIndex[k.csb_nummer]||'')));
+  const tstats = getDayStats([k]);
+  if (tstats) meta.append(makeMetaTag('Tage', tstats));
   root.append(meta);
 
   const row = el('div','row');
@@ -619,7 +659,9 @@ function buildPrintAreaFromOne(k){
   );
   const mid = el('div','');
   const fbMail = k.fachberater ? ( (function(){
-    const parts = (k.fachberater||'').toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,'').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').split(/\\s+/).filter(Boolean);
+    const parts = (k.fachberater||'').toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,'')
+      .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue')
+      .split(/\\s+/).filter(Boolean);
     return parts.length>=2 ? parts[0]+'.'+parts[parts.length-1]+'@edeka.de' : '';
   })() ) : '';
   mid.append(
@@ -638,24 +680,27 @@ function buildPrintAreaFromOne(k){
   return root;
 }
 
-/* Skaliert #printArea so, dass alles auf eine A4-Seite passt */
+/* Skalierung auf eine A4-Seite */
 function computeAndApplyPrintScale(){
   const printArea = $('#printArea');
   if(!printArea) return;
   const A4_W = 793.7, A4_H = 1122.5;
   const marginPx = 48;
   const targetW = A4_W - 2*marginPx, targetH = A4_H - 2*marginPx;
+
   const wrap = printArea.querySelector('.p-wrap');
   if(!wrap) return;
   document.documentElement.style.setProperty('--print-scale', '1');
+
   const actualW = wrap.scrollWidth;
   const actualH = wrap.scrollHeight;
+
   let scale = Math.min(targetW/actualW, targetH/actualH, 1);
   scale = Math.max(0.1, scale*0.995);
   document.documentElement.style.setProperty('--print-scale', String(scale));
 }
 
-/* Ergebnisliste der aktuell sichtbaren Tabelle (robust via data-csb) */
+/* Ergebnisliste der aktuellen Ansicht (robust via data-csb) */
 function getCurrentResultList(){
   const rows = Array.from($('#tableBody').children);
   const csbList = rows.map(tr=>{
@@ -673,6 +718,13 @@ function getCurrentResultList(){
   return result;
 }
 
+/* Logo warten (gegen leere erste Seite) */
+function waitForLogo(){
+  const img = document.querySelector('.brand-logo');
+  if(!img || img.complete) return Promise.resolve();
+  return new Promise(res => { img.addEventListener('load', res); img.addEventListener('error', res); });
+}
+
 /* Events */
 document.addEventListener('DOMContentLoaded', ()=>{
   if(Object.keys(tourkundenData).length>0){ buildData(); }
@@ -685,9 +737,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
   $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
 
-  $('#btnPrint').addEventListener('click', ()=>{
+  /* Drucken (Ansicht) */
+  document.getElementById('btnPrint').addEventListener('click', async ()=>{
     const list = getCurrentResultList();
-    const printArea = $('#printArea'); printArea.innerHTML = '';
+    const printArea = document.getElementById('printArea'); printArea.innerHTML = '';
     if(list.length===0){ return; }
 
     if(list.length===1 || lastContext.kind==='one'){
@@ -696,7 +749,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
       printArea.append( buildPrintAreaFromList(list) );
     }
 
-    // Sicherstellen, dass DOM aufgebaut & gemessen werden kann
+    await waitForLogo();
     requestAnimationFrame(()=>{
       computeAndApplyPrintScale();
       requestAnimationFrame(()=>{ window.print(); });
