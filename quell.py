@@ -184,7 +184,7 @@ a.addr-chip{
 /* ==========================
    PRINT STYLES (NEU & CLEAN)
    ========================== */
-#printArea{ display:none; } /* wird nur zum Drucken sichtbar aufgebaut */
+#printArea{ display:none; } /* Bildschirm: versteckt */
 
 @media print {
   @page { size: A4 portrait; margin: 12mm; }
@@ -193,7 +193,15 @@ a.addr-chip{
   /* Nur den Print-Container zeigen */
   body * { visibility: hidden !important; }
   #printArea, #printArea * { visibility: visible !important; }
-  #printArea { position: absolute; inset: 0; padding: 0; margin: 0; }
+
+  /* WICHTIG: sichtbar machen! */
+  #printArea { 
+    display:block !important; 
+    position: static !important;
+    inset: auto !important;
+    padding: 0;
+    margin: 0;
+  }
 
   /* Cleanes Drucklayout */
   .p-wrap{
@@ -224,22 +232,20 @@ a.addr-chip{
   }
   .p-table tr:last-child td{ border-bottom:none; }
 
-  /* Ein-Kunde-Layout (kompakt) */
   .p-one .row{ display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:10px; }
   .p-kv{ display:flex; gap:6px; }
   .p-k{ width:92px; color:#6b7280; font-weight:800; }
   .p-v{ flex:1 1 auto; font-weight:900; }
 
-  /* Mehrere Kunden (Tour/Schlüssel): Tabelle */
-  .p-list .p-table th:nth-child(1){ width:108px; }     /* CSB/SAP */
-  .p-list .p-table th:nth-child(2){ width:auto; }      /* Name/Adresse */
-  .p-list .p-table th:nth-child(3){ width:126px; }     /* Schlüssel */
-  .p-list .p-table th:nth-child(4){ width:210px; }     /* Fachberater/Markt */
+  .p-list .p-table th:nth-child(1){ width:108px; }
+  .p-list .p-table th:nth-child(2){ width:auto; }
+  .p-list .p-table th:nth-child(3){ width:126px; }
+  .p-list .p-table th:nth-child(4){ width:210px; }
 }
 
 /* Bildschirm: versteckter Print-Container, damit wir ihn füllen können */
 #printArea{
-  position: fixed; left:-99999px; top:-99999px; width: 210mm; /* A4-Breite für saubere Messung vor dem Druck */
+  position: fixed; left:-99999px; top:-99999px; width: 210mm; /* A4-Breite für Messung */
 }
 </style>
 </head>
@@ -311,7 +317,7 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 
 let allCustomers = [];
 let prevQuery = null;
-let lastContext = { kind:'list', label:'Aktuelle Ansicht', value:'' }; // 'one' | 'tour' | 'key' | 'list'
+let lastContext = { kind:'list', label:'Aktuelle Ansicht', value:'' };
 const DIAL_SCHEME = 'callto';
 
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
@@ -429,6 +435,9 @@ function rowFor(k){
   const tr = document.createElement('tr');
   const csb = k.csb_nummer||'-', sap=k.sap_nummer||'-', plz=k.postleitzahl||'-';
 
+  // NEU: CSB an die Zeile hängen – robust für Druckauswahl
+  tr.dataset.csb = csb;
+
   const td1 = document.createElement('td');
   const c1 = el('div','cell');
   const l1 = el('div','cell-top'); l1.appendChild(makeIdChip('CSB', csb));
@@ -499,13 +508,11 @@ function onSmart(){
   const qRaw=$('#smartSearch').value.trim(); closeTourTop();
   if(!qRaw){ renderTable([]); lastContext={kind:'list',label:'Aktuelle Ansicht',value:''}; return; }
 
-  // Tour-Prefix 1-3-stellig
   if(/^\\d{1,3}$/.test(qRaw)){
     const n=qRaw.replace(/^0+(\\d)/,'$1');
     const r=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'').startsWith(n)));
     renderTourTop(r,n,false); renderTable(r); return;
   }
-  // Exakte Tour 4-stellig ODER exakte CSB 4-stellig
   if(/^\\d{4}$/.test(qRaw)){
     const n=qRaw.replace(/^0+(\\d)/,'$1');
     const tr=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'')===n));
@@ -516,7 +523,6 @@ function onSmart(){
     renderTable(r); return;
   }
 
-  // Freitext
   const q=normDE(qRaw);
   const r=allCustomers.filter(k=>{
     const fb=k.fachberater||'';
@@ -536,27 +542,24 @@ function onKey(){
 }
 function debounce(fn,d=140){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
 
-/* ---------- PRINT: baue dedizierten Druck-Container je nach Kontext ---------- */
+/* ---------- PRINT: dedizierter Druck-Container ---------- */
 function makeMetaTag(label, value){ const s=el('span','tag'); s.textContent=label+': '+value; return s; }
 
 function buildPrintAreaFromList(list){
   const root = el('div','p-wrap p-list');
 
-  // Kopf
   const head = el('div','p-head');
   const logo = el('img','p-logo'); logo.src = document.querySelector('.brand-logo')?.src || '';
   const title = el('div','p-title','Kunden-Übersicht');
   head.append(logo, title);
   root.append(head);
 
-  // Meta
   const meta = el('div','p-meta');
   if (lastContext.kind==='tour') meta.append(makeMetaTag('Kontext', lastContext.label));
   if (lastContext.kind==='key')  meta.append(makeMetaTag('Kontext', lastContext.label));
   meta.append(makeMetaTag('Einträge', String(list.length)));
   root.append(meta);
 
-  // Tabelle
   const table = el('table','p-table');
   const thead = el('thead'); const thr = el('tr');
   ['CSB / SAP','Name / Adresse','Schlüssel','Fachberater / Markt'].forEach(h=>thr.append(el('th','',h)));
@@ -565,17 +568,13 @@ function buildPrintAreaFromList(list){
   const tbody = el('tbody');
   list.forEach(k=>{
     const tr = el('tr','');
-    // CSB/SAP
     const td1 = el('td','');
     td1.innerHTML = '<div><strong>'+ (k.csb_nummer||'-') +'</strong></div><div>'+ (k.sap_nummer||'-') +'</div>';
-    // Name/Adresse
     const td2 = el('td','');
     const addr = [(k.strasse||''),(k.postleitzahl||''),(k.ort||'')].filter(Boolean).join(', ');
     const tours = (k.touren||[]).map(t=> (t.tournummer||'')+' ('+(t.liefertag||'').substring(0,2)+')').join(' · ');
     td2.innerHTML = '<div><strong>'+ (k.name||'-') +'</strong></div><div>'+ addr +'</div><div style="margin-top:2px; font-size:10px; color:#4b5563">'+tours+'</div>';
-    // Schlüssel
     const td3 = el('td',''); td3.textContent = (k.schluessel||'') || (keyIndex[k.csb_nummer]||'-');
-    // Fachberater/Markt
     const td4 = el('td','');
     const fbMail = k.fachberater ? ( (function(){
       const parts = (k.fachberater||'').toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,'').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').split(/\\s+/).filter(Boolean);
@@ -597,14 +596,12 @@ function buildPrintAreaFromList(list){
 function buildPrintAreaFromOne(k){
   const root = el('div','p-wrap p-one');
 
-  // Kopf
   const head = el('div','p-head');
   const logo = el('img','p-logo'); logo.src = document.querySelector('.brand-logo')?.src || '';
   const title = el('div','p-title','Kunde');
   head.append(logo, title);
   root.append(head);
 
-  // Meta
   const meta = el('div','p-meta');
   meta.append(makeMetaTag('CSB', k.csb_nummer||'-'));
   if(k.sap_nummer) meta.append(makeMetaTag('SAP', k.sap_nummer));
@@ -613,19 +610,16 @@ function buildPrintAreaFromOne(k){
   if(k.schluessel || keyIndex[k.csb_nummer]) meta.append(makeMetaTag('Schlüssel', (k.schluessel||'')||(keyIndex[k.csb_nummer]||'')));
   root.append(meta);
 
-  // Datenraster
   const row = el('div','row');
-  // Spalte 1
   const left = el('div','');
   left.append(
     (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','Name'), el('div','p-v',k.name||'-')); return kv; })(),
     (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','Adresse'), el('div','p-v',[(k.strasse||''),(k.postleitzahl||''),(k.ort||'')].filter(Boolean).join(', '))); return kv; })(),
     (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','Schlüssel'), el('div','p-v',(k.schluessel||'')||(keyIndex[k.csb_nummer]||'-'))); return kv; })(),
   );
-  // Spalte 2
   const mid = el('div','');
   const fbMail = k.fachberater ? ( (function(){
-    const parts = (k.fachberater||'').toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,'').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').split(/\\s+/).filter(Boolean);
+    const parts = (k.fachberater||'').toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,'').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').split(/\\s+/).filter(Boolean);
     return parts.length>=2 ? parts[0]+'.'+parts[parts.length-1]+'@edeka.de' : '';
   })() ) : '';
   mid.append(
@@ -633,7 +627,6 @@ function buildPrintAreaFromOne(k){
     (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','FB Tel.'), el('div','p-v',k.fb_phone||'-')); return kv; })(),
     (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','FB Mail'), el('div','p-v',fbMail||'-')); return kv; })(),
   );
-  // Spalte 3
   const right = el('div','');
   right.append(
     (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','Markt Tel.'), el('div','p-v',k.market_phone||'-')); return kv; })(),
@@ -649,38 +642,28 @@ function buildPrintAreaFromOne(k){
 function computeAndApplyPrintScale(){
   const printArea = $('#printArea');
   if(!printArea) return;
-  // A4 @ 96 CSS-DPI
   const A4_W = 793.7, A4_H = 1122.5;
-  const marginPx = 48; // ~12mm
+  const marginPx = 48;
   const targetW = A4_W - 2*marginPx, targetH = A4_H - 2*marginPx;
-
-  // Element, das skaliert wird
   const wrap = printArea.querySelector('.p-wrap');
   if(!wrap) return;
-
-  // temporär Reset
   document.documentElement.style.setProperty('--print-scale', '1');
-
-  // Messung: volle Breite/Höhe des Inhalts
   const actualW = wrap.scrollWidth;
   const actualH = wrap.scrollHeight;
-
   let scale = Math.min(targetW/actualW, targetH/actualH, 1);
-  scale = Math.max(0.1, scale*0.995); // kleine Sicherheitsmarge
+  scale = Math.max(0.1, scale*0.995);
   document.documentElement.style.setProperty('--print-scale', String(scale));
 }
 
-/* Baut je nach Kontext die Datenbasis der aktuellen Ansicht */
+/* Ergebnisliste der aktuell sichtbaren Tabelle (robust via data-csb) */
 function getCurrentResultList(){
   const rows = Array.from($('#tableBody').children);
-  // Mappe zurück auf leichtgewichtige Objekte, indem wir aus den DOM-Zellen lesen:
-  // Da wir Originaldaten nicht an die Zeilen binden, falls nötig, könne man hier
-  // alternativ allCustomers filtern — aber DOM genügt für Druck.
-  // Besser: finde die passenden k aus allCustomers anhand CSB (erste Spalte).
   const csbList = rows.map(tr=>{
+    const dataCsb = tr.dataset.csb;
+    if (dataCsb) return dataCsb;
     const csbStrong = tr.querySelector('td:nth-child(1) .cell-top .mono') || tr.querySelector('td:nth-child(1) .cell-top');
     if(!csbStrong) return null;
-    const txt = csbStrong.textContent.replace(/\\D/g,'');
+    const txt = (csbStrong.textContent||'').replace(/\\D/g,'');
     return txt||null;
   }).filter(Boolean);
 
@@ -690,7 +673,7 @@ function getCurrentResultList(){
   return result;
 }
 
-/* Ereignisse */
+/* Events */
 document.addEventListener('DOMContentLoaded', ()=>{
   if(Object.keys(tourkundenData).length>0){ buildData(); }
   $('#smartSearch').addEventListener('input', debounce(onSmart,140));
@@ -702,32 +685,24 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
   $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
 
-  // Druck-Button
   $('#btnPrint').addEventListener('click', ()=>{
     const list = getCurrentResultList();
     const printArea = $('#printArea'); printArea.innerHTML = '';
+    if(list.length===0){ return; }
 
-    if(list.length===0){
-      // Nichts gefiltert → nichts drucken
-      return;
-    }
-
-    // Ein Kunde?
     if(list.length===1 || lastContext.kind==='one'){
-      const view = buildPrintAreaFromOne(list[0]);
-      printArea.append(view);
+      printArea.append( buildPrintAreaFromOne(list[0]) );
     } else {
-      // Tour/Schlüssel/Liste
-      const view = buildPrintAreaFromList(list);
-      printArea.append(view);
+      printArea.append( buildPrintAreaFromList(list) );
     }
 
-    // Skala berechnen und drucken
-    computeAndApplyPrintScale();
-    window.print();
+    // Sicherstellen, dass DOM aufgebaut & gemessen werden kann
+    requestAnimationFrame(()=>{
+      computeAndApplyPrintScale();
+      requestAnimationFrame(()=>{ window.print(); });
+    });
   });
 
-  // Nach dem Drucken Skala wieder zurücksetzen
   window.addEventListener('afterprint', ()=>{
     document.documentElement.style.setProperty('--print-scale','1');
   });
