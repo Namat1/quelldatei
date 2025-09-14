@@ -32,8 +32,6 @@ HTML_TEMPLATE = """
 
   --radius:6px; --radius-pill:999px;
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
-
-  --print-scale: 1;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -55,11 +53,13 @@ body{
   color:#0b1226; display:flex; align-items:center; justify-content:center; gap:10px;
   border-bottom:1px solid var(--grid);
 }
-.brand-logo{height:56px; width:auto}
+.brand-logo{height:56px; width:auto}  /* größer als zuvor (44px) */
+/* .title bleibt ungenutzt, kann bestehen bleiben */
+.title{font-weight:900; letter-spacing:.35px; font-size:13px; text-transform:uppercase}
 
 /* Searchbar */
 .searchbar{
-  padding:8px 12px; display:grid; grid-template-columns:1fr 260px auto auto auto; gap:8px; align-items:center;
+  padding:8px 12px; display:grid; grid-template-columns:1fr 260px auto auto; gap:8px; align-items:center;
   border-bottom:1px solid var(--grid); background:var(--surface);
 }
 @media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr} }
@@ -80,7 +80,7 @@ body{
 .btn-back{border-color:var(--accent); color:var(--accent-2); background:#eef2ff}
 .btn-back:hover{background:#e2e8ff}
 
-/* Tour-Banner */
+/* Tour-Banner (große Pill) */
 .tour-wrap{display:none; padding:10px 12px 0}
 .tour-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0; background:transparent; border:none;}
 .tour-pill{
@@ -173,101 +173,19 @@ a.addr-chip{
 .addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
 .addr-dot{width:6px; height:6px; background:#ff2d55; border-radius:999px; display:inline-block}
 
-/* Map-Button */
+/* (Map-Button Styles bleiben erhalten, werden aber nicht mehr genutzt) */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
   padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
   background:var(--accent); color:#fff; display:inline-block; text-align:center; letter-spacing:.2px
 }
 .table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
-
-/* ==========================
-   PRINT STYLES (stabil & 1 Seite)
-   ========================== */
-#printArea{ display:none; } /* Screen: versteckt */
-
-@media print {
-  @page { size: A4 portrait; margin: 12mm; }
-  html, body {
-    background:#fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    height: auto !important;
-  }
-
-  body * { visibility: hidden !important; }
-
-  #printArea, #printArea * {
-    visibility: visible !important;
-  }
-  #printArea {
-    display:block !important;
-    position: fixed !important;
-    top: 0 !important; left: 0 !important;
-    width: 100vw !important;
-    max-width: 100vw !important;
-    height: auto !important;
-    padding: 0; margin: 0;
-    overflow: visible !important;
-  }
-
-  .p-wrap{
-    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    color:#111827; font-weight:600; letter-spacing:0; line-height:1.3;
-    transform: scale(var(--print-scale)); transform-origin: top left;
-    width: 100%;
-    break-inside: avoid;
-  }
-  .p-head{
-    display:flex; align-items:center; gap:12px; margin-bottom:8px;
-    border-bottom:1px solid #e5e7eb; padding-bottom:6px;
-    break-inside: avoid;
-  }
-  .p-head .p-logo{ height: 38px; }
-  .p-head .p-title{ font-size:16px; font-weight:900; }
-
-  .p-meta{
-    display:flex; gap:10px; flex-wrap:wrap; font-size:11px; color:#374151;
-    margin: 4px 0 10px 50px;
-    break-inside: avoid;
-  }
-  .p-meta .tag{
-    background:#f3f4f6; padding:2px 8px; border-radius:999px; border:1px solid #e5e7eb;
-  }
-
-  .p-table{
-    width:100%; border-collapse: collapse; table-layout: fixed; font-size:11px;
-    border:1px solid #e5e7eb;
-  }
-  .p-table th{
-    text-align:left; padding:6px 6px; background:#f9fafb; border-bottom:1px solid #e5e7eb; font-weight:900;
-  }
-  .p-table td{
-    padding:6px 6px; border-bottom:1px solid #f1f5f9; vertical-align:top; font-weight:700;
-  }
-  .p-table tr:last-child td{ border-bottom:none; }
-
-  .p-one .row{ display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:10px; }
-  .p-kv{ display:flex; gap:6px; }
-  .p-k{ width:92px; color:#6b7280; font-weight:800; }
-  .p-v{ flex:1 1 auto; font-weight:900; }
-
-  .p-list .p-table th:nth-child(1){ width:108px; } /* CSB/SAP */
-  .p-list .p-table th:nth-child(2){ width:auto; }  /* Name/Adresse */
-  .p-list .p-table th:nth-child(3){ width:126px; } /* Schlüssel */
-  .p-list .p-table th:nth-child(4){ width:210px; } /* Fachberater/Markt */
-}
-
-/* Screen: außerhalb der Seite parken, damit wir vorher messen können */
-#printArea{
-  position: fixed; left:-99999px; top:-99999px; width: 210mm; /* A4-Breite für Messung */
-}
 </style>
 </head>
 <body>
 <div class="page">
   <div class="container">
-    <div class="card" id="printCard">
+    <div class="card">
       <div class="header">
         <img class="brand-logo" alt="Logo" src="__LOGO_DATA_URL__">
       </div>
@@ -283,7 +201,6 @@ a.addr-chip{
         </div>
         <button class="btn btn-back" id="btnBack" style="display:none;">Zurück zur Suche</button>
         <button class="btn btn-danger" id="btnReset">Zurücksetzen</button>
-        <button class="btn" id="btnPrint" title="Aktuelle Ansicht als A4 (Hochformat) auf eine Seite drucken">Drucken (Ansicht)</button>
       </div>
 
       <div class="tour-wrap" id="tourWrap">
@@ -299,8 +216,8 @@ a.addr-chip{
             <col style="width:210px">
             <col style="width:520px">
             <col style="width:260px">
-            <col style="width:105px">
-            <col style="width:418px">
+            <col style="width:105px">   <!-- Schlüssel ~5% kleiner -->
+            <col style="width:418px">   <!-- Fachberater/Markt ~10% größer -->
           </colgroup>
           <thead>
             <tr>
@@ -318,9 +235,6 @@ a.addr-chip{
   </div>
 </div>
 
-<!-- Versteckter Print-Container (wird zur Laufzeit befüllt) -->
-<div id="printArea"></div>
-
 <script>
 const tourkundenData   = {  };
 const keyIndex         = {  };
@@ -332,10 +246,8 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 
 let allCustomers = [];
 let prevQuery = null;
-let lastContext = { kind:'list', label:'Aktuelle Ansicht', value:'' };
 const DIAL_SCHEME = 'callto';
 
-/* Utils */
 function sanitizePhone(num){ return (num||'').toString().trim().replace(/[^\\d+]/g,''); }
 function makePhoneChip(label, num, cls){
   if(!num) return null;
@@ -405,7 +317,6 @@ function dedupByCSB(list){
   return out;
 }
 
-/* Daten vorbereiten */
 function buildData(){
   const map = new Map();
   for(const [tour, list] of Object.entries(tourkundenData)){
@@ -431,11 +342,9 @@ function buildData(){
   allCustomers = Array.from(map.values());
 }
 
-/* State-Helpers */
 function pushPrevQuery(){ const v=$('#smartSearch').value.trim(); if(v){ prevQuery=v; $('#btnBack').style.display='inline-block'; } }
 function popPrevQuery(){ if(prevQuery){ $('#smartSearch').value=prevQuery; prevQuery=null; $('#btnBack').style.display='none'; onSmart(); } }
 
-/* UI Builder */
 function makeIdChip(label, value){
   const a=document.createElement('a'); a.className='id-chip'; a.href='javascript:void(0)'; a.title=label+' '+value+' suchen';
   a.addEventListener('click',()=>{ pushPrevQuery(); $('#smartSearch').value=value; onSmart(); });
@@ -453,9 +362,6 @@ function makeAddressChip(name, strasse, plz, ort){
 function rowFor(k){
   const tr = document.createElement('tr');
   const csb = k.csb_nummer||'-', sap=k.sap_nummer||'-', plz=k.postleitzahl||'-';
-
-  /* Wichtig für Druck: CSB an Zeile heften */
-  tr.dataset.csb = csb;
 
   const td1 = document.createElement('td');
   const c1 = el('div','cell');
@@ -497,268 +403,41 @@ function renderTable(list){
   if(list.length){ list.forEach(k=>body.appendChild(rowFor(k))); tbl.style.display='table'; } else { tbl.style.display='none'; }
 }
 
-/* Kontextanzeige */
 function renderTourTop(list, query, isExact){
   const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
-  if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; lastContext={kind:'list',label:'Aktuelle Ansicht',value:''}; return; }
-  if(query.startsWith('Schluessel ')){
-    const key=query.replace(/^Schluessel\\s+/, '');
-    title.textContent='Schlüssel '+key+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden');
-    lastContext={kind:'key',label:'Schlüssel '+key,value:key};
-  } else {
-    title.textContent=(isExact?('Tour '+query):('Tour-Prefix '+query+'*'))+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden');
-    lastContext={kind:'tour',label:(isExact?('Tour '+query):('Tour-Prefix '+query+'*')),value:query};
-  }
-  const dayCount={};
-  list.forEach(k=>(k.touren||[]).forEach(t=>{
-    const tnum=t.tournummer||'';
-    const cond=(lastContext.kind==='tour' && (tnum===query || tnum.startsWith(query)));
-    const ok = cond || lastContext.kind==='key';
-    if(ok){ dayCount[t.liefertag]=(dayCount[t.liefertag]||0)+1; }
-  }));
+  if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
+  if(query.startsWith('Schluessel ')){ const key=query.replace(/^Schluessel\\s+/, ''); title.textContent='Schlüssel '+key+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden'); }
+  else{ title.textContent=(isExact?('Tour '+query):('Tour-Prefix '+query+'*'))+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden'); }
+  const dayCount={}; list.forEach(k=>(k.touren||[]).forEach(t=>{ const tnum=t.tournummer||''; const cond=isExact?(tnum===query):tnum.startsWith(query.replace('Schluessel ','')); if(cond||query.startsWith('Schluessel ')){ dayCount[t.liefertag]=(dayCount[t.liefertag]||0)+1; }}));
   extra.textContent=Object.entries(dayCount).sort().map(([d,c])=>d+': '+c).join('  •  ');
   wrap.style.display='block';
 }
 function closeTourTop(){ $('#tourWrap').style.display='none'; $('#tourTitle').textContent=''; $('#tourExtra').textContent=''; }
 
-/* Suche */
 function onSmart(){
-  const qRaw=$('#smartSearch').value.trim(); closeTourTop();
-  if(!qRaw){ renderTable([]); lastContext={kind:'list',label:'Aktuelle Ansicht',value:''}; return; }
-
-  if(/^\\d{1,3}$/.test(qRaw)){
-    const n=qRaw.replace(/^0+(\\d)/,'$1');
-    const r=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'').startsWith(n)));
-    renderTourTop(r,n,false); renderTable(r); return;
-  }
+  const qRaw=$('#smartSearch').value.trim(); closeTourTop(); if(!qRaw){ renderTable([]); return; }
+  if(/^\\d{1,3}$/.test(qRaw)){ const n=qRaw.replace(/^0+(\\d)/,'$1'); const r=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'').startsWith(n))); renderTourTop(r,n,false); renderTable(r); return; }
   if(/^\\d{4}$/.test(qRaw)){
-    const n=qRaw.replace(/^0+(\\d)/,'$1');
-    const tr=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'')===n));
-    const cr=allCustomers.filter(k=>(k.csb_nummer||'')===n);
-    const r=dedupByCSB([...tr,...cr]);
-    if(cr.length===1 && tr.length===0){ lastContext={kind:'one',label:'Kunde',value:cr[0].csb_nummer}; }
-    else if(tr.length){ renderTourTop(tr,n,true); }
-    renderTable(r); return;
+    const n=qRaw.replace(/^0+(\\d)/,'$1'); const tr=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'')===n)); const cr=allCustomers.filter(k=>(k.csb_nummer||'')===n); const r=dedupByCSB([...tr,...cr]);
+    if(tr.length) renderTourTop(tr,n,true); else closeTourTop(); renderTable(r); return;
   }
-
   const q=normDE(qRaw);
-  const r=allCustomers.filter(k=>{
-    const fb=k.fachberater||'';
-    const text=(k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||'')+' '+(k.market_email||''));
-    return normDE(text).includes(q);
-  });
-  lastContext = (r.length===1 ? {kind:'one',label:'Kunde',value:r[0].csb_nummer} : {kind:'list',label:'Ergebnisliste',value:qRaw});
+  const r=allCustomers.filter(k=>{ const fb=k.fachberater||''; const text=(k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||'')+' '+(k.market_email||'')); return normDE(text).includes(q); });
   renderTable(r);
 }
 function onKey(){
-  const q=$('#keySearch').value.trim(); closeTourTop();
-  if(!q){ renderTable([]); lastContext={kind:'list',label:'Aktuelle Ansicht',value:''}; return; }
-  const n=q.replace(/[^0-9]/g,'').replace(/^0+(\\d)/,'$1');
-  const r=[]; for(const k of allCustomers){ const key=(k.schluessel||'')||(keyIndex[k.csb_nummer]||''); if(key===n) r.push(k); }
-  if(r.length){ renderTourTop(r,'Schluessel '+n,true); }
-  renderTable(r);
+  const q=$('#keySearch').value.trim(); closeTourTop(); if(!q){ renderTable([]); return; }
+  const n=q.replace(/[^0-9]/g,'').replace(/^0+(\\d)/,'$1'); const r=[]; for(const k of allCustomers){ const key=(k.schluessel||'')||(keyIndex[k.csb_nummer]||''); if(key===n) r.push(k); }
+  if(r.length) renderTourTop(r,'Schluessel '+n,true); renderTable(r);
 }
 function debounce(fn,d=140){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
 
-/* ----- PRINT HILFSFUNKTIONEN ----- */
-function abbrevDay(d){
-  const m = {Montag:'Mo', Dienstag:'Di', Mittwoch:'Mi', Donnerstag:'Do', Freitag:'Fr', Samstag:'Sa'};
-  return m[d] || (d?d.substring(0,2):'');
-}
-function getDayStats(list){
-  const cnt = {Mo:0, Di:0, Mi:0, Do:0, Fr:0, Sa:0};
-  (list||[]).forEach(k => (k.touren||[]).forEach(t => {
-    const ab = abbrevDay(t.liefertag||'');
-    if (cnt.hasOwnProperty(ab)) cnt[ab] += 1;
-  }));
-  return Object.entries(cnt).filter(([,v])=>v>0).map(([k,v])=>`${k}: ${v}`).join(' · ');
-}
-function makeMetaTag(label, value){ const s=el('span','tag'); s.textContent=label+': '+value; return s; }
-
-function buildPrintAreaFromList(list){
-  const root = el('div','p-wrap p-list');
-
-  const head = el('div','p-head');
-  const logo = el('img','p-logo'); logo.src = document.querySelector('.brand-logo')?.src || '';
-  const title = el('div','p-title','Kunden-Übersicht');
-  head.append(logo, title);
-  root.append(head);
-
-  const meta = el('div','p-meta');
-  if (lastContext.kind==='tour') meta.append(makeMetaTag('Kontext', lastContext.label));
-  if (lastContext.kind==='key')  meta.append(makeMetaTag('Kontext', lastContext.label));
-  meta.append(makeMetaTag('Einträge', String(list.length)));
-  const tstats = getDayStats(list);
-  if (tstats) meta.append(makeMetaTag('Tage', tstats));
-  root.append(meta);
-
-  const table = el('table','p-table');
-  const thead = el('thead'); const thr = el('tr');
-  ['CSB / SAP','Name / Adresse','Schlüssel','Fachberater / Markt'].forEach(h=>thr.append(el('th','',h)));
-  thead.append(thr); table.append(thead);
-
-  const tbody = el('tbody');
-  list.forEach(k=>{
-    const tr = el('tr','');
-    const td1 = el('td','');
-    td1.innerHTML = '<div><strong>'+ (k.csb_nummer||'-') +'</strong></div><div>'+ (k.sap_nummer||'-') +'</div>';
-
-    const td2 = el('td','');
-    const addr = [(k.strasse||''),(k.postleitzahl||''),(k.ort||'')].filter(Boolean).join(', ');
-    const tours = (k.touren||[]).map(t=> (t.tournummer||'')+' ('+abbrevDay(t.liefertag||'')+')').join(' · ');
-    td2.innerHTML = '<div><strong>'+ (k.name||'-') +'</strong></div><div>'+ addr +'</div>'
-                  + (tours?'<div style="margin-top:2px; font-size:10px; color:#4b5563">'+tours+'</div>':'');
-
-    const td3 = el('td',''); td3.textContent = (k.schluessel||'') || (keyIndex[k.csb_nummer]||'-');
-
-    const td4 = el('td','');
-    const fbMail = k.fachberater ? ( (function(){
-      const parts = (k.fachberater||'').toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,'')
-        .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
-        .split(/\\s+/).filter(Boolean);
-      return parts.length>=2 ? parts[0]+'.'+parts[parts.length-1]+'@edeka.de' : '';
-    })() ) : '';
-    td4.innerHTML =
-      (k.fachberater?('<div><strong>'+k.fachberater+'</strong></div>'):'') +
-      (k.fb_phone?('<div>'+k.fb_phone+'</div>'):'') +
-      (fbMail?('<div>'+fbMail+'</div>'):'') +
-      (k.market_phone||k.market_email?('<div style="margin-top:2px; color:#4b5563">Markt: '+[k.market_phone||'',k.market_email||''].filter(Boolean).join(' · ')+'</div>'):'');
-    tr.append(td1,td2,td3,td4);
-    tbody.append(tr);
-  });
-  table.append(tbody);
-  root.append(table);
-  return root;
-}
-
-function buildPrintAreaFromOne(k){
-  const root = el('div','p-wrap p-one');
-
-  const head = el('div','p-head');
-  const logo = el('img','p-logo'); logo.src = document.querySelector('.brand-logo')?.src || '';
-  const title = el('div','p-title','Kunde');
-  head.append(logo, title);
-  root.append(head);
-
-  const meta = el('div','p-meta');
-  meta.append(makeMetaTag('CSB', k.csb_nummer||'-'));
-  if(k.sap_nummer) meta.append(makeMetaTag('SAP', k.sap_nummer));
-  const tours = (k.touren||[]).map(t=> (t.tournummer||'')+' ('+abbrevDay(t.liefertag||'')+')').join(' · ');
-  if(tours) meta.append(makeMetaTag('Touren', tours));
-  if(k.schluessel || keyIndex[k.csb_nummer]) meta.append(makeMetaTag('Schlüssel', (k.schluessel||'')||(keyIndex[k.csb_nummer]||'')));
-  const tstats = getDayStats([k]);
-  if (tstats) meta.append(makeMetaTag('Tage', tstats));
-  root.append(meta);
-
-  const row = el('div','row');
-  const left = el('div','');
-  left.append(
-    (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','Name'), el('div','p-v',k.name||'-')); return kv; })(),
-    (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','Adresse'), el('div','p-v',[(k.strasse||''),(k.postleitzahl||''),(k.ort||'')].filter(Boolean).join(', '))); return kv; })(),
-    (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','Schlüssel'), el('div','p-v',(k.schluessel||'')||(keyIndex[k.csb_nummer]||'-'))); return kv; })(),
-  );
-  const mid = el('div','');
-  const fbMail = k.fachberater ? ( (function(){
-    const parts = (k.fachberater||'').toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,'')
-      .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue')
-      .split(/\\s+/).filter(Boolean);
-    return parts.length>=2 ? parts[0]+'.'+parts[parts.length-1]+'@edeka.de' : '';
-  })() ) : '';
-  mid.append(
-    (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','Fachberater'), el('div','p-v',k.fachberater||'-')); return kv; })(),
-    (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','FB Tel.'), el('div','p-v',k.fb_phone||'-')); return kv; })(),
-    (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','FB Mail'), el('div','p-v',fbMail||'-')); return kv; })(),
-  );
-  const right = el('div','');
-  right.append(
-    (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','Markt Tel.'), el('div','p-v',k.market_phone||'-')); return kv; })(),
-    (function(){ const kv=el('div','p-kv'); kv.append(el('div','p-k','Markt Mail'), el('div','p-v',k.market_email||'-')); return kv; })(),
-  );
-
-  row.append(left, mid, right);
-  root.append(row);
-  return root;
-}
-
-/* Skalierung auf eine A4-Seite */
-function computeAndApplyPrintScale(){
-  const printArea = $('#printArea');
-  if(!printArea) return;
-  const A4_W = 793.7, A4_H = 1122.5;
-  const marginPx = 48;
-  const targetW = A4_W - 2*marginPx, targetH = A4_H - 2*marginPx;
-
-  const wrap = printArea.querySelector('.p-wrap');
-  if(!wrap) return;
-  document.documentElement.style.setProperty('--print-scale', '1');
-
-  const actualW = wrap.scrollWidth;
-  const actualH = wrap.scrollHeight;
-
-  let scale = Math.min(targetW/actualW, targetH/actualH, 1);
-  scale = Math.max(0.1, scale*0.995);
-  document.documentElement.style.setProperty('--print-scale', String(scale));
-}
-
-/* Ergebnisliste der aktuellen Ansicht (robust via data-csb) */
-function getCurrentResultList(){
-  const rows = Array.from($('#tableBody').children);
-  const csbList = rows.map(tr=>{
-    const dataCsb = tr.dataset.csb;
-    if (dataCsb) return dataCsb;
-    const csbStrong = tr.querySelector('td:nth-child(1) .cell-top .mono') || tr.querySelector('td:nth-child(1) .cell-top');
-    if(!csbStrong) return null;
-    const txt = (csbStrong.textContent||'').replace(/\\D/g,'');
-    return txt||null;
-  }).filter(Boolean);
-
-  const byCSB = new Map(allCustomers.map(k=>[String(k.csb_nummer||''), k]));
-  const result = [];
-  csbList.forEach(c=>{ if(byCSB.has(c)) result.push(byCSB.get(c)); });
-  return result;
-}
-
-/* Logo warten (gegen leere erste Seite) */
-function waitForLogo(){
-  const img = document.querySelector('.brand-logo');
-  if(!img || img.complete) return Promise.resolve();
-  return new Promise(res => { img.addEventListener('load', res); img.addEventListener('error', res); });
-}
-
-/* Events */
 document.addEventListener('DOMContentLoaded', ()=>{
   if(Object.keys(tourkundenData).length>0){ buildData(); }
   $('#smartSearch').addEventListener('input', debounce(onSmart,140));
   $('#keySearch').addEventListener('input', debounce(onKey,140));
-  $('#btnReset').addEventListener('click', ()=>{
-    $('#smartSearch').value=''; $('#keySearch').value='';
-    closeTourTop(); renderTable([]); prevQuery=null; $('#btnBack').style.display='none';
-    lastContext={kind:'list',label:'Aktuelle Ansicht',value:''};
-  });
+  $('#btnReset').addEventListener('click', ()=>{ $('#smartSearch').value=''; $('#keySearch').value=''; closeTourTop(); renderTable([]); prevQuery=null; $('#btnBack').style.display='none'; });
   $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
-
-  /* Drucken (Ansicht) */
-  document.getElementById('btnPrint').addEventListener('click', async ()=>{
-    const list = getCurrentResultList();
-    const printArea = document.getElementById('printArea'); printArea.innerHTML = '';
-    if(list.length===0){ return; }
-
-    if(list.length===1 || lastContext.kind==='one'){
-      printArea.append( buildPrintAreaFromOne(list[0]) );
-    } else {
-      printArea.append( buildPrintAreaFromList(list) );
-    }
-
-    await waitForLogo();
-    requestAnimationFrame(()=>{
-      computeAndApplyPrintScale();
-      requestAnimationFrame(()=>{ window.print(); });
-    });
-  });
-
-  window.addEventListener('afterprint', ()=>{
-    document.documentElement.style.setProperty('--print-scale','1');
-  });
 });
 </script>
 </body>
