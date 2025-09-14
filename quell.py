@@ -12,25 +12,25 @@ HTML_TEMPLATE = """
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kunden-Suche</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&family=Inter+Tight:wght@600;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&family=Inter+Tight:wght@700;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f3f6fb; --surface:#ffffff; --alt:#f9fbff;
   --grid:#cfd7e6; --grid-2:#bfc9dd; --head-grid:#b3bfd6;
-  --txt:#0a1020; --muted:#293346;
+  --txt:#0c1220; --muted:#293346;
 
   --accent:#2563eb; --accent-2:#1f4fd3;
 
   --pill-yellow-bg:#fff3b0; --pill-yellow-bd:#f59e0b; --pill-yellow-tx:#4a3001;
   --pill-green-bg:#d1fae5; --pill-green-bd:#10b981; --pill-green-tx:#065f46;
-  --pill-red-bg:#ffeef1;   --pill-red-bd:#f9a8b6;  --pill-red-tx:#7f1d1d;
+  --pill-red-bg:#ffe4e6;   --pill-red-bd:#fb7185;  --pill-red-tx:#7f1d1d;
 
   --chip-fb-bg:#e0f2ff; --chip-fb-bd:#3b82f6; --chip-fb-tx:#0b3b93;
   --chip-mk-bg:#ede9fe; --chip-mk-bd:#8b5cf6; --chip-mk-tx:#2c1973;
 
   --row-sep:#e6edff;
 
-  --radius:8px; --radius-pill:999px;
+  --radius:6px; --radius-pill:999px;
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
 *{box-sizing:border-box}
@@ -38,101 +38,83 @@ html,body{height:100%}
 body{
   margin:0; background:var(--bg);
   font-family:"Inter Tight", Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  color:var(--txt); font-size:var(--fs-12); line-height:1.45; font-weight:600; letter-spacing:.1px;
+  color:var(--txt); font-size:var(--fs-12); line-height:1.35; font-weight:800; letter-spacing:.1px;
 }
 
 /* Frame */
 .page{min-height:100vh; display:flex; justify-content:center; padding:10px}
 .container{width:100%; max-width:1480px}
-.card{background:var(--surface); border:1px solid var(--grid); border-radius:10px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,.04)}
+.card{background:var(--surface); border:1px solid var(--grid); border-radius:8px; overflow:hidden}
 
 /* Header */
 .header{
-  padding:12px 16px;
+  padding:10px 12px;
   background:linear-gradient(180deg,#ffffff 0%, #f4f7fe 100%);
   color:#0b1226; display:flex; align-items:center; justify-content:center; gap:10px;
   border-bottom:1px solid var(--grid);
 }
-.brand-logo{height:64px; width:auto}
+.brand-logo{height:56px; width:auto}  /* größer als zuvor (44px) */
+/* .title bleibt ungenutzt, kann bestehen bleiben */
 .title{font-weight:900; letter-spacing:.35px; font-size:13px; text-transform:uppercase}
 
 /* Searchbar */
 .searchbar{
-  padding:8px 12px; display:grid; grid-template-columns:1fr 240px auto auto auto; gap:8px; align-items:center;
+  padding:8px 12px; display:grid; grid-template-columns:1fr 260px auto auto; gap:8px; align-items:center;
   border-bottom:1px solid var(--grid); background:var(--surface);
 }
 @media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr} }
 @media(max-width:680px){ .searchbar{grid-template-columns:1fr} }
 .field{display:grid; grid-template-columns:74px 1fr; gap:6px; align-items:center}
-.label{font-weight:800; color:var(--muted); font-size:var(--fs-11); text-transform:uppercase; letter-spacing:.35px}
+.label{font-weight:900; color:var(--muted); font-size:var(--fs-11); text-transform:uppercase; letter-spacing:.35px}
 .input{
   width:100%; padding:7px 9px; border:1px solid var(--grid); border-radius:6px; background:#fff;
-  font-size:var(--fs-12); font-weight:700;
+  font-size:var(--fs-12); font-weight:900;
 }
-.input::placeholder{ color:#8a98b1; font-weight:600 }
-.input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,.18)}
-#smartSearch{
-  background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%238a98b1" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.415l-3.85-3.85h-.017zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg>');
-  background-repeat:no-repeat; background-position:8px 50%; padding-left:28px;
-}
+.input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(37,99,235,.16)}
 
 /* Buttons */
-.btn{padding:7px 10px; border:1px solid var(--grid); background:#fff; color:#0f172a; border-radius:6px; cursor:pointer; font-weight:800; font-size:var(--fs-12)}
+.btn{padding:7px 10px; border:1px solid var(--grid); background:#fff; color:#0f172a; border-radius:6px; cursor:pointer; font-weight:900; font-size:var(--fs-12)}
 .btn:hover{background:#f2f5f9}
-.btn-primary{border-color:var(--accent); color:#fff; background:var(--accent)}
-.btn-primary:hover{background:var(--accent-2); border-color:var(--accent-2)}
-.btn-ghost{border-color:#e5e7eb; background:#fff; color:#0f172a}
-.btn-ghost:hover{background:#f2f5f9}
+.btn-danger{border-color:#d7263d; background:#d7263d; color:#fff}
+.btn-danger:hover{background:#bf1f33}
+.btn-back{border-color:var(--accent); color:var(--accent-2); background:#eef2ff}
+.btn-back:hover{background:#e2e8ff}
 
-/* Density toggle */
-body.dense thead th{ padding:6px 7px }
-body.dense tbody td{ padding:6px 7px }
-
-/* Tour-Banner */
+/* Tour-Banner (große Pill) */
 .tour-wrap{display:none; padding:10px 12px 0}
 .tour-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0; background:transparent; border:none;}
 .tour-pill{
   display:inline-flex; align-items:center; gap:10px;
   background:#ffedd5; color:#7c2d12;
   border:2px solid #fb923c; border-radius:999px; padding:8px 14px;
-  font-weight:800; font-size:13px; letter-spacing:.2px;
+  font-weight:900; font-size:13px; letter-spacing:.2px;
   box-shadow:0 0 0 3px rgba(251,146,60,.18) inset;
 }
-.tour-stats{font-weight:800; font-size:11px; color:#334155}
+.tour-stats{font-weight:900; font-size:11px; color:#334155}
 
 /* Tabelle */
-.table-section{padding:6px 12px 14px; overflow:auto}
+.table-section{padding:6px 12px 14px}
 table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
 thead th{
   position:sticky; top:0; z-index:2;
-  background:linear-gradient(180deg,#f9fbff,#eef2f8);
-  color:#0f172a; font-weight:800; text-transform:uppercase; letter-spacing:.25px;
+  background:linear-gradient(180deg,#f7f9fe,#eef2f8);
+  color:#0f172a; font-weight:900; text-transform:uppercase; letter-spacing:.25px;
   border-bottom:2px solid var(--head-grid); border-right:1px solid var(--head-grid);
   padding:8px 9px; white-space:nowrap; text-align:left;
 }
 thead th:last-child{border-right:none}
 tbody td{
-  padding:8px 9px; vertical-align:top; font-weight:600;
+  padding:8px 9px; vertical-align:top; font-weight:800;
   border-bottom:1px solid var(--grid); border-right:1px solid var(--grid);
   background:#fff;
 }
 tbody td:last-child{border-right:none}
 
-/* Sticky first/last column */
-tbody td:first-child, thead th:first-child{
-  position:sticky; left:0; z-index:3; background:#fff;
-  box-shadow:1px 0 0 var(--grid);
-}
-tbody td:last-child, thead th:last-child{
-  position:sticky; right:0; z-index:3; background:#fff;
-  box-shadow:-1px 0 0 var(--grid);
-}
-
 /* Zeilenabgrenzung */
 tbody tr:nth-child(odd) td{background:#f8fbff}
 tbody tr:nth-child(even) td{background:#ffffff}
-tbody tr+tr td{border-top:3px solid var(--row-sep)}
-tbody tr:hover td{background:#f2f6ff}
+tbody tr+tr td{border-top:6px solid var(--row-sep)}
+tbody tr:hover td{background:#eef4ff}
 
 /* Zellen */
 .cell{display:flex; flex-direction:column; gap:4px; min-height:38px; width:100%}
@@ -141,22 +123,22 @@ tbody tr:hover td{background:#f2f6ff}
 /* Monospace Zahlen */
 .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:700}
 
-/* ID-Chips (copy-on-click; Strg/⌘-Klick sucht) */
+/* ID-Chips */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--pill-yellow-bg); color:var(--pill-yellow-tx);
   border:1.5px solid var(--pill-yellow-bd); border-radius:var(--radius-pill); padding:3px 9px;
-  font-weight:800; font-size:var(--fs-11); text-decoration:none; line-height:1;
-  box-shadow:0 0 0 2px rgba(245,158,11,.12) inset; cursor:pointer;
+  font-weight:900; font-size:var(--fs-11); text-decoration:none; line-height:1;
+  box-shadow:0 0 0 2px rgba(245,158,11,.12) inset;
 }
 a.id-chip:hover{filter:brightness(.97)}
-.id-tag{font-size:var(--fs-10); font-weight:800; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
+.id-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
 /* Schlüssel */
 .badge-key{
   display:inline-block; background:var(--pill-green-bg); border:1.5px solid var(--pill-green-bd);
   color:var(--pill-green-tx); border-radius:var(--radius-pill); padding:3px 9px;
-  font-weight:800; font-size:var(--fs-11); line-height:1;
+  font-weight:900; font-size:var(--fs-11); line-height:1;
   box-shadow:0 0 0 2px rgba(16,185,129,.12) inset;
 }
 
@@ -164,56 +146,40 @@ a.id-chip:hover{filter:brightness(.97)}
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-block; background:var(--pill-red-bg); border:1.5px solid var(--pill-red-bd); color:var(--pill-red-tx);
-  padding:4px 9px; border-radius:var(--radius-pill); font-weight:800; font-size:var(--fs-11); cursor:pointer; line-height:1.25; letter-spacing:.15px;
+  padding:3px 9px; border-radius:var(--radius-pill); font-weight:900; font-size:var(--fs-10); cursor:pointer; line-height:1.25; letter-spacing:.15px;
   box-shadow:0 0 0 2px rgba(251,113,133,.12) inset;
 }
 .tour-btn:hover{filter:brightness(.97)}
 
 /* Telefon-/Mail-Chips untereinander */
-.phone-col{display:flex; flex-direction:column; gap:8px}
+.phone-col{display:flex; flex-direction:column; gap:6px}
 a.phone-chip, a.mail-chip{
   display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
-  padding:3px 9px; font-weight:800; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer; width:max-content; max-width:100%;
+  padding:3px 9px; font-weight:900; font-size:var(--fs-11); line-height:1; text-decoration:none; cursor:pointer; width:max-content; max-width:100%;
 }
 a.phone-chip.chip-fb{background:var(--chip-fb-bg); color:var(--chip-fb-tx); border:1.5px solid var(--chip-fb-bd)}
 a.phone-chip.chip-market{background:var(--chip-mk-bg); color:var(--chip-mk-tx); border:1.5px solid var(--chip-mk-bd)}
 a.mail-chip{background:#e6f7f4; color:#065f46; border:1.5px solid #10b981; max-width:100%}
 a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.97)}
-.chip-tag{font-size:var(--fs-10); font-weight:800; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
-.mail-chip .txt{white-space:normal; word-break:break-word; line-height:1.2}
+.chip-tag{font-size:var(--fs-10); font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
+.mail-chip .txt{white-space:normal; word-break:break-all; line-height:1.2}
 
 /* Adresse-Pill */
 a.addr-chip{
   display:inline-flex; align-items:center; gap:8px; max-width:100%;
   background:#e0ecff; color:#0b3a8a; border:1.5px solid #60a5fa; border-radius:999px; padding:4px 10px;
-  text-decoration:none; font-weight:800; font-size:var(--fs-11);
+  text-decoration:none; font-weight:900; font-size:var(--fs-11);
 }
 .addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
 .addr-dot{width:6px; height:6px; background:#ff2d55; border-radius:999px; display:inline-block}
 
-/* Fokus-States */
-a:focus{ outline:2px solid var(--accent); outline-offset:2px }
-
-/* Mobile: Kartenlayout */
-@media(max-width: 900px){
-  .table-section table{ table-layout:auto }
-  colgroup{ display:none }
-  thead{ display:none }
-  tbody tr{ display:grid; grid-template-columns: 1fr; border:1px solid var(--grid); border-radius:8px; margin-bottom:8px }
-  tbody td{ border-right:none }
-  tbody td::before{ content:attr(data-label); display:block; font-size:var(--fs-10); color:var(--muted); text-transform:uppercase; margin-bottom:2px }
-  /* Sticky-Spalten in Card-Ansicht deaktivieren */
-  tbody td:first-child, thead th:first-child,
-  tbody td:last-child, thead th:last-child{ position:static; box-shadow:none }
+/* (Map-Button Styles bleiben erhalten, werden aber nicht mehr genutzt) */
+.table-map{
+  text-decoration:none; font-weight:900; font-size:var(--fs-11);
+  padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
+  background:var(--accent); color:#fff; display:inline-block; text-align:center; letter-spacing:.2px
 }
-
-/* Print */
-@media print{
-  .searchbar, .tour-wrap{ display:none !important }
-  .card{ border:none; box-shadow:none }
-  body{ background:#fff; }
-  thead th{ position:static }
-}
+.table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
 </style>
 </head>
 <body>
@@ -233,9 +199,8 @@ a:focus{ outline:2px solid var(--accent); outline-offset:2px }
           <div class="label">Schlüssel</div>
           <input class="input" id="keySearch" placeholder="exakt (z. B. 40)">
         </div>
-        <button class="btn btn-ghost" id="density">Komprimiert</button>
-        <button class="btn btn-ghost" id="btnBack" style="display:none;">Zurück zur Suche</button>
-        <button class="btn btn-ghost" id="btnReset">Zurücksetzen</button>
+        <button class="btn btn-back" id="btnBack" style="display:none;">Zurück zur Suche</button>
+        <button class="btn btn-danger" id="btnReset">Zurücksetzen</button>
       </div>
 
       <div class="tour-wrap" id="tourWrap">
@@ -251,8 +216,8 @@ a:focus{ outline:2px solid var(--accent); outline-offset:2px }
             <col style="width:210px">
             <col style="width:520px">
             <col style="width:260px">
-            <col style="width:105px">
-            <col style="width:418px">
+            <col style="width:105px">   <!-- Schlüssel ~5% kleiner -->
+            <col style="width:418px">   <!-- Fachberater/Markt ~10% größer -->
           </colgroup>
           <thead>
             <tr>
@@ -333,7 +298,7 @@ function fbEmailFromName(name){
   const parts = normalizeNameKey(name).split(' ').filter(Boolean);
   if(parts.length<2) return '';
   const vor = parts[0]; const nach = parts[parts.length-1];
-  return `${vor}.${nach}@edeka.de`.replace(/\\s+/g,'');
+  return `${vor}.${nach}@edeka.de`.replace(/\s+/g,'');
 }
 function pickBeraterPhone(name){
   if(!name) return '';
@@ -380,46 +345,31 @@ function buildData(){
 function pushPrevQuery(){ const v=$('#smartSearch').value.trim(); if(v){ prevQuery=v; $('#btnBack').style.display='inline-block'; } }
 function popPrevQuery(){ if(prevQuery){ $('#smartSearch').value=prevQuery; prevQuery=null; $('#btnBack').style.display='none'; onSmart(); } }
 
-function copyToClipboard(txt){
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt);
-  }else{
-    const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-  }
-}
 function makeIdChip(label, value){
-  const a=document.createElement('a'); a.className='id-chip'; a.href='javascript:void(0)'; a.title=label+' '+value;
-  a.addEventListener('click',(ev)=>{
-    if(ev.ctrlKey||ev.metaKey){ // Strg/⌘-Klick: Suche
-      pushPrevQuery(); $('#smartSearch').value=value; onSmart();
-    }else{ // Klick: Kopieren
-      copyToClipboard(value);
-      a.title=`${label} ${value} kopiert (Strg/⌘-Klick: suchen)`;
-    }
-  });
+  const a=document.createElement('a'); a.className='id-chip'; a.href='javascript:void(0)'; a.title=label+' '+value+' suchen';
+  a.addEventListener('click',()=>{ pushPrevQuery(); $('#smartSearch').value=value; onSmart(); });
   a.append(el('span','id-tag',label), el('span','mono',' '+value)); return a;
 }
 function twoLineCell(top, sub){ const w=el('div','cell'); w.append(el('div','cell-top',top), el('div','cell-sub',sub)); return w; }
 function makeAddressChip(name, strasse, plz, ort){
   const txt = `${strasse||''}, ${plz||''} ${ort||''}`.replace(/^,\\s*/, '').trim();
   const url = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(`${name||''}, ${txt}`);
-  const a = document.createElement('a'); a.className='addr-chip'; a.href=url; a.target='_blank'; a.title='Adresse in Google Maps öffnen';
+  const a = document.createElement('a'); a.className='addr-chip'; a.href=url; a.target='_blank'; a.title='Adresse in Google Maps öffnen (klickbar)';
   a.append(el('span','addr-dot',''), el('span','chip-tag','Adresse'), (()=>{ const s=document.createElement('span'); s.className='txt'; s.textContent=' '+txt; return s; })());
   return a;
 }
 
 function rowFor(k){
   const tr = document.createElement('tr');
-
   const csb = k.csb_nummer||'-', sap=k.sap_nummer||'-', plz=k.postleitzahl||'-';
 
-  const td1 = document.createElement('td'); td1.setAttribute('data-label','CSB / SAP');
+  const td1 = document.createElement('td');
   const c1 = el('div','cell');
   const l1 = el('div','cell-top'); l1.appendChild(makeIdChip('CSB', csb));
   const l2 = el('div','cell-sub'); l2.appendChild(makeIdChip('SAP', sap));
   c1.append(l1,l2); td1.append(c1); tr.append(td1);
 
-  const td2 = document.createElement('td'); td2.setAttribute('data-label','Name / Adresse');
+  const td2 = document.createElement('td');
   const c2 = el('div','cell');
   c2.append(el('div','cell-top', k.name||'-'));
   const addrPill = makeAddressChip(k.name||'', k.strasse||'', plz, k.ort||'');
@@ -427,22 +377,14 @@ function rowFor(k){
   c2.append(line2);
   td2.append(c2); tr.append(td2);
 
-  const td4 = document.createElement('td'); td4.setAttribute('data-label','Touren');
-  const c4 = el('div','cell'); const tours=el('div','tour-inline');
-  (k.touren||[]).forEach(t=>{
-    const tnum=(t.tournummer||''); const day=(t.liefertag||'').substring(0,2);
-    const b=el('span','tour-btn',tnum+' ('+day+')'); b.title='Tour '+tnum;
-    b.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value=tnum; onSmart(); };
-    tours.appendChild(b);
-  });
+  const td4 = document.createElement('td'); const c4 = el('div','cell'); const tours=el('div','tour-inline');
+  (k.touren||[]).forEach(t=>{ const tnum=(t.tournummer||''); const b=el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')'); b.title='Tour '+tnum; b.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value=tnum; onSmart(); }; tours.appendChild(b); });
   c4.appendChild(tours); td4.appendChild(c4); tr.append(td4);
 
-  const td5 = document.createElement('td'); td5.setAttribute('data-label','Schlüssel');
-  const key=(k.schluessel||'')||(keyIndex[csb]||'');
+  const td5 = document.createElement('td'); const key=(k.schluessel||'')||(keyIndex[csb]||'');
   td5.appendChild(key ? el('span','badge-key',key) : el('span','', '-')); tr.append(td5);
 
-  const td6=document.createElement('td'); td6.setAttribute('data-label','Fachberater / Markt');
-  const col=el('div','phone-col');
+  const td6=document.createElement('td'); const col=el('div','phone-col');
   const fbPhone = k.fb_phone;
   const fbMail  = k.fachberater ? fbEmailFromName(k.fachberater) : '';
   const mkPhone = k.market_phone;
@@ -463,7 +405,7 @@ function renderTable(list){
 
 function renderTourTop(list, query, isExact){
   const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
-  if(!	list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
+  if(!list.length){ wrap.style.display='none'; title.textContent=''; extra.textContent=''; return; }
   if(query.startsWith('Schluessel ')){ const key=query.replace(/^Schluessel\\s+/, ''); title.textContent='Schlüssel '+key+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden'); }
   else{ title.textContent=(isExact?('Tour '+query):('Tour-Prefix '+query+'*'))+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden'); }
   const dayCount={}; list.forEach(k=>(k.touren||[]).forEach(t=>{ const tnum=t.tournummer||''; const cond=isExact?(tnum===query):tnum.startsWith(query.replace('Schluessel ','')); if(cond||query.startsWith('Schluessel ')){ dayCount[t.liefertag]=(dayCount[t.liefertag]||0)+1; }}));
@@ -496,7 +438,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   $('#keySearch').addEventListener('input', debounce(onKey,140));
   $('#btnReset').addEventListener('click', ()=>{ $('#smartSearch').value=''; $('#keySearch').value=''; closeTourTop(); renderTable([]); prevQuery=null; $('#btnBack').style.display='none'; });
   $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
-  $('#density').addEventListener('click', (e)=>{ document.body.classList.toggle('dense'); e.target.textContent = document.body.classList.contains('dense') ? 'Komfort' : 'Komprimiert'; });
 });
 </script>
 </body>
@@ -504,8 +445,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 """
 
 # ===== Streamlit-Wrapper =====
-st.title("Kunden-Suche – Tech-Lab (Header hell, ruhiger, mit Dichte-Toggle)")
-st.caption("Umlaut-Suche • 4-stellig = Tour oder CSB • Schlüssel exakte Suche • Klick auf CSB/SAP = kopieren (Strg/⌘-Klick = suchen) • Adresse-Pill (Google Maps) • Sticky 1./letzte Spalte • Druckansicht")
+st.title("Kunden-Suche – Tech-Lab (heller Header, knallige Pills)")
+st.caption("Umlaut-Suche • 4-stellig = Tour oder CSB • Schlüssel exakte Suche • Telefon/Mail-Pills klickbar • Adresse-Pill (Google Maps)")
 
 c1, c2, c3 = st.columns([1,1,1])
 with c1:
