@@ -32,6 +32,9 @@ HTML_TEMPLATE = """
 
   --radius:6px; --radius-pill:999px;
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
+
+  /* wird zur Laufzeit für den Druck gesetzt */
+  --print-scale: 1;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -53,13 +56,12 @@ body{
   color:#0b1226; display:flex; align-items:center; justify-content:center; gap:10px;
   border-bottom:1px solid var(--grid);
 }
-.brand-logo{height:56px; width:auto}  /* größer als zuvor (44px) */
-/* .title bleibt ungenutzt, kann bestehen bleiben */
+.brand-logo{height:56px; width:auto}
 .title{font-weight:900; letter-spacing:.35px; font-size:13px; text-transform:uppercase}
 
 /* Searchbar */
 .searchbar{
-  padding:8px 12px; display:grid; grid-template-columns:1fr 260px auto auto; gap:8px; align-items:center;
+  padding:8px 12px; display:grid; grid-template-columns:1fr 260px auto auto auto; gap:8px; align-items:center;
   border-bottom:1px solid var(--grid); background:var(--surface);
 }
 @media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr} }
@@ -80,7 +82,7 @@ body{
 .btn-back{border-color:var(--accent); color:var(--accent-2); background:#eef2ff}
 .btn-back:hover{background:#e2e8ff}
 
-/* Tour-Banner (große Pill) */
+/* Tour-Banner */
 .tour-wrap{display:none; padding:10px 12px 0}
 .tour-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0; background:transparent; border:none;}
 .tour-pill{
@@ -173,19 +175,58 @@ a.addr-chip{
 .addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
 .addr-dot{width:6px; height:6px; background:#ff2d55; border-radius:999px; display:inline-block}
 
-/* (Map-Button Styles bleiben erhalten, werden aber nicht mehr genutzt) */
+/* Map-Button (derzeit ungenutzt) */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
   padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
   background:var(--accent); color:#fff; display:inline-block; text-align:center; letter-spacing:.2px
 }
 .table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
+
+/* ---------- PRINT STYLES ---------- */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+  html, body {
+    background: #ffffff !important;
+  }
+  /* Nur die Karte drucken, alles andere ausblenden */
+  body * { visibility: hidden; }
+  .card, .card * { visibility: visible; }
+  .page { padding: 0 !important; }
+  .container { max-width: unset !important; }
+  .card {
+    box-shadow: none !important;
+    border: none !important;
+    /* Skaliere die komplette Karte so, dass sie auf eine A4-Seite passt */
+    transform: scale(var(--print-scale));
+    transform-origin: top left;
+    width: 100% !important;
+  }
+  /* UI-Elemente ausblenden, damit es clean aussieht */
+  .searchbar .field,
+  #btnReset,
+  #btnBack,
+  #btnPrint {
+    display: none !important;
+  }
+  /* Sticky-Header in Tabellen beim Druck vermeiden */
+  thead th {
+    position: static !important;
+  }
+  /* Etwas kompakter im Druck */
+  body { font-size: 11px; }
+  thead th, tbody td { padding: 6px 7px !important; }
+  tbody tr+tr td { border-top-width: 4px; }
+}
 </style>
 </head>
 <body>
 <div class="page">
   <div class="container">
-    <div class="card">
+    <div class="card" id="printCard">
       <div class="header">
         <img class="brand-logo" alt="Logo" src="__LOGO_DATA_URL__">
       </div>
@@ -201,6 +242,8 @@ a.addr-chip{
         </div>
         <button class="btn btn-back" id="btnBack" style="display:none;">Zurück zur Suche</button>
         <button class="btn btn-danger" id="btnReset">Zurücksetzen</button>
+        <!-- NEU: Druck-Button -->
+        <button class="btn" id="btnPrint" title="Als A4 (Hochformat) auf eine Seite drucken">Drucken</button>
       </div>
 
       <div class="tour-wrap" id="tourWrap">
@@ -432,12 +475,58 @@ function onKey(){
 }
 function debounce(fn,d=140){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
 
+/* ---------- PRINT LOGIK ----------
+   Skaliert die komplette Karte auf A4 (Hochformat), sodass alles auf *eine* Seite passt. */
+function computeAndApplyPrintScale() {
+  const card = document.getElementById('printCard');
+  if (!card) return;
+
+  // Größe von A4 bei 96 CSS-DPI (ca.): 793.7 x 1122.5 px
+  const A4_W = 793.7;
+  const A4_H = 1122.5;
+
+  // Entspricht @page margin: 12mm (~45px). Wir rechnen konservativ mit 48px.
+  const marginPx = 48;
+  const targetW = A4_W - 2 * marginPx;
+  const targetH = A4_H - 2 * marginPx;
+
+  // Aktuelle Größe des Inhalts ermitteln (ungezoomt)
+  const rect = card.getBoundingClientRect();
+  const actualW = rect.width;
+  // Für Höhe nehmen wir scrollHeight, um gesamten Inhalt zu erfassen
+  const actualH = card.scrollHeight;
+
+  // Skalierungsfaktor berechnen
+  let scale = Math.min(targetW / actualW, targetH / actualH, 1);
+  // leichte Sicherheitsmarge, damit nichts anstößt
+  scale = Math.max(0.1, scale * 0.995);
+
+  document.documentElement.style.setProperty('--print-scale', String(scale));
+}
+
 document.addEventListener('DOMContentLoaded', ()=>{
   if(Object.keys(tourkundenData).length>0){ buildData(); }
   $('#smartSearch').addEventListener('input', debounce(onSmart,140));
   $('#keySearch').addEventListener('input', debounce(onKey,140));
   $('#btnReset').addEventListener('click', ()=>{ $('#smartSearch').value=''; $('#keySearch').value=''; closeTourTop(); renderTable([]); prevQuery=null; $('#btnBack').style.display='none'; });
   $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
+
+  // Druck-Button: Skala berechnen, dann Drucken
+  const btnPrint = document.getElementById('btnPrint');
+  if (btnPrint) {
+    btnPrint.addEventListener('click', () => {
+      // Nach kurzem Timeout, damit evtl. letzte Renderings abgeschlossen sind
+      setTimeout(() => {
+        computeAndApplyPrintScale();
+        window.print();
+      }, 0);
+    });
+  }
+
+  // Nach dem Drucken Skala wieder zurücksetzen (für spätere Drucke)
+  window.addEventListener('afterprint', () => {
+    document.documentElement.style.setProperty('--print-scale', '1');
+  });
 });
 </script>
 </body>
