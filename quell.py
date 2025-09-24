@@ -79,7 +79,7 @@ body{
 .btn-back{border-color:var(--accent); color:var(--accent-2); background:#eef2ff}
 .btn-back:hover{background:#e2e8ff}
 
-/* Tour-Banner (große Pill) */
+/* Tour-Banner */
 .tour-wrap{display:none; padding:10px 12px 0}
 .tour-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0; background:transparent; border:none;}
 .tour-pill{
@@ -92,7 +92,7 @@ body{
 .tour-stats{font-weight:900; font-size:11px; color:#334155}
 
 /* Tabelle */
-.table-section{padding:6px 12px 14px; overflow-x:auto} /* <- horizontal scroll falls nötig */
+.table-section{padding:6px 12px 14px; overflow-x:auto}
 table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12); min-width:920px}
 thead th{
   position:sticky; top:0; z-index:2;
@@ -109,7 +109,7 @@ tbody td{
 }
 tbody td:last-child{border-right:none}
 
-/* Zeilenabgrenzung */
+/* Zeilen */
 tbody tr:nth-child(odd) td{background:#f8fbff}
 tbody tr:nth-child(even) td{background:#ffffff}
 tbody tr+tr td{border-top:6px solid var(--row-sep)}
@@ -150,7 +150,7 @@ a.id-chip:hover{filter:brightness(.97)}
 }
 .tour-btn:hover{filter:brightness(.97)}
 
-/* Telefon-/Mail-Chips untereinander */
+/* Telefon-/Mail-Chips */
 .phone-col{display:flex; flex-direction:column; gap:6px}
 a.phone-chip, a.mail-chip{
   display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-pill);
@@ -172,7 +172,7 @@ a.addr-chip{
 .addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
 .addr-dot{width:6px; height:6px; background:#ff2d55; border-radius:999px; display:inline-block}
 
-/* Map-Button (bleibt) */
+/* Map-Button */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
   padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
@@ -181,33 +181,71 @@ a.addr-chip{
 .table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
 
 /* ========================= */
-/*  Portrait-Layout (Auto)   */
+/*  Portrait-Layout (Cards)  */
+/*  -> keine Scrolls nötig   */
 /* ========================= */
 @media (orientation: portrait) {
   .page{padding:6px}
   .container{max-width:100%}
   .header{padding:8px 10px}
-  .brand-logo{height:44px} /* kompakter im Hochkant */
+  .brand-logo{height:44px}
 
-  /* Suchleiste stapeln & fixieren unter dem Header */
   .searchbar{
     position:sticky; top:0; z-index:5;
-    grid-template-columns:1fr; gap:6px; padding:8px 10px; border-bottom:1px solid var(--grid);
+    grid-template-columns:1fr; gap:6px; padding:8px 10px;
+    border-bottom:1px solid var(--grid);
   }
 
-  /* Tour-Pill etwas kleiner */
   .tour-wrap{padding:8px 10px 0}
-  .tour-pill{padding:7px 12px; font-size:12px}
+  .tour-pill{padding:6px 10px; font-size:12px}
   .tour-stats{font-size:10px}
 
-  /* Tabelle: horizontal scroll, kompaktere Zellen, größere Mindestbreite
-     damit alle 5 Spalten erhalten bleiben */
-  .table-section{padding:6px 8px 10px; overflow-x:auto}
-  table{min-width:1280px}
-  thead th{padding:6px 7px; font-size:11px}
-  tbody td{padding:6px 7px}
-  .cell{gap:3px; min-height:34px}
-  .title{font-size:12px}
+  .table-section{padding:6px 8px 10px; overflow:visible}
+  table{width:100%; min-width:0; border-spacing:0; table-layout:auto}
+  thead{display:none}
+
+  tbody tr{
+    display:block;
+    border:1px solid var(--grid);
+    border-radius:10px;
+    background:#fff;
+    margin:10px 0;
+    overflow:hidden;
+  }
+  tbody td{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    justify-content:space-between;
+    padding:8px 10px;
+    border:none;
+    border-bottom:1px solid var(--grid);
+    background:#fff !important;
+  }
+  tbody td:last-child{border-bottom:none}
+  tbody tr+tr td{border-top:none}
+
+  tbody td::before{
+    content:attr(data-label);
+    font-weight:900;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.35px;
+    font-size:10px;
+    line-height:1.2;
+    margin-right:8px;
+    flex:0 0 112px;
+    white-space:nowrap;
+  }
+
+  .cell{gap:4px; min-height:auto}
+  .cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .tour-inline{gap:4px}
+  .tour-btn{font-size:10px; padding:2px 7px}
+  .badge-key{font-size:10px; padding:3px 8px}
+  a.phone-chip, a.mail-chip{font-size:10px; padding:3px 8px; max-width:100%}
+  .mail-chip .txt{white-space:normal}
+  a.addr-chip{font-size:10px; padding:3px 8px; max-width:100%}
 }
 </style>
 </head>
@@ -327,7 +365,7 @@ function fbEmailFromName(name){
   const parts = normalizeNameKey(name).split(' ').filter(Boolean);
   if(parts.length<2) return '';
   const vor = parts[0]; const nach = parts[parts.length-1];
-  return `${vor}.${nach}@edeka.de`.replace(/\s+/g,'');
+  return `${vor}.${nach}@edeka.de`.replace(/\\s+/g,'');
 }
 function pickBeraterPhone(name){
   if(!name) return '';
@@ -392,13 +430,15 @@ function rowFor(k){
   const tr = document.createElement('tr');
   const csb = k.csb_nummer||'-', sap=k.sap_nummer||'-', plz=k.postleitzahl||'-';
 
-  const td1 = document.createElement('td');
+  // CSB / SAP
+  const td1 = document.createElement('td'); td1.setAttribute('data-label', 'CSB / SAP');
   const c1 = el('div','cell');
   const l1 = el('div','cell-top'); l1.appendChild(makeIdChip('CSB', csb));
   const l2 = el('div','cell-sub'); l2.appendChild(makeIdChip('SAP', sap));
   c1.append(l1,l2); td1.append(c1); tr.append(td1);
 
-  const td2 = document.createElement('td');
+  // Name / Adresse
+  const td2 = document.createElement('td'); td2.setAttribute('data-label', 'Name / Adresse');
   const c2 = el('div','cell');
   c2.append(el('div','cell-top', k.name||'-'));
   const addrPill = makeAddressChip(k.name||'', k.strasse||'', plz, k.ort||'');
@@ -406,22 +446,34 @@ function rowFor(k){
   c2.append(line2);
   td2.append(c2); tr.append(td2);
 
-  const td4 = document.createElement('td'); const c4 = el('div','cell'); const tours=el('div','tour-inline');
-  (k.touren||[]).forEach(t=>{ const tnum=(t.tournummer||''); const b=el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')'); b.title='Tour '+tnum; b.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value=tnum; onSmart(); }; tours.appendChild(b); });
+  // Touren
+  const td4 = document.createElement('td'); td4.setAttribute('data-label', 'Touren');
+  const c4 = el('div','cell'); const tours=el('div','tour-inline');
+  (k.touren||[]).forEach(t=>{
+    const tnum=(t.tournummer||'');
+    const b=el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')');
+    b.title='Tour '+tnum;
+    b.onclick=()=>{ pushPrevQuery(); $('#smartSearch').value=tnum; onSmart(); };
+    tours.appendChild(b);
+  });
   c4.appendChild(tours); td4.appendChild(c4); tr.append(td4);
 
-  const td5 = document.createElement('td'); const key=(k.schluessel||'')||(keyIndex[csb]||'');
+  // Schlüssel
+  const td5 = document.createElement('td'); td5.setAttribute('data-label', 'Schlüssel');
+  const key=(k.schluessel||'')||(keyIndex[csb]||'');
   td5.appendChild(key ? el('span','badge-key',key) : el('span','', '-')); tr.append(td5);
 
-  const td6=document.createElement('td'); const col=el('div','phone-col');
+  // Fachberater / Markt
+  const td6 = document.createElement('td'); td6.setAttribute('data-label', 'Fachberater / Markt');
+  const col=el('div','phone-col');
   const fbPhone = k.fb_phone;
   const fbMail  = k.fachberater ? fbEmailFromName(k.fachberater) : '';
   const mkPhone = k.market_phone;
   const mkMail  = k.market_email || '';
-  const p1 = makePhoneChip('FB', fbPhone, 'chip-fb');      if(p1) col.appendChild(p1);
-  const m1 = makeMailChip('FB Mail', fbMail);              if(m1) col.appendChild(m1);
-  const p2 = makePhoneChip('Markt', mkPhone,'chip-market');if(p2) col.appendChild(p2);
-  const m2 = makeMailChip('Mail', mkMail);                 if(m2) col.appendChild(m2);
+  const p1 = makePhoneChip('FB', fbPhone, 'chip-fb');       if(p1) col.appendChild(p1);
+  const m1 = makeMailChip('FB Mail', fbMail);               if(m1) col.appendChild(m1);
+  const p2 = makePhoneChip('Markt', mkPhone,'chip-market'); if(p2) col.appendChild(p2);
+  const m2 = makeMailChip('Mail', mkMail);                  if(m2) col.appendChild(m2);
   if(!col.childNodes.length) col.textContent='-';
   td6.appendChild(col); tr.append(td6);
 
@@ -537,6 +589,7 @@ def build_berater_map(df: pd.DataFrame) -> dict:
     return out
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
+    # A = Fachberater, I = CSB, O = Markt-Tel, X = Markt-Mail
     out = {}
     for _, row in df.iterrows():
         fach = str(row.iloc[0]).strip() if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
@@ -613,7 +666,7 @@ if excel_file and key_file:
                         tour_dict.setdefault(tournr, []).append(entry)
 
             with st.spinner("Verarbeite Kundendatei..."):
-                for blatt in ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]:
+                for blatt in BLATTNAMEN:
                     try:
                         df = pd.read_excel(excel_file, sheet_name=blatt)
                         kunden_sammeln(df)
