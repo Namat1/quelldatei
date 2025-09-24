@@ -181,72 +181,106 @@ a.addr-chip{
 .table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
 
 /* ========================= */
-/*  Portrait-Layout (Cards)  */
-/*  -> keine Scrolls nötig   */
+/*  Portrait-Layout (polished, no scroll)  */
 /* ========================= */
 @media (orientation: portrait) {
-  .page{padding:6px}
-  .container{max-width:100%}
-  .header{padding:8px 10px}
-  .brand-logo{height:44px}
+  /* global kompakter */
+  body{ font-size:11px; }
+  .page{ padding:6px }
+  .container{ max-width:100% }
 
+  /* Header: kleiner, clean */
+  .header{ padding:6px 10px }
+  .brand-logo{ height:40px }
+
+  /* Suche: einspaltig + sticky */
   .searchbar{
     position:sticky; top:0; z-index:5;
-    grid-template-columns:1fr; gap:6px; padding:8px 10px;
+    grid-template-columns:1fr; gap:6px; padding:6px 10px;
     border-bottom:1px solid var(--grid);
+    background:var(--surface);
   }
+  .label{ font-size:10px }
+  .input{ padding:6px 8px; font-size:11px }
+  .btn{ padding:6px 8px; font-size:11px }
 
-  .tour-wrap{padding:8px 10px 0}
-  .tour-pill{padding:6px 10px; font-size:12px}
-  .tour-stats{font-size:10px}
+  /* Tour-Pill */
+  .tour-wrap{ padding:6px 10px 0 }
+  .tour-banner{ gap:8px }
+  .tour-pill{ padding:5px 10px; font-size:11px }
+  .tour-stats{ font-size:10px }
 
-  .table-section{padding:6px 8px 10px; overflow:visible}
-  table{width:100%; min-width:0; border-spacing:0; table-layout:auto}
-  thead{display:none}
+  /* Tabelle -> Cards */
+  .table-section{ padding:6px 8px 10px; overflow:visible }
+  table{ width:100%; min-width:0; border-spacing:0; table-layout:auto }
+  thead{ display:none }
 
   tbody tr{
     display:block;
-    border:1px solid var(--grid);
-    border-radius:10px;
+    margin:8px 0;
     background:#fff;
-    margin:10px 0;
+    border:1px solid var(--grid);
+    border-radius:8px;                /* etwas kleiner */
+    box-shadow:0 1px 0 rgba(0,0,0,.02);
     overflow:hidden;
   }
+
+  /* Zeilenabstände der alten Tabelle neutralisieren */
+  tbody tr:nth-child(odd) td,
+  tbody tr:nth-child(even) td{ background:#fff }
+  tbody tr+tr td{ border-top:none }
+
+  /* jede "Zelle" = Zeile mit Label links */
   tbody td{
     display:flex;
-    gap:10px;
+    gap:8px;
     align-items:flex-start;
     justify-content:space-between;
     padding:8px 10px;
     border:none;
     border-bottom:1px solid var(--grid);
-    background:#fff !important;
   }
-  tbody td:last-child{border-bottom:none}
-  tbody tr+tr td{border-top:none}
+  tbody td:last-child{ border-bottom:none }
 
+  /* Label-Spalte links */
   tbody td::before{
     content:attr(data-label);
+    flex:0 0 96px;                    /* fester, schmaler */
+    white-space:nowrap;
+    margin-right:8px;
     font-weight:900;
     color:var(--muted);
     text-transform:uppercase;
-    letter-spacing:.35px;
+    letter-spacing:.3px;
     font-size:10px;
     line-height:1.2;
-    margin-right:8px;
-    flex:0 0 112px;
-    white-space:nowrap;
   }
 
-  .cell{gap:4px; min-height:auto}
-  .cell-top,.cell-sub{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .tour-inline{gap:4px}
-  .tour-btn{font-size:10px; padding:2px 7px}
-  .badge-key{font-size:10px; padding:3px 8px}
-  a.phone-chip, a.mail-chip{font-size:10px; padding:3px 8px; max-width:100%}
-  .mail-chip .txt{white-space:normal}
-  a.addr-chip{font-size:10px; padding:3px 8px; max-width:100%}
+  /* Inhalte kompakter & sauber ellipsen */
+  .cell{ gap:3px; min-height:auto }
+  .cell-top,.cell-sub{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+
+  /* Touren-Chips enger + gut wrap */
+  .tour-inline{ gap:4px; row-gap:6px }
+  .tour-btn{ font-size:10px; padding:2px 6px; line-height:1.2 }
+
+  /* Schlüssel kleiner */
+  .badge-key{ font-size:10px; padding:2px 7px }
+
+  /* Chips dürfen umbrechen */
+  a.phone-chip, a.mail-chip{
+    font-size:10px; padding:3px 7px; max-width:100%;
+    white-space:normal; line-height:1.25;
+  }
+  .mail-chip .txt{ white-space:normal; word-break:break-word }
+
+  /* Adresse-Pill darf auch umbrechen */
+  a.addr-chip{
+    font-size:10px; padding:3px 8px; max-width:100%;
+    white-space:normal;
+  }
 }
+
 </style>
 </head>
 <body>
