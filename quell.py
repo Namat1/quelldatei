@@ -53,8 +53,7 @@ body{
   color:#0b1226; display:flex; align-items:center; justify-content:center; gap:10px;
   border-bottom:1px solid var(--grid);
 }
-.brand-logo{height:56px; width:auto}  /* größer als zuvor (44px) */
-/* .title bleibt ungenutzt, kann bestehen bleiben */
+.brand-logo{height:56px; width:auto}
 .title{font-weight:900; letter-spacing:.35px; font-size:13px; text-transform:uppercase}
 
 /* Searchbar */
@@ -93,8 +92,8 @@ body{
 .tour-stats{font-weight:900; font-size:11px; color:#334155}
 
 /* Tabelle */
-.table-section{padding:6px 12px 14px}
-table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12)}
+.table-section{padding:6px 12px 14px; overflow-x:auto} /* <- horizontal scroll falls nötig */
+table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:var(--fs-12); min-width:920px}
 thead th{
   position:sticky; top:0; z-index:2;
   background:linear-gradient(180deg,#f7f9fe,#eef2f8);
@@ -173,13 +172,43 @@ a.addr-chip{
 .addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
 .addr-dot{width:6px; height:6px; background:#ff2d55; border-radius:999px; display:inline-block}
 
-/* (Map-Button Styles bleiben erhalten, werden aber nicht mehr genutzt) */
+/* Map-Button (bleibt) */
 .table-map{
   text-decoration:none; font-weight:900; font-size:var(--fs-11);
   padding:6px 10px; border-radius:6px; border:1px solid var(--accent);
   background:var(--accent); color:#fff; display:inline-block; text-align:center; letter-spacing:.2px
 }
 .table-map:hover{background:var(--accent-2); border-color:var(--accent-2)}
+
+/* ========================= */
+/*  Portrait-Layout (Auto)   */
+/* ========================= */
+@media (orientation: portrait) {
+  .page{padding:6px}
+  .container{max-width:100%}
+  .header{padding:8px 10px}
+  .brand-logo{height:44px} /* kompakter im Hochkant */
+
+  /* Suchleiste stapeln & fixieren unter dem Header */
+  .searchbar{
+    position:sticky; top:0; z-index:5;
+    grid-template-columns:1fr; gap:6px; padding:8px 10px; border-bottom:1px solid var(--grid);
+  }
+
+  /* Tour-Pill etwas kleiner */
+  .tour-wrap{padding:8px 10px 0}
+  .tour-pill{padding:7px 12px; font-size:12px}
+  .tour-stats{font-size:10px}
+
+  /* Tabelle: horizontal scroll, kompaktere Zellen, größere Mindestbreite
+     damit alle 5 Spalten erhalten bleiben */
+  .table-section{padding:6px 8px 10px; overflow-x:auto}
+  table{min-width:1280px}
+  thead th{padding:6px 7px; font-size:11px}
+  tbody td{padding:6px 7px}
+  .cell{gap:3px; min-height:34px}
+  .title{font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -216,8 +245,8 @@ a.addr-chip{
             <col style="width:210px">
             <col style="width:520px">
             <col style="width:260px">
-            <col style="width:105px">   <!-- Schlüssel ~5% kleiner -->
-            <col style="width:418px">   <!-- Fachberater/Markt ~10% größer -->
+            <col style="width:105px">
+            <col style="width:418px">
           </colgroup>
           <thead>
             <tr>
@@ -508,7 +537,6 @@ def build_berater_map(df: pd.DataFrame) -> dict:
     return out
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
-    # A = Fachberater-Name, I = CSB, O = Markt-Telefon, X = Markt-Mail
     out = {}
     for _, row in df.iterrows():
         fach = str(row.iloc[0]).strip() if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
@@ -585,7 +613,7 @@ if excel_file and key_file:
                         tour_dict.setdefault(tournr, []).append(entry)
 
             with st.spinner("Verarbeite Kundendatei..."):
-                for blatt in BLATTNAMEN:
+                for blatt in ["Direkt 1 - 99", "Hupa MK 882", "Hupa 2221-4444", "Hupa 7773-7779"]:
                     try:
                         df = pd.read_excel(excel_file, sheet_name=blatt)
                         kunden_sammeln(df)
