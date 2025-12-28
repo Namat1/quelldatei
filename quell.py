@@ -17,6 +17,7 @@ HTML_TEMPLATE = """
 :root{
   /* =========================
      V2 DISPO THEME (ruhig, klar)
+     + 1920px OHNE HORIZONTAL-SCROLL
      ========================= */
   --bg:#f4f6fa;
   --surface:#ffffff;
@@ -69,13 +70,13 @@ body{
   color:var(--txt);
   font-size:12px;
   line-height:1.35;
-  font-weight:650;         /* V2: weniger "alles fett" */
+  font-weight:650;
   letter-spacing:.05px;
 }
 
-/* Frame */
-.page{min-height:100vh; display:flex; justify-content:center; padding:10px}
-.container{width:100%; max-width:1480px}
+/* Frame (1920 ohne horizontal-scroll) */
+.page{min-height:100vh; display:flex; justify-content:center; padding:0}
+.container{width:100%; max-width:1920px}
 .card{
   background:var(--surface);
   border:1px solid var(--grid);
@@ -97,7 +98,7 @@ body{
 .searchbar{
   padding:10px 12px;
   display:grid;
-  grid-template-columns:1fr 220px auto auto auto; /* V2: + meta */
+  grid-template-columns:1fr 220px auto auto auto;
   gap:8px;
   align-items:center;
   border-bottom:1px solid var(--grid);
@@ -175,16 +176,22 @@ body{
 }
 .tour-stats{font-weight:800; font-size:11px; color:var(--muted-2)}
 
-/* Tabelle */
-.table-section{padding:6px 12px 14px; overflow-x:auto}
+/* Tabelle (WICHTIG: kein overflow-x Container) */
+.table-section{
+  padding:6px 12px 14px;
+  overflow:visible; /* statt overflow-x:auto -> verhindert horizontal-scrollbar */
+}
 table{
   width:100%;
   border-collapse:separate;
   border-spacing:0;
   table-layout:fixed;
   font-size:12px;
-  min-width:920px
+
+  min-width:0;  /* statt min-width:920px -> MUSS weg */
 }
+
+/* Sticky Header */
 thead th{
   position:sticky; top:0; z-index:2;
   background:linear-gradient(180deg,#f7f9fe,#eef2f8);
@@ -202,19 +209,21 @@ thead th{
 thead th:last-child{border-right:none}
 
 tbody td{
-  padding:7px 9px;              /* V2: kompakter */
+  padding:7px 9px;
   vertical-align:top;
-  font-weight:650;              /* V2: weniger fett */
+  font-weight:650;
   border-bottom:1px solid var(--grid);
   border-right:1px solid var(--grid);
   background:#fff;
+
+  overflow:hidden; /* Schutz: breite Inhalte dürfen Tabelle nicht sprengen */
 }
 tbody td:last-child{border-right:none}
 
 /* Zeilen */
 tbody tr:nth-child(odd) td{background:var(--alt)}
 tbody tr:nth-child(even) td{background:#ffffff}
-tbody tr+tr td{border-top:3px solid var(--row-sep)} /* V2: weniger Abstand */
+tbody tr+tr td{border-top:3px solid var(--row-sep)}
 tbody tr:hover td{background:#eff6ff}
 
 /* Zellen */
@@ -224,7 +233,7 @@ tbody tr:hover td{background:#eff6ff}
 /* Monospace Zahlen */
 .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:650}
 
-/* ID-Chips (neutralisiert) */
+/* ID-Chips */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--chip-neutral-bg);
@@ -241,7 +250,7 @@ a.id-chip{
 a.id-chip:hover{filter:brightness(.98)}
 .id-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
-/* Schlüssel (clean) */
+/* Schlüssel */
 .badge-key{
   display:inline-block;
   background:var(--chip-key-bg);
@@ -255,7 +264,7 @@ a.id-chip:hover{filter:brightness(.98)}
   box-shadow:none;
 }
 
-/* Touren (primary) */
+/* Touren */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-block;
@@ -273,7 +282,7 @@ a.id-chip:hover{filter:brightness(.98)}
 }
 .tour-btn:hover{filter:brightness(.98)}
 
-/* Telefon-/Mail-Chips (nur leicht farbig, bleiben sekundär) */
+/* Telefon-/Mail */
 .phone-col{display:flex; flex-direction:column; gap:6px}
 a.phone-chip, a.mail-chip{
   display:inline-flex; align-items:center; gap:6px;
@@ -292,12 +301,20 @@ a.phone-chip, a.mail-chip{
 }
 a.phone-chip.chip-fb{background:#eef6ff; border-color:#bcd3ff; color:#123a7a}
 a.phone-chip.chip-market{background:#f3efff; border-color:#d2c6ff; color:#2b1973}
-a.mail-chip{background:#ecfdf5; border-color:#b7f7d6; color:#14532d; max-width:100%}
+a.mail-chip{
+  background:#ecfdf5; border-color:#b7f7d6; color:#14532d; max-width:100%;
+}
 a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.98)}
 .chip-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
-.mail-chip .txt{white-space:normal; word-break:break-all; line-height:1.2}
 
-/* Adresse-Pill (ruhiger) */
+/* WICHTIG: E-Mails dürfen nicht die Tabelle verbreitern */
+.mail-chip .txt{
+  white-space:normal;
+  word-break:break-word;
+  line-height:1.2;
+}
+
+/* Adresse-Pill */
 a.addr-chip{
   display:inline-flex; align-items:center; gap:8px; max-width:100%;
   background:var(--chip-addr-bg);
@@ -317,7 +334,6 @@ a.addr-chip{
 /* ========================= */
 @media (orientation: portrait) {
   body{ font-size:11px; }
-  .page{ padding:0 }
   .container{ max-width:none; width:100% }
   .card{ border-left:none; border-right:none; border-radius:0; box-shadow:none }
 
@@ -379,12 +395,13 @@ a.addr-chip{
     padding:8px 10px;
     border:none;
     border-bottom:1px solid var(--grid);
+    overflow:visible;
   }
   tbody td:last-child{ border-bottom:none }
 
   tbody td::before{
     content:attr(data-label);
-    flex:0 0 96px;               /* V2: breiter */
+    flex:0 0 96px;
     margin-right:8px;
     white-space:nowrap;
     font-weight:900;
@@ -439,12 +456,13 @@ a.addr-chip{
 
       <div class="table-section">
         <table id="resultTable" style="display:none;">
+          <!-- 1920: Prozent-Spalten (kein horizontal scroll) -->
           <colgroup>
-            <col style="width:210px">
-            <col style="width:520px">
-            <col style="width:260px">
-            <col style="width:105px">
-            <col style="width:418px">
+            <col style="width:14%">
+            <col style="width:36%">
+            <col style="width:18%">
+            <col style="width:7%">
+            <col style="width:25%">
           </colgroup>
           <thead>
             <tr>
@@ -839,7 +857,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 """
 
 # ===== Streamlit-Wrapper =====
-st.title("Kunden-Suche – V2 (Dispo UI)")
+st.title("Kunden-Suche – V2 (Dispo UI, 1920 ohne horizontal Scroll)")
 st.caption("Ruhiges Dispo-Theme • Statusleiste + Trefferanzeige • Portrait: Cards • Landscape: Tabelle")
 
 c1, c2, c3 = st.columns([1, 1, 1])
