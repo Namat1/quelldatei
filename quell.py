@@ -61,7 +61,7 @@ HTML_TEMPLATE = """
 }
 
 *{box-sizing:border-box}
-html,body{height:100%}
+html,body{height:100%; width:100%; overflow-x:hidden}
 
 body{
   margin:0;
@@ -75,14 +75,15 @@ body{
 }
 
 /* Frame (1920 ohne horizontal-scroll) */
-.page{min-height:100vh; display:flex; justify-content:center; padding:0}
-.container{width:100%; max-width:1920px}
+.page{min-height:100vh; display:flex; justify-content:center; padding:0; width:100%}
+.container{width:100%; max-width:1920px; margin:0 auto}
 .card{
   background:var(--surface);
   border:1px solid var(--grid);
   border-radius:var(--radius);
   overflow:hidden;
   box-shadow:var(--shadow-soft);
+  width:100%;
 }
 
 /* Header */
