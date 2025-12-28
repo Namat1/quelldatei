@@ -16,9 +16,12 @@ HTML_TEMPLATE = """
 <style>
 :root{
   /* =========================
-     V2 DISPO THEME (ruhig, klar)
-     + 1920px OHNE HORIZONTAL-SCROLL
+     V3 DISPO THEME (ruhig, klar)
+     + 90% von 1920px (max 1728)
+     + Darkmode Toggle
      ========================= */
+
+  /* LIGHT (Default) */
   --bg:#f4f6fa;
   --surface:#ffffff;
   --alt:#f8fafc;
@@ -35,7 +38,7 @@ HTML_TEMPLATE = """
   --accent:#2563eb;
   --accent-2:#1e4fd1;
 
-  /* Chips (diszipliniert) */
+  /* Chips */
   --chip-neutral-bg:#f8fafc;
   --chip-neutral-bd:#cbd5e1;
   --chip-neutral-tx:#334155;
@@ -60,8 +63,46 @@ HTML_TEMPLATE = """
   --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
 
+/* DARK overrides via [data-theme="dark"] */
+:root[data-theme="dark"]{
+  --bg:#0b1220;
+  --surface:#0f172a;
+  --alt:#0c152b;
+
+  --grid:#22304b;
+  --grid-2:#2a3a5a;
+  --head-grid:#2f446b;
+  --row-sep:#0a1224;
+
+  --txt:#e5e7eb;
+  --muted:#cbd5e1;
+  --muted-2:#94a3b8;
+
+  --accent:#60a5fa;
+  --accent-2:#93c5fd;
+
+  --chip-neutral-bg:#0b1730;
+  --chip-neutral-bd:#2a3a5a;
+  --chip-neutral-tx:#cbd5e1;
+
+  --chip-tour-bg:#2a0f18;
+  --chip-tour-bd:#fb7185;
+  --chip-tour-tx:#fecdd3;
+
+  --chip-key-bg:#052214;
+  --chip-key-bd:#22c55e;
+  --chip-key-tx:#bbf7d0;
+
+  --chip-addr-bg:#0b1730;
+  --chip-addr-bd:#3b82f6;
+  --chip-addr-tx:#bfdbfe;
+
+  --shadow-soft:0 1px 0 rgba(0,0,0,.22), 0 14px 30px rgba(0,0,0,.28);
+}
+
 *{box-sizing:border-box}
 html,body{height:100%}
+html,body{overflow-x:hidden} /* Safety: niemals horizontal scroll */
 
 body{
   margin:0;
@@ -74,9 +115,13 @@ body{
   letter-spacing:.05px;
 }
 
-/* Frame (1920 ohne horizontal-scroll) */
+/* Frame: 90% von 1920 (= max 1728) */
 .page{min-height:100vh; display:flex; justify-content:center; padding:0}
-.container{width:100%; max-width:1920px}
+.container{
+  width:90vw;
+  max-width:1728px;
+  margin:0 auto;
+}
 .card{
   background:var(--surface);
   border:1px solid var(--grid);
@@ -88,7 +133,7 @@ body{
 /* Header */
 .header{
   padding:10px 12px;
-  background:linear-gradient(180deg,#ffffff 0%, #f5f7ff 100%);
+  background:linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, #ffffff 8%) 0%, color-mix(in srgb, var(--surface) 72%, #93c5fd 6%) 100%);
   border-bottom:1px solid var(--grid);
   display:flex; align-items:center; justify-content:center;
 }
@@ -98,13 +143,13 @@ body{
 .searchbar{
   padding:10px 12px;
   display:grid;
-  grid-template-columns:1fr 220px auto auto auto;
+  grid-template-columns:1fr 220px auto auto auto auto;
   gap:8px;
   align-items:center;
   border-bottom:1px solid var(--grid);
   background:var(--surface);
 }
-@media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr auto} }
+@media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr auto auto} }
 @media(max-width:780px){ .searchbar{grid-template-columns:1fr} }
 
 .field{display:grid; grid-template-columns:74px 1fr; gap:6px; align-items:center}
@@ -121,32 +166,60 @@ body{
   padding:7px 10px;
   border:1px solid var(--grid);
   border-radius:8px;
-  background:#fff;
+  background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
+  color:var(--txt);
   font-size:12px;
   font-weight:650;
 }
 .input:focus{
   outline:none;
   border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(37,99,235,.14);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 /* Buttons */
 .btn{
   padding:7px 10px;
   border:1px solid var(--grid);
-  background:#fff;
-  color:#0f172a;
+  background:color-mix(in srgb, var(--surface) 86%, #ffffff 14%);
+  color:var(--txt);
   border-radius:8px;
   cursor:pointer;
   font-weight:800;
   font-size:12px
 }
-.btn:hover{background:#f3f6fb}
+.btn:hover{filter:brightness(1.03)}
+:root[data-theme="dark"] .btn:hover{filter:brightness(1.08)}
 .btn-danger{border-color:#ef4444; background:#ef4444; color:#fff}
 .btn-danger:hover{filter:brightness(.95)}
-.btn-back{border-color:var(--accent); color:var(--accent-2); background:#eff6ff}
-.btn-back:hover{background:#e6f0ff}
+.btn-back{border-color:var(--accent); color:var(--accent-2); background:color-mix(in srgb, var(--accent) 12%, var(--surface))}
+.btn-back:hover{filter:brightness(1.02)}
+
+/* Darkmode Toggle Button */
+.btn-toggle{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  white-space:nowrap;
+}
+.toggle-dot{
+  width:10px; height:10px; border-radius:999px;
+  background:var(--muted-2);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--muted-2) 14%, transparent);
+}
+:root[data-theme="dark"] .toggle-dot{
+  background:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.toggle-label{
+  font-weight:900;
+  font-size:11px;
+  letter-spacing:.25px;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+:root[data-theme="dark"] .toggle-label{color:var(--muted)}
 
 .results-meta{
   justify-self:end;
@@ -160,13 +233,14 @@ body{
 .tour-wrap{
   display:none;
   padding:10px 12px;
-  background:#fff7ed;
-  border-bottom:1px solid #fed7aa;
+  background:color-mix(in srgb, #ffedd5 84%, var(--surface));
+  border-bottom:1px solid color-mix(in srgb, #fdba74 70%, var(--grid));
 }
 .tour-banner{display:flex; align-items:center; justify-content:space-between; gap:12px}
 .tour-pill{
   display:inline-flex; align-items:center; gap:10px;
-  background:#ffedd5; color:#7c2d12;
+  background:color-mix(in srgb, #ffedd5 86%, var(--surface));
+  color:color-mix(in srgb, #7c2d12 85%, var(--txt));
   border:1px solid #fdba74;
   border-radius:999px;
   padding:7px 12px;
@@ -176,10 +250,10 @@ body{
 }
 .tour-stats{font-weight:800; font-size:11px; color:var(--muted-2)}
 
-/* Tabelle (WICHTIG: kein overflow-x Container) */
+/* Tabelle (kein overflow-x Container) */
 .table-section{
   padding:6px 12px 14px;
-  overflow:visible; /* statt overflow-x:auto -> verhindert horizontal-scrollbar */
+  overflow:visible;
 }
 table{
   width:100%;
@@ -187,15 +261,14 @@ table{
   border-spacing:0;
   table-layout:fixed;
   font-size:12px;
-
-  min-width:0;  /* statt min-width:920px -> MUSS weg */
+  min-width:0;
 }
 
 /* Sticky Header */
 thead th{
   position:sticky; top:0; z-index:2;
-  background:linear-gradient(180deg,#f7f9fe,#eef2f8);
-  color:#0f172a;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--surface) 75%, #ffffff 25%), color-mix(in srgb, var(--surface) 82%, #93c5fd 6%));
+  color:var(--txt);
   font-weight:900;
   font-size:11px;
   text-transform:uppercase;
@@ -214,17 +287,16 @@ tbody td{
   font-weight:650;
   border-bottom:1px solid var(--grid);
   border-right:1px solid var(--grid);
-  background:#fff;
-
-  overflow:hidden; /* Schutz: breite Inhalte dürfen Tabelle nicht sprengen */
+  background:var(--surface);
+  overflow:hidden;
 }
 tbody td:last-child{border-right:none}
 
 /* Zeilen */
 tbody tr:nth-child(odd) td{background:var(--alt)}
-tbody tr:nth-child(even) td{background:#ffffff}
+tbody tr:nth-child(even) td{background:var(--surface)}
 tbody tr+tr td{border-top:3px solid var(--row-sep)}
-tbody tr:hover td{background:#eff6ff}
+tbody tr:hover td{background:color-mix(in srgb, var(--accent) 12%, var(--surface))}
 
 /* Zellen */
 .cell{display:flex; flex-direction:column; gap:4px; min-height:36px; width:100%}
@@ -247,7 +319,7 @@ a.id-chip{
   line-height:1;
   box-shadow:none;
 }
-a.id-chip:hover{filter:brightness(.98)}
+a.id-chip:hover{filter:brightness(1.03)}
 .id-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
 /* Schlüssel */
@@ -280,7 +352,7 @@ a.id-chip:hover{filter:brightness(.98)}
   letter-spacing:.12px;
   box-shadow:none;
 }
-.tour-btn:hover{filter:brightness(.98)}
+.tour-btn:hover{filter:brightness(1.03)}
 
 /* Telefon-/Mail */
 .phone-col{display:flex; flex-direction:column; gap:6px}
@@ -296,15 +368,13 @@ a.phone-chip, a.mail-chip{
   width:max-content;
   max-width:100%;
   border:1px solid var(--grid-2);
-  background:#fff;
-  color:#0f172a;
+  background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
+  color:var(--txt);
 }
-a.phone-chip.chip-fb{background:#eef6ff; border-color:#bcd3ff; color:#123a7a}
-a.phone-chip.chip-market{background:#f3efff; border-color:#d2c6ff; color:#2b1973}
-a.mail-chip{
-  background:#ecfdf5; border-color:#b7f7d6; color:#14532d; max-width:100%;
-}
-a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.98)}
+a.phone-chip.chip-fb{background:color-mix(in srgb, #eef6ff 55%, var(--surface)); border-color:color-mix(in srgb, #bcd3ff 65%, var(--grid-2)); color:color-mix(in srgb, #123a7a 75%, var(--txt))}
+a.phone-chip.chip-market{background:color-mix(in srgb, #f3efff 55%, var(--surface)); border-color:color-mix(in srgb, #d2c6ff 65%, var(--grid-2)); color:color-mix(in srgb, #2b1973 75%, var(--txt))}
+a.mail-chip{background:color-mix(in srgb, #ecfdf5 55%, var(--surface)); border-color:color-mix(in srgb, #b7f7d6 65%, var(--grid-2)); color:color-mix(in srgb, #14532d 75%, var(--txt)); max-width:100%}
+a.phone-chip:hover, a.mail-chip:hover{filter:brightness(1.04)}
 .chip-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
 /* WICHTIG: E-Mails dürfen nicht die Tabelle verbreitern */
@@ -377,14 +447,14 @@ a.addr-chip{
   tbody tr{
     display:block;
     margin:10px 0;
-    background:#fff;
+    background:var(--surface);
     border:1px solid var(--grid);
     border-radius:12px;
     box-shadow:0 1px 0 rgba(0,0,0,.02);
     overflow:hidden;
   }
   tbody tr:nth-child(odd) td,
-  tbody tr:nth-child(even) td{ background:#fff }
+  tbody tr:nth-child(even) td{ background:var(--surface) }
   tbody tr+tr td{ border-top:none }
 
   tbody td{
@@ -441,6 +511,11 @@ a.addr-chip{
           <input class="input" id="keySearch" placeholder="exakt (z. B. 40)">
         </div>
 
+        <button class="btn btn-toggle" id="btnTheme" title="Darkmode umschalten">
+          <span class="toggle-dot" aria-hidden="true"></span>
+          <span class="toggle-label" id="themeLabel">Dark</span>
+        </button>
+
         <button class="btn btn-back" id="btnBack" style="display:none;">Zurück zur Suche</button>
         <button class="btn btn-danger" id="btnReset">Zurücksetzen</button>
 
@@ -492,6 +567,40 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 let allCustomers = [];
 let prevQuery = null;
 const DIAL_SCHEME = 'callto';
+
+/* =========================
+   Theme Toggle (persisted)
+   ========================= */
+const THEME_KEY = 'kunden_suche_theme';
+
+function applyTheme(theme){
+  const root = document.documentElement;
+  if(theme === 'dark'){
+    root.setAttribute('data-theme', 'dark');
+    $('#themeLabel').textContent = 'Light';
+  }else{
+    root.removeAttribute('data-theme');
+    $('#themeLabel').textContent = 'Dark';
+  }
+}
+
+function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY);
+  if(saved === 'dark' || saved === 'light'){
+    applyTheme(saved);
+    return;
+  }
+  // Default: folgt System, aber nur wenn nicht gespeichert
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+}
+
+function toggleTheme(){
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem(THEME_KEY, next);
+}
 
 function setResultsMeta(text){
   const m = $('#resultsMeta');
@@ -821,6 +930,9 @@ function debounce(fn,d=140){
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
+  initTheme();
+  $('#btnTheme').addEventListener('click', toggleTheme);
+
   if(Object.keys(tourkundenData).length>0){ buildData(); }
 
   $('#smartSearch').addEventListener('input', debounce(onSmart,140));
@@ -849,6 +961,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
         onKey();
       }
     }
+    // Optional: Taste "D" toggelt Theme (nur wenn kein Input fokus)
+    if((e.key === 'd' || e.key === 'D') && document.activeElement && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){
+      toggleTheme();
+    }
   });
 });
 </script>
@@ -857,8 +973,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 """
 
 # ===== Streamlit-Wrapper =====
-st.title("Kunden-Suche – V2 (Dispo UI, 1920 ohne horizontal Scroll)")
-st.caption("Ruhiges Dispo-Theme • Statusleiste + Trefferanzeige • Portrait: Cards • Landscape: Tabelle")
+st.title("Kunden-Suche – V3 (Dispo UI, 90% von 1920 + Darkmode)")
+st.caption("Ruhiges Dispo-Theme • Darkmode Toggle • 90% Breite (max 1728) • Portrait: Cards • Landscape: Tabelle")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
