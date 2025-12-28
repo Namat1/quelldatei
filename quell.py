@@ -91,10 +91,6 @@ body{
   margin: 0 auto;
 }
 
-/* Optional: Wer es auf ultrabreiten Monitoren begrenzen will, nutzt dies:
-   @media (min-width: 1940px) { .container { max-width: 1920px; } } 
-*/
-
 .card{
   background:var(--surface);
   border:1px solid var(--grid);
@@ -529,7 +525,7 @@ function makeIdChip(label, value){
 
 function makeAddressChip(name, strasse, plz, ort){
   const txt = `${strasse||''}, ${plz||''} ${ort||''}`.replace(/^,\\s*/, '').trim();
-  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(txt)}`;
+  const url = `https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(`${encodeURIComponent(txt)}`;
   const a = document.createElement('a');
   a.className='addr-chip';
   a.href=url;
