@@ -72,10 +72,11 @@ body{
   line-height:1.35;
   font-weight:650;
   letter-spacing:.05px;
+  overflow-x:hidden;
 }
 
 /* Frame (1920 ohne horizontal-scroll) */
-.page{min-height:100vh; display:flex; justify-content:center; padding:0}
+.page{min-height:100vh; display:flex; justify-content:center; padding:0; width:100%}
 .container{width:100%; max-width:1920px}
 .card{
   background:var(--surface);
