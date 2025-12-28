@@ -59,8 +59,6 @@ HTML_TEMPLATE = """
 
   --radius:10px;
   --radius-pill:999px;
-
-  --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
 
 /* DARK overrides via [data-theme="dark"] */
@@ -133,7 +131,9 @@ body{
 /* Header */
 .header{
   padding:10px 12px;
-  background:linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, #ffffff 8%) 0%, color-mix(in srgb, var(--surface) 72%, #93c5fd 6%) 100%);
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--surface) 92%, #ffffff 8%) 0%,
+    color-mix(in srgb, var(--surface) 72%, #93c5fd 6%) 100%);
   border-bottom:1px solid var(--grid);
   display:flex; align-items:center; justify-content:center;
 }
@@ -267,7 +267,9 @@ table{
 /* Sticky Header */
 thead th{
   position:sticky; top:0; z-index:2;
-  background:linear-gradient(180deg, color-mix(in srgb, var(--surface) 75%, #ffffff 25%), color-mix(in srgb, var(--surface) 82%, #93c5fd 6%));
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--surface) 75%, #ffffff 25%),
+    color-mix(in srgb, var(--surface) 82%, #93c5fd 6%));
   color:var(--txt);
   font-weight:900;
   font-size:11px;
@@ -371,9 +373,22 @@ a.phone-chip, a.mail-chip{
   background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
   color:var(--txt);
 }
-a.phone-chip.chip-fb{background:color-mix(in srgb, #eef6ff 55%, var(--surface)); border-color:color-mix(in srgb, #bcd3ff 65%, var(--grid-2)); color:color-mix(in srgb, #123a7a 75%, var(--txt))}
-a.phone-chip.chip-market{background:color-mix(in srgb, #f3efff 55%, var(--surface)); border-color:color-mix(in srgb, #d2c6ff 65%, var(--grid-2)); color:color-mix(in srgb, #2b1973 75%, var(--txt))}
-a.mail-chip{background:color-mix(in srgb, #ecfdf5 55%, var(--surface)); border-color:color-mix(in srgb, #b7f7d6 65%, var(--grid-2)); color:color-mix(in srgb, #14532d 75%, var(--txt)); max-width:100%}
+a.phone-chip.chip-fb{
+  background:color-mix(in srgb, #eef6ff 55%, var(--surface));
+  border-color:color-mix(in srgb, #bcd3ff 65%, var(--grid-2));
+  color:color-mix(in srgb, #123a7a 75%, var(--txt))
+}
+a.phone-chip.chip-market{
+  background:color-mix(in srgb, #f3efff 55%, var(--surface));
+  border-color:color-mix(in srgb, #d2c6ff 65%, var(--grid-2));
+  color:color-mix(in srgb, #2b1973 75%, var(--txt))
+}
+a.mail-chip{
+  background:color-mix(in srgb, #ecfdf5 55%, var(--surface));
+  border-color:color-mix(in srgb, #b7f7d6 65%, var(--grid-2));
+  color:color-mix(in srgb, #14532d 75%, var(--txt));
+  max-width:100%
+}
 a.phone-chip:hover, a.mail-chip:hover{filter:brightness(1.04)}
 .chip-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
@@ -382,6 +397,73 @@ a.phone-chip:hover, a.mail-chip:hover{filter:brightness(1.04)}
   white-space:normal;
   word-break:break-word;
   line-height:1.2;
+}
+
+/* =========================
+   DARK: Fachberater/Markt/Mail Pills "leuchten" + besser lesbar
+   ========================= */
+:root[data-theme="dark"] a.phone-chip,
+:root[data-theme="dark"] a.mail-chip{
+  border-color: rgba(148,163,184,.35);
+  background: rgba(255,255,255,.06);
+  color: #e5e7eb;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.06) inset,
+    0 10px 22px rgba(0,0,0,.35);
+}
+
+/* FB */
+:root[data-theme="dark"] a.phone-chip.chip-fb{
+  background: rgba(96,165,250,.18);
+  border-color: rgba(96,165,250,.55);
+  color: #eaf2ff;
+  box-shadow:
+    0 0 0 1px rgba(96,165,250,.14) inset,
+    0 0 0 3px rgba(96,165,250,.08),
+    0 10px 24px rgba(0,0,0,.40);
+}
+:root[data-theme="dark"] a.phone-chip.chip-fb:hover{
+  filter: brightness(1.12);
+  box-shadow:
+    0 0 0 1px rgba(96,165,250,.20) inset,
+    0 0 0 4px rgba(96,165,250,.12),
+    0 12px 28px rgba(0,0,0,.45);
+}
+
+/* Markt */
+:root[data-theme="dark"] a.phone-chip.chip-market{
+  background: rgba(167,139,250,.18);
+  border-color: rgba(167,139,250,.55);
+  color: #f4efff;
+  box-shadow:
+    0 0 0 1px rgba(167,139,250,.14) inset,
+    0 0 0 3px rgba(167,139,250,.08),
+    0 10px 24px rgba(0,0,0,.40);
+}
+:root[data-theme="dark"] a.phone-chip.chip-market:hover{
+  filter: brightness(1.12);
+  box-shadow:
+    0 0 0 1px rgba(167,139,250,.20) inset,
+    0 0 0 4px rgba(167,139,250,.12),
+    0 12px 28px rgba(0,0,0,.45);
+}
+
+/* Mail */
+:root[data-theme="dark"] a.mail-chip{
+  background: rgba(34,197,94,.16);
+  border-color: rgba(34,197,94,.55);
+  color: #dcfce7;
+  box-shadow:
+    0 0 0 1px rgba(34,197,94,.12) inset,
+    0 0 0 3px rgba(34,197,94,.07),
+    0 10px 24px rgba(0,0,0,.40);
+}
+:root[data-theme="dark"] a.mail-chip:hover{
+  filter: brightness(1.12);
+  box-shadow:
+    0 0 0 1px rgba(34,197,94,.20) inset,
+    0 0 0 4px rgba(34,197,94,.12),
+    0 12px 28px rgba(0,0,0,.45);
 }
 
 /* Adresse-Pill */
