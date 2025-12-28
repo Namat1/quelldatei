@@ -5,9 +5,6 @@ import base64
 import unicodedata
 import re
 
-# ==========================================
-# HTML TEMPLATE MIT CSS FIXES FÜR 1920px
-# ==========================================
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
@@ -20,6 +17,7 @@ HTML_TEMPLATE = """
 :root{
   /* =========================
      V2 DISPO THEME (ruhig, klar)
+     + 1920px OHNE HORIZONTAL-SCROLL
      ========================= */
   --bg:#f4f6fa;
   --surface:#ffffff;
@@ -37,32 +35,36 @@ HTML_TEMPLATE = """
   --accent:#2563eb;
   --accent-2:#1e4fd1;
 
-  /* Chips */
-  --chip-neutral-bg:#f8fafc; --chip-neutral-bd:#cbd5e1; --chip-neutral-tx:#334155;
-  --chip-tour-bg:#ffe4e6;    --chip-tour-bd:#fb7185;    --chip-tour-tx:#7f1d1d;
-  --chip-key-bg:#dcfce7;     --chip-key-bd:#22c55e;     --chip-key-tx:#14532d;
-  --chip-addr-bg:#e7f0ff;    --chip-addr-bd:#7aa7ff;    --chip-addr-tx:#0b3a8a;
+  /* Chips (diszipliniert) */
+  --chip-neutral-bg:#f8fafc;
+  --chip-neutral-bd:#cbd5e1;
+  --chip-neutral-tx:#334155;
+
+  --chip-tour-bg:#ffe4e6;
+  --chip-tour-bd:#fb7185;
+  --chip-tour-tx:#7f1d1d;
+
+  --chip-key-bg:#dcfce7;
+  --chip-key-bd:#22c55e;
+  --chip-key-tx:#14532d;
+
+  --chip-addr-bg:#e7f0ff;
+  --chip-addr-bd:#7aa7ff;
+  --chip-addr-tx:#0b3a8a;
 
   --shadow-soft:0 1px 0 rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
+
   --radius:10px;
   --radius-pill:999px;
+
+  --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
 
 *{box-sizing:border-box}
-
-/* WICHTIG: overflow-y: scroll erzwingt den vertikalen Balken immer, 
-   damit die Breite berechenbar bleibt. overflow-x auf hidden. */
-html {
-  height: 100%;
-  width: 100%;
-  overflow-y: scroll; 
-  overflow-x: hidden;
-}
+html,body{height:100%}
 
 body{
   margin:0;
-  height: 100%;
-  width: 100%;
   background:var(--bg);
   font-family:"Inter Tight", Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   color:var(--txt);
@@ -70,36 +72,17 @@ body{
   line-height:1.35;
   font-weight:650;
   letter-spacing:.05px;
-  overflow-x: hidden; /* Doppelte Sicherheit */
 }
 
-/* Frame Layout Fixes */
-.page {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding: 0;
-  width: 100%; /* Passt sich dem Viewport an (exkl. Scrollbar) */
-}
-
-.container {
-  width: 100%;
-  /* Statt stur 1920px nehmen wir 100% der verfügbaren Fläche. 
-     Bei Full-HD (1920px) minus Scrollbar (~17px) sind das ca 1903px. 
-     So entsteht kein horizontaler Scrollbalken. */
-  max-width: 100%; 
-  margin: 0 auto;
-}
-
+/* Frame (1920 ohne horizontal-scroll) */
+.page{min-height:100vh; display:flex; justify-content:center; padding:0}
+.container{width:100%; max-width:1920px}
 .card{
   background:var(--surface);
   border:1px solid var(--grid);
-  /* Radius oben wegnehmen, falls es am Rand klebt, sieht sauberer aus bei Full-Width */
-  border-radius: 0 0 var(--radius) var(--radius);
+  border-radius:var(--radius);
   overflow:hidden;
   box-shadow:var(--shadow-soft);
-  width:100%;
-  margin-bottom: 20px;
 }
 
 /* Header */
@@ -115,7 +98,6 @@ body{
 .searchbar{
   padding:10px 12px;
   display:grid;
-  /* Auto-Spalten passen sich dem Inhalt an, 1fr nimmt den Rest */
   grid-template-columns:1fr 220px auto auto auto;
   gap:8px;
   align-items:center;
@@ -127,24 +109,38 @@ body{
 
 .field{display:grid; grid-template-columns:74px 1fr; gap:6px; align-items:center}
 .label{
-  font-weight:800; color:var(--muted); font-size:11px;
-  text-transform:uppercase; letter-spacing:.32px
+  font-weight:800;
+  color:var(--muted);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.32px
 }
 
 .input{
-  width:100%; padding:7px 10px; border:1px solid var(--grid);
-  border-radius:8px; background:#fff; font-size:12px; font-weight:650;
+  width:100%;
+  padding:7px 10px;
+  border:1px solid var(--grid);
+  border-radius:8px;
+  background:#fff;
+  font-size:12px;
+  font-weight:650;
 }
 .input:focus{
-  outline:none; border-color:var(--accent);
+  outline:none;
+  border-color:var(--accent);
   box-shadow:0 0 0 3px rgba(37,99,235,.14);
 }
 
 /* Buttons */
 .btn{
-  padding:7px 10px; border:1px solid var(--grid); background:#fff;
-  color:#0f172a; border-radius:8px; cursor:pointer;
-  font-weight:800; font-size:12px; white-space: nowrap;
+  padding:7px 10px;
+  border:1px solid var(--grid);
+  background:#fff;
+  color:#0f172a;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:800;
+  font-size:12px
 }
 .btn:hover{background:#f3f6fb}
 .btn-danger{border-color:#ef4444; background:#ef4444; color:#fff}
@@ -153,160 +149,277 @@ body{
 .btn-back:hover{background:#e6f0ff}
 
 .results-meta{
-  justify-self:end; font-weight:800; font-size:11px;
-  color:var(--muted-2); white-space:nowrap;
+  justify-self:end;
+  font-weight:800;
+  font-size:11px;
+  color:var(--muted-2);
+  white-space:nowrap;
 }
 
 /* Tour-Statusleiste */
 .tour-wrap{
-  display:none; padding:10px 12px; background:#fff7ed; border-bottom:1px solid #fed7aa;
+  display:none;
+  padding:10px 12px;
+  background:#fff7ed;
+  border-bottom:1px solid #fed7aa;
 }
 .tour-banner{display:flex; align-items:center; justify-content:space-between; gap:12px}
 .tour-pill{
   display:inline-flex; align-items:center; gap:10px;
-  background:#ffedd5; color:#7c2d12; border:1px solid #fdba74;
-  border-radius:999px; padding:7px 12px;
-  font-weight:900; font-size:12px;
+  background:#ffedd5; color:#7c2d12;
+  border:1px solid #fdba74;
+  border-radius:999px;
+  padding:7px 12px;
+  font-weight:900;
+  font-size:12px;
+  box-shadow:none;
 }
 .tour-stats{font-weight:800; font-size:11px; color:var(--muted-2)}
 
-/* Tabelle */
+/* Tabelle (WICHTIG: kein overflow-x Container) */
 .table-section{
   padding:6px 12px 14px;
-  overflow:visible; 
+  overflow:visible; /* statt overflow-x:auto -> verhindert horizontal-scrollbar */
 }
 table{
   width:100%;
   border-collapse:separate;
   border-spacing:0;
-  table-layout:fixed; /* Zwingend für Layout-Stabilität */
+  table-layout:fixed;
   font-size:12px;
-  min-width:0;
+
+  min-width:0;  /* statt min-width:920px -> MUSS weg */
 }
 
 /* Sticky Header */
 thead th{
   position:sticky; top:0; z-index:2;
   background:linear-gradient(180deg,#f7f9fe,#eef2f8);
-  color:#0f172a; font-weight:900; font-size:11px;
-  text-transform:uppercase; letter-spacing:.22px;
+  color:#0f172a;
+  font-weight:900;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.22px;
   border-bottom:2px solid var(--head-grid);
   border-right:1px solid var(--head-grid);
   padding:8px 9px;
-  text-align:left;
-  
-  /* FIX FÜR HORIZONTAL SCROLL: */
   white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  text-align:left;
 }
 thead th:last-child{border-right:none}
 
 tbody td{
-  padding:7px 9px; vertical-align:top; font-weight:650;
+  padding:7px 9px;
+  vertical-align:top;
+  font-weight:650;
   border-bottom:1px solid var(--grid);
   border-right:1px solid var(--grid);
   background:#fff;
-  overflow:hidden; /* Zelleninhalt darf Tabelle nicht sprengen */
+
+  overflow:hidden; /* Schutz: breite Inhalte dürfen Tabelle nicht sprengen */
 }
 tbody td:last-child{border-right:none}
 
+/* Zeilen */
 tbody tr:nth-child(odd) td{background:var(--alt)}
 tbody tr:nth-child(even) td{background:#ffffff}
 tbody tr+tr td{border-top:3px solid var(--row-sep)}
 tbody tr:hover td{background:#eff6ff}
 
+/* Zellen */
 .cell{display:flex; flex-direction:column; gap:4px; min-height:36px; width:100%}
 .cell-top,.cell-sub{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.mono{font-family:"JetBrains Mono", ui-monospace, monospace; font-weight:650}
 
-/* Elemente */
+/* Monospace Zahlen */
+.mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:650}
+
+/* ID-Chips */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
-  background:var(--chip-neutral-bg); color:var(--chip-neutral-tx);
-  border:1px solid var(--chip-neutral-bd); border-radius:var(--radius-pill);
-  padding:3px 9px; font-weight:900; font-size:11px;
-  text-decoration:none; line-height:1;
+  background:var(--chip-neutral-bg);
+  color:var(--chip-neutral-tx);
+  border:1px solid var(--chip-neutral-bd);
+  border-radius:var(--radius-pill);
+  padding:3px 9px;
+  font-weight:900;
+  font-size:11px;
+  text-decoration:none;
+  line-height:1;
+  box-shadow:none;
 }
 a.id-chip:hover{filter:brightness(.98)}
 .id-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
+/* Schlüssel */
 .badge-key{
-  display:inline-block; background:var(--chip-key-bg);
-  border:1px solid var(--chip-key-bd); color:var(--chip-key-tx);
-  border-radius:var(--radius-pill); padding:3px 9px;
-  font-weight:900; font-size:11px; line-height:1;
+  display:inline-block;
+  background:var(--chip-key-bg);
+  border:1px solid var(--chip-key-bd);
+  color:var(--chip-key-tx);
+  border-radius:var(--radius-pill);
+  padding:3px 9px;
+  font-weight:900;
+  font-size:11px;
+  line-height:1;
+  box-shadow:none;
 }
 
+/* Touren */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
-  display:inline-block; background:var(--chip-tour-bg);
-  border:1px solid var(--chip-tour-bd); color:var(--chip-tour-tx);
-  padding:3px 9px; border-radius:var(--radius-pill);
-  font-weight:900; font-size:10px; cursor:pointer;
-  line-height:1.25; letter-spacing:.12px;
+  display:inline-block;
+  background:var(--chip-tour-bg);
+  border:1px solid var(--chip-tour-bd);
+  color:var(--chip-tour-tx);
+  padding:3px 9px;
+  border-radius:var(--radius-pill);
+  font-weight:900;
+  font-size:10px;
+  cursor:pointer;
+  line-height:1.25;
+  letter-spacing:.12px;
+  box-shadow:none;
 }
 .tour-btn:hover{filter:brightness(.98)}
 
+/* Telefon-/Mail */
 .phone-col{display:flex; flex-direction:column; gap:6px}
 a.phone-chip, a.mail-chip{
   display:inline-flex; align-items:center; gap:6px;
-  border-radius:var(--radius-pill); padding:3px 9px;
-  font-weight:850; font-size:11px; line-height:1;
-  text-decoration:none; cursor:pointer; width:max-content; max-width:100%;
-  border:1px solid var(--grid-2); background:#fff; color:#0f172a;
+  border-radius:var(--radius-pill);
+  padding:3px 9px;
+  font-weight:850;
+  font-size:11px;
+  line-height:1;
+  text-decoration:none;
+  cursor:pointer;
+  width:max-content;
+  max-width:100%;
+  border:1px solid var(--grid-2);
+  background:#fff;
+  color:#0f172a;
 }
 a.phone-chip.chip-fb{background:#eef6ff; border-color:#bcd3ff; color:#123a7a}
 a.phone-chip.chip-market{background:#f3efff; border-color:#d2c6ff; color:#2b1973}
-a.mail-chip{background:#ecfdf5; border-color:#b7f7d6; color:#14532d; max-width:100%}
+a.mail-chip{
+  background:#ecfdf5; border-color:#b7f7d6; color:#14532d; max-width:100%;
+}
 a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.98)}
 .chip-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
-.mail-chip .txt{white-space:normal; word-break:break-word; line-height:1.2}
 
+/* WICHTIG: E-Mails dürfen nicht die Tabelle verbreitern */
+.mail-chip .txt{
+  white-space:normal;
+  word-break:break-word;
+  line-height:1.2;
+}
+
+/* Adresse-Pill */
 a.addr-chip{
   display:inline-flex; align-items:center; gap:8px; max-width:100%;
-  background:var(--chip-addr-bg); color:var(--chip-addr-tx);
-  border:1px solid var(--chip-addr-bd); border-radius:999px;
-  padding:4px 10px; text-decoration:none; font-weight:800; font-size:11px;
+  background:var(--chip-addr-bg);
+  color:var(--chip-addr-tx);
+  border:1px solid var(--chip-addr-bd);
+  border-radius:999px;
+  padding:4px 10px;
+  text-decoration:none;
+  font-weight:800;
+  font-size:11px;
 }
 .addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
 .addr-dot{width:6px; height:6px; background:#ef4444; border-radius:999px; display:inline-block}
 
-/* Portrait (Mobile) */
+/* ========================= */
+/* Portrait full-width cards  */
+/* ========================= */
 @media (orientation: portrait) {
   body{ font-size:11px; }
-  .container{ max-width:100% }
-  .card{ border-left:none; border-right:none; border-radius:0; box-shadow:none; margin-bottom:0; }
-  .header{ padding:8px 12px; }
+  .container{ max-width:none; width:100% }
+  .card{ border-left:none; border-right:none; border-radius:0; box-shadow:none }
+
+  .header{
+    padding:8px max(12px, env(safe-area-inset-right))
+             8px max(12px, env(safe-area-inset-left));
+  }
   .brand-logo{ height:38px }
+
   .searchbar{
     position:sticky; top:0; z-index:5;
-    grid-template-columns:1fr; gap:6px; padding:8px 12px;
+    grid-template-columns:1fr;
+    gap:6px;
+    padding:8px max(12px, env(safe-area-inset-right))
+            8px max(12px, env(safe-area-inset-left));
+    border-bottom:1px solid var(--grid);
+    background:var(--surface);
   }
   .results-meta{ justify-self:start; }
+
   .label{ font-size:10px }
-  .input, .btn{ padding:6px 8px; font-size:11px }
-  .tour-wrap{ padding:8px 12px; }
-  .table-section{ padding:8px 12px; }
-  table{ table-layout:auto }
-  thead{ display:none }
-  tbody tr{
-    display:block; margin:10px 0; background:#fff;
-    border:1px solid var(--grid); border-radius:12px;
-    box-shadow:0 1px 0 rgba(0,0,0,.02); overflow:hidden;
+  .input{ padding:6px 8px; font-size:11px }
+  .btn{ padding:6px 8px; font-size:11px }
+
+  .tour-wrap{
+    padding:8px max(12px, env(safe-area-inset-right))
+            8px max(12px, env(safe-area-inset-left));
   }
+  .tour-banner{ gap:8px }
+  .tour-pill{ padding:5px 10px; font-size:11px }
+  .tour-stats{ font-size:10px }
+
+  .table-section{
+    padding:8px max(12px, env(safe-area-inset-right))
+            12px max(12px, env(safe-area-inset-left));
+    overflow:visible;
+  }
+  table{ width:100%; min-width:0; border-spacing:0; table-layout:auto }
+  thead{ display:none }
+
+  tbody tr{
+    display:block;
+    margin:10px 0;
+    background:#fff;
+    border:1px solid var(--grid);
+    border-radius:12px;
+    box-shadow:0 1px 0 rgba(0,0,0,.02);
+    overflow:hidden;
+  }
+  tbody tr:nth-child(odd) td,
+  tbody tr:nth-child(even) td{ background:#fff }
+  tbody tr+tr td{ border-top:none }
+
   tbody td{
-    display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
-    padding:8px 10px; border:none; border-bottom:1px solid var(--grid); overflow:visible;
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    justify-content:space-between;
+    padding:8px 10px;
+    border:none;
+    border-bottom:1px solid var(--grid);
+    overflow:visible;
   }
   tbody td:last-child{ border-bottom:none }
+
   tbody td::before{
-    content:attr(data-label); flex:0 0 96px; margin-right:8px; white-space:nowrap;
-    font-weight:900; color:var(--muted); text-transform:uppercase;
-    letter-spacing:.3px; font-size:10px; line-height:1.2;
+    content:attr(data-label);
+    flex:0 0 96px;
+    margin-right:8px;
+    white-space:nowrap;
+    font-weight:900;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.3px;
+    font-size:10px;
+    line-height:1.2;
   }
+
   .cell{ gap:3px; min-height:auto }
+  .cell-top,.cell-sub{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .tour-inline{ gap:4px; row-gap:6px }
+  .tour-btn{ font-size:10px; padding:2px 6px; line-height:1.2 }
+  .badge-key{ font-size:10px; padding:2px 7px }
+  a.phone-chip, a.mail-chip{ font-size:10px; padding:3px 7px; max-width:100%; white-space:normal; line-height:1.25 }
   .mail-chip .txt{ white-space:normal; word-break:break-word }
+  a.addr-chip{ font-size:10px; padding:3px 8px; max-width:100%; white-space:normal }
 }
 </style>
 </head>
@@ -343,6 +456,7 @@ a.addr-chip{
 
       <div class="table-section">
         <table id="resultTable" style="display:none;">
+          <!-- 1920: Prozent-Spalten (kein horizontal scroll) -->
           <colgroup>
             <col style="width:14%">
             <col style="width:36%">
@@ -367,10 +481,10 @@ a.addr-chip{
 </div>
 
 <script>
-const tourkundenData = {};
-const keyIndex = {};
-const beraterIndex = {};
-const beraterCSBIndex = {};
+const tourkundenData   = {  };
+const keyIndex         = {  };
+const beraterIndex     = {  };
+const beraterCSBIndex  = {  };
 
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
@@ -525,7 +639,7 @@ function makeIdChip(label, value){
 
 function makeAddressChip(name, strasse, plz, ort){
   const txt = `${strasse||''}, ${plz||''} ${ort||''}`.replace(/^,\\s*/, '').trim();
-  const url = `https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(`${encodeURIComponent(txt)}`;
+  const url = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(`${name||''}, ${txt}`);
   const a = document.createElement('a');
   a.className='addr-chip';
   a.href=url;
@@ -591,10 +705,10 @@ function rowFor(k){
   const mkPhone = k.market_phone;
   const mkMail  = k.market_email || '';
 
-  const p1 = makePhoneChip('FB', fbPhone, 'chip-fb');         if(p1) col.appendChild(p1);
-  const m1 = makeMailChip('FB Mail', fbMail);                 if(m1) col.appendChild(m1);
-  const p2 = makePhoneChip('Markt', mkPhone,'chip-market');   if(p2) col.appendChild(p2);
-  const m2 = makeMailChip('Mail', mkMail);                    if(m2) col.appendChild(m2);
+  const p1 = makePhoneChip('FB', fbPhone, 'chip-fb');        if(p1) col.appendChild(p1);
+  const m1 = makeMailChip('FB Mail', fbMail);                if(m1) col.appendChild(m1);
+  const p2 = makePhoneChip('Markt', mkPhone,'chip-market');  if(p2) col.appendChild(p2);
+  const m2 = makeMailChip('Mail', mkMail);                   if(m2) col.appendChild(m2);
   if(!col.childNodes.length) col.textContent='-';
   td6.appendChild(col); tr.append(td6);
 
@@ -618,7 +732,10 @@ function renderTable(list){
 function renderTourTop(list, query, isExact){
   const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
   if(!list.length){
-    wrap.style.display='none'; title.textContent=''; extra.textContent=''; return;
+    wrap.style.display='none';
+    title.textContent='';
+    extra.textContent='';
+    return;
   }
 
   if(query.startsWith('Schluessel ')){
@@ -638,6 +755,7 @@ function renderTourTop(list, query, isExact){
   }));
   extra.textContent=Object.entries(dayCount).sort().map(([d,c])=>d+': '+c).join('  •  ');
   wrap.style.display='block';
+
   setResultsMeta(title.textContent);
 }
 function closeTourTop(){
@@ -739,8 +857,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 """
 
 # ===== Streamlit-Wrapper =====
-st.title("Kunden-Suche – V2 (Dispo UI, 1920 Fixed)")
-st.caption("Optimiert für Full-HD (1920px) ohne horizontalen Scrollbalken")
+st.title("Kunden-Suche – V2 (Dispo UI, 1920 ohne horizontal Scroll)")
+st.caption("Ruhiges Dispo-Theme • Statusleiste + Trefferanzeige • Portrait: Cards • Landscape: Tabelle")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
@@ -807,6 +925,7 @@ def build_berater_map(df: pd.DataFrame) -> dict:
     return out
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
+    # A = Fachberater, I = CSB, O = Markt-Tel, X = Markt-Mail
     out = {}
     for _, row in df.iterrows():
         fach = str(row.iloc[0]).strip() if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
@@ -919,10 +1038,10 @@ if excel_file and key_file:
 
             final_html = (
                 HTML_TEMPLATE
-                .replace("const tourkundenData = {};", f"const tourkundenData = {json.dumps(sorted_tours, ensure_ascii=False)};")
-                .replace("const keyIndex = {};", f"const keyIndex = {json.dumps(key_map, ensure_ascii=False)};")
-                .replace("const beraterIndex = {};", f"const beraterIndex = {json.dumps(berater_map, ensure_ascii=False)};")
-                .replace("const beraterCSBIndex = {};", f"const beraterCSBIndex = {json.dumps(berater_csb_map, ensure_ascii=False)};")
+                .replace("const tourkundenData   = {  }", f"const tourkundenData   = {json.dumps(sorted_tours, ensure_ascii=False)}")
+                .replace("const keyIndex         = {  }", f"const keyIndex         = {json.dumps(key_map, ensure_ascii=False)}")
+                .replace("const beraterIndex     = {  }", f"const beraterIndex     = {json.dumps(berater_map, ensure_ascii=False)}")
+                .replace("const beraterCSBIndex  = {  }", f"const beraterCSBIndex  = {json.dumps(berater_csb_map, ensure_ascii=False)}")
                 .replace("__LOGO_DATA_URL__", logo_data_url)
             )
 
