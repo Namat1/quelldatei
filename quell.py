@@ -1,17 +1,3 @@
-Hier ist der angepasste Code.
-
-**Das Problem:** Bei einer Bildschirmbreite von 1920px nimmt der vertikale Scrollbar (der bei Tabellen fast immer da ist) ca. 15–17px Platz weg. Der verfügbare Bereich ist also nur noch ca. 1903px. Wenn Elemente (wie die Table-Header oder Grid-Spalten) auch nur 1 Pixel zu breit berechnet werden oder `max-width: 1920px` erzwingen, entsteht unten der horizontale Scrollbalken.
-
-**Die Lösung im Code:**
-
-1. **`html { overflow-y: scroll; }`**: Stabilisiert den Scrollbalken, damit das Layout nicht "springt".
-2. **`thead th { overflow: hidden; text-overflow: ellipsis; }`**: Verhindert, dass lange Spaltenüberschriften die Tabelle breiter drücken als 100% (häufigste Ursache).
-3. **`.container { max-width: 100%; }`**: Statt hart auf 1920px zu begrenzen, erlauben wir 100% der *verfügbaren* Breite (Viewport minus Scrollbar).
-4. **`.page { width: 100%; overflow-x: hidden; }`**: Stellt sicher, dass nichts über den Rand hinausragt.
-
-Hier ist das vollständige, korrigierte Skript:
-
-```python
 import streamlit as st
 import pandas as pd
 import json
@@ -956,5 +942,3 @@ if excel_file and key_file:
             st.error(f"Fehler: {e}")
 else:
     st.info("Bitte Quelldatei, Schlüsseldatei und Logo hochladen. Optional: Fachberater-Telefonliste & CSB-Zuordnung.")
-
-```
