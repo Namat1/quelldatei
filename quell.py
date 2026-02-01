@@ -492,6 +492,7 @@ const tourkundenData   = {  };
 const keyIndex         = {  };
 const beraterIndex     = {  };
 const beraterCSBIndex  = {  };
+const winterIndex      = {  };
 
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
@@ -606,6 +607,16 @@ function buildData(){
         rec.fb_phone     = rec.fachberater ? pickBeraterPhone(rec.fachberater) : '';
         rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
         rec.market_email = (beraterCSBIndex[csb] && beraterCSBIndex[csb].email) ? beraterCSBIndex[csb].email : '';
+
+        // Winter (Mo-Sa Winter): Tour + Ladefolge an Kunden hängen
+        if (winterIndex[csb]){
+          rec.winter_tour = (winterIndex[csb].tour || '').toString().trim();
+          rec.winter_lf   = (winterIndex[csb].lf   || '').toString().trim();
+        } else {
+          rec.winter_tour = '';
+          rec.winter_lf   = '';
+        }
+
         map.set(csb, rec);
       }
       map.get(csb).touren.push({ tournummer: tourN, liefertag: k.liefertag });
@@ -765,6 +776,26 @@ function renderTourTop(list, query, isExact){
 
   setResultsMeta(title.textContent);
 }
+
+function renderCustomerWinterTop(customer){
+  const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
+  const wt = (customer.winter_tour || '').trim();
+  const wlf = (customer.winter_lf || '').trim();
+
+  if(!wt && !wlf){
+    wrap.style.display='none';
+    title.textContent='';
+    extra.textContent='';
+    return;
+  }
+
+  // gewünschtes Format: "1037 LF1"
+  title.textContent = `${wt}${wlf ? ' ' + wlf : ''}`;
+  extra.textContent = 'Winter (Mo–Sa) — Tour + Ladefolge';
+  wrap.style.display='block';
+  setResultsMeta(title.textContent);
+}
+
 function closeTourTop(){
   $('#tourWrap').style.display='none';
   $('#tourTitle').textContent='';
@@ -791,8 +822,25 @@ function onSmart(){
     const cr=allCustomers.filter(k=>(k.csb_nummer||'')===n);
     const r=dedupByCSB([...tr,...cr]);
     if(tr.length) renderTourTop(tr,n,true);
+
+    // Wenn es ein eindeutiger CSB-Treffer ist -> Winter-Pill zeigen
+    if(cr.length === 1){
+      renderCustomerWinterTop(cr[0]);
+    }
+
     renderTable(r);
     return;
+  }
+
+  // Kundennummer/CSB 4+ Ziffern (falls später mal 5-stellig etc.) -> Winter-Pill, wenn eindeutig
+  if(/^\\d{4,}$/.test(qRaw)){
+    const n=qRaw.replace(/^0+(\\d)/,'$1');
+    const cr=allCustomers.filter(k=>(k.csb_nummer||'')===n);
+    if(cr.length === 1){
+      renderCustomerWinterTop(cr[0]);
+      renderTable(cr);
+      return;
+    }
   }
 
   const q=normDE(qRaw);
@@ -943,6 +991,36 @@ def build_berater_csb_map(df: pd.DataFrame) -> dict:
             out[csb] = {"name": fach, "telefon": tel, "email": mail}
     return out
 
+def build_winter_map(excel_file) -> dict:
+    """
+    Liest Blatt 'Mo-Sa Winter':
+    - Spalte B = Tour
+    - Spalte C = LA.F
+    - Spalte D = KD.NR
+    Ergebnis: { "42097": {"tour":"1037", "lf":"LF1"} , ...}
+    """
+    out = {}
+    try:
+        dfw = pd.read_excel(excel_file, sheet_name="Mo-Sa Winter", header=0)
+    except Exception:
+        return out
+
+    if dfw.shape[1] < 4:
+        return out
+
+    for _, row in dfw.iterrows():
+        tour_raw = row.iloc[1]  # B
+        lf_raw   = row.iloc[2]  # C
+        kd_raw   = row.iloc[3]  # D
+
+        kd = normalize_digits_py(kd_raw)
+        tour = normalize_digits_py(tour_raw)
+        lf = "" if pd.isna(lf_raw) else str(lf_raw).strip()
+
+        if kd and (tour or lf):
+            out[kd] = {"tour": tour, "lf": lf}
+    return out
+
 def to_data_url(file) -> str:
     mime = file.type or ("image/png" if file.name.lower().endswith(".png") else "image/jpeg")
     return f"data:{mime};base64," + base64.b64encode(file.read()).decode("utf-8")
@@ -1000,6 +1078,11 @@ if excel_file and key_file:
                         bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=None)
                     berater_csb_map = build_berater_csb_map(bcf)
 
+            # Winter-Index (Mo-Sa Winter)
+            with st.spinner("Lese Winter-Ladefolgen (Mo-Sa Winter)..."):
+                excel_file.seek(0)
+                winter_map = build_winter_map(excel_file)
+
             tour_dict = {}
 
             def kunden_sammeln(df: pd.DataFrame):
@@ -1029,6 +1112,7 @@ if excel_file and key_file:
             with st.spinner("Verarbeite Kundendatei..."):
                 for blatt in BLATTNAMEN:
                     try:
+                        excel_file.seek(0)
                         df = pd.read_excel(excel_file, sheet_name=blatt)
                         kunden_sammeln(df)
                     except ValueError:
@@ -1049,6 +1133,7 @@ if excel_file and key_file:
                 .replace("const keyIndex         = {  }", f"const keyIndex         = {json.dumps(key_map, ensure_ascii=False)}")
                 .replace("const beraterIndex     = {  }", f"const beraterIndex     = {json.dumps(berater_map, ensure_ascii=False)}")
                 .replace("const beraterCSBIndex  = {  }", f"const beraterCSBIndex  = {json.dumps(berater_csb_map, ensure_ascii=False)}")
+                .replace("const winterIndex      = {  }", f"const winterIndex      = {json.dumps(winter_map, ensure_ascii=False)}")
                 .replace("__LOGO_DATA_URL__", logo_data_url)
             )
 
