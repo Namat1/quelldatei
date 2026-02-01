@@ -163,7 +163,7 @@ body{
   white-space:nowrap;
 }
 
-/* Tour-Statusleiste */
+/* Tour-Statusleiste (bleibt vorhanden, wird aber NICHT mehr genutzt) */
 .tour-wrap{
   display:none;
   padding:10px 12px;
@@ -454,6 +454,7 @@ a.addr-chip{
         <div class="results-meta" id="resultsMeta" style="display:none;"></div>
       </div>
 
+      <!-- bleibt, wird aber nicht genutzt -->
       <div class="tour-wrap" id="tourWrap">
         <div class="tour-banner">
           <span class="tour-pill" id="tourTitle"></span>
@@ -492,7 +493,7 @@ const tourkundenData   = {  };
 const keyIndex         = {  };
 const beraterIndex     = {  };
 const beraterCSBIndex  = {  };
-const winterIndex      = {  };
+const winterIndex      = {  };  // {KDNR: {tour:'...', lf:'LF2'}}
 
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
@@ -608,14 +609,8 @@ function buildData(){
         rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
         rec.market_email = (beraterCSBIndex[csb] && beraterCSBIndex[csb].email) ? beraterCSBIndex[csb].email : '';
 
-        // Winter: Tour + Ladefolge anhängen
-        if (winterIndex[csb]){
-          rec.winter_tour = (winterIndex[csb].tour || '').toString().trim();
-          rec.winter_lf   = (winterIndex[csb].lf   || '').toString().trim();
-        } else {
-          rec.winter_tour = '';
-          rec.winter_lf   = '';
-        }
+        // LF pro Kunde (aus Mo-Sa Winter per KD.NR/CSB)
+        rec.ladefolge = (winterIndex[csb] && winterIndex[csb].lf) ? String(winterIndex[csb].lf).trim() : '';
 
         map.set(csb, rec);
       }
@@ -693,12 +688,17 @@ function rowFor(k){
   c2.append(line2);
   td2.append(c2); tr.append(td2);
 
-  /* Touren */
+  /* Touren (LF bei ALLEN Touren anzeigen, kein Extra-Chip) */
   const td4 = document.createElement('td'); td4.setAttribute('data-label', 'Touren');
   const c4 = el('div','cell'); const tours=el('div','tour-inline');
+
+  const lf = (k.ladefolge || '').toString().trim();
+  const lfText = lf ? (' ' + lf) : '';
+
   (k.touren||[]).forEach(t=>{
-    const tnum=(t.tournummer||'');
-    const b=el('span','tour-btn',tnum+' ('+t.liefertag.substring(0,2)+')');
+    const tnum=(t.tournummer||'').toString().trim();
+    const day=(t.liefertag||'').substring(0,2);
+    const b=el('span','tour-btn', `${tnum} (${day})${lfText}`);
     b.title='Tour '+tnum;
     b.onclick=()=>{
       pushPrevQuery();
@@ -707,6 +707,7 @@ function rowFor(k){
     };
     tours.appendChild(b);
   });
+
   c4.appendChild(tours); td4.appendChild(c4); tr.append(td4);
 
   /* Schlüssel */
@@ -747,56 +748,8 @@ function renderTable(list){
   }
 }
 
-function renderTourTop(list, query, isExact){
-  const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
-  if(!list.length){
-    wrap.style.display='none';
-    title.textContent='';
-    extra.textContent='';
-    return;
-  }
-
-  if(query.startsWith('Schluessel ')){
-    const key=query.replace(/^Schluessel\\s+/, '');
-    title.textContent='Schlüssel '+key+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden');
-  } else {
-    title.textContent=(isExact?('Tour '+query):('Tour-Prefix '+query+'*'))+' — '+list.length+' '+(list.length===1?'Kunde':'Kunden');
-  }
-
-  const dayCount={};
-  list.forEach(k=>(k.touren||[]).forEach(t=>{
-    const tnum=t.tournummer||'';
-    const cond=isExact ? (tnum===query) : tnum.startsWith(query.replace('Schluessel ',''));
-    if(cond || query.startsWith('Schluessel ')){
-      dayCount[t.liefertag]=(dayCount[t.liefertag]||0)+1;
-    }
-  }));
-  extra.textContent=Object.entries(dayCount).sort().map(([d,c])=>d+': '+c).join('  •  ');
-  wrap.style.display='block';
-
-  setResultsMeta(title.textContent);
-}
-
-function renderCustomerWinterTop(customer){
-  const wrap=$('#tourWrap'), title=$('#tourTitle'), extra=$('#tourExtra');
-  const wt = (customer.winter_tour || '').trim();
-  const wlf = (customer.winter_lf || '').trim();
-
-  if(!wt && !wlf){
-    wrap.style.display='none';
-    title.textContent='';
-    extra.textContent='';
-    return;
-  }
-
-  // gewünschtes Format: "1037 LF1"
-  title.textContent = `${wt}${wlf ? ' ' + wlf : ''}`;
-  extra.textContent = 'Winter (Mo–Sa) — Tour + Ladefolge';
-  wrap.style.display='block';
-  setResultsMeta(title.textContent);
-}
-
 function closeTourTop(){
+  // wir nutzen tourWrap nicht mehr, aber sauber halten
   $('#tourWrap').style.display='none';
   $('#tourTitle').textContent='';
   $('#tourExtra').textContent='';
@@ -811,7 +764,6 @@ function onSmart(){
   if(/^\\d{1,3}$/.test(qRaw)){
     const n=qRaw.replace(/^0+(\\d)/,'$1');
     const r=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'').startsWith(n)));
-    renderTourTop(r,n,false);
     renderTable(r);
     return;
   }
@@ -821,26 +773,8 @@ function onSmart(){
     const tr=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'')===n));
     const cr=allCustomers.filter(k=>(k.csb_nummer||'')===n);
     const r=dedupByCSB([...tr,...cr]);
-    if(tr.length) renderTourTop(tr,n,true);
-
-    // Wenn es ein eindeutiger CSB-Treffer ist -> Winter-Pill zeigen
-    if(cr.length === 1){
-      renderCustomerWinterTop(cr[0]);
-    }
-
     renderTable(r);
     return;
-  }
-
-  // Kundennummer/CSB 4+ Ziffern -> Winter-Pill, wenn eindeutig
-  if(/^\\d{4,}$/.test(qRaw)){
-    const n=qRaw.replace(/^0+(\\d)/,'$1');
-    const cr=allCustomers.filter(k=>(k.csb_nummer||'')===n);
-    if(cr.length === 1){
-      renderCustomerWinterTop(cr[0]);
-      renderTable(cr);
-      return;
-    }
   }
 
   const q=normDE(qRaw);
@@ -863,7 +797,6 @@ function onKey(){
     const key=(k.schluessel||'')||(keyIndex[k.csb_nummer]||'');
     if(key===n) r.push(k);
   }
-  if(r.length) renderTourTop(r,'Schluessel '+n,true);
   renderTable(r);
 }
 
@@ -913,7 +846,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Ruhiges Dispo-Theme • Statusleiste + Trefferanzeige • Portrait: Cards • Landscape: Tabelle")
+st.caption("Ruhiges Dispo-Theme • LF wird an ALLEN Tour-Chips angezeigt • kein extra Chip • kein Tour-Pill oben")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
@@ -1005,6 +938,11 @@ def format_lf(v) -> str:
     return s
 
 def build_winter_map(excel_file) -> dict:
+    """
+    Blatt 'Mo-Sa Winter':
+    B=Tour, C=LA.F, D=KD.NR
+    Ergebnis: {KDNR: {tour:'...', lf:'LF2'}}
+    """
     out = {}
     try:
         dfw = pd.read_excel(excel_file, sheet_name="Mo-Sa Winter")
@@ -1012,11 +950,11 @@ def build_winter_map(excel_file) -> dict:
         return out
 
     for _, row in dfw.iterrows():
-        tour = normalize_digits_py(row.iloc[1])  # B: Tour
-        lf   = format_lf(row.iloc[2])           # C: LA.F
-        kd   = normalize_digits_py(row.iloc[3]) # D: KD.NR
+        kd = normalize_digits_py(row.iloc[3])   # D: KD.NR
         if not kd:
             continue
+        tour = normalize_digits_py(row.iloc[1]) # B: Tour (für dich optional)
+        lf = format_lf(row.iloc[2])             # C: LA.F -> LFx
         out[kd] = {"tour": tour, "lf": lf}
     return out
 
@@ -1079,7 +1017,7 @@ if excel_file and key_file:
                         bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=None)
                     berater_csb_map = build_berater_csb_map(bcf)
 
-            with st.spinner("Lese Winter-Ladefolgen (Mo-Sa Winter)..."):
+            with st.spinner("Lese Ladefolgen (Mo-Sa Winter)..."):
                 excel_file.seek(0)
                 winter_map = build_winter_map(excel_file)
 
