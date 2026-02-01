@@ -15,10 +15,6 @@ HTML_TEMPLATE = """
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=Inter+Tight:wght@500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* =========================
-     V2 DISPO THEME (ruhig, klar)
-     + 1728px FIX (90% von 1920) OHNE HORIZONTAL-SCROLL
-     ========================= */
   --bg:#f4f6fa;
   --surface:#ffffff;
   --alt:#f8fafc;
@@ -35,7 +31,6 @@ HTML_TEMPLATE = """
   --accent:#2563eb;
   --accent-2:#1e4fd1;
 
-  /* Chips (diszipliniert) */
   --chip-neutral-bg:#f8fafc;
   --chip-neutral-bd:#cbd5e1;
   --chip-neutral-tx:#334155;
@@ -56,14 +51,10 @@ HTML_TEMPLATE = """
 
   --radius:10px;
   --radius-pill:999px;
-
-  --fs-10:10px; --fs-11:11px; --fs-12:12px;
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
-
-/* HARD STOP: niemals horizontal scrollen */
 html, body{ overflow-x:hidden; }
 
 body{
@@ -77,12 +68,11 @@ body{
   letter-spacing:.05px;
 }
 
-/* Frame (FIX 1728px, zentriert, ohne horizontal-scroll) */
 .page{min-height:100vh; display:flex; justify-content:center; padding:0}
 .container{
-  width:1728px;          /* FIX: 90% von 1920 */
+  width:1728px;
   max-width:1728px;
-  margin:0 auto;         /* zentrieren */
+  margin:0 auto;
 }
 .card{
   background:var(--surface);
@@ -92,7 +82,6 @@ body{
   box-shadow:var(--shadow-soft);
 }
 
-/* Header */
 .header{
   padding:10px 12px;
   background:linear-gradient(180deg,#ffffff 0%, #f5f7ff 100%);
@@ -101,7 +90,6 @@ body{
 }
 .brand-logo{height:46px; width:auto}
 
-/* Searchbar */
 .searchbar{
   padding:10px 12px;
   display:grid;
@@ -122,7 +110,6 @@ body{
   text-transform:uppercase;
   letter-spacing:.32px
 }
-
 .input{
   width:100%;
   padding:7px 10px;
@@ -138,7 +125,6 @@ body{
   box-shadow:0 0 0 3px rgba(37,99,235,.14);
 }
 
-/* Buttons */
 .btn{
   padding:7px 10px;
   border:1px solid var(--grid);
@@ -163,30 +149,9 @@ body{
   white-space:nowrap;
 }
 
-/* Tour-Statusleiste (bleibt vorhanden, wird aber NICHT mehr genutzt) */
-.tour-wrap{
-  display:none;
-  padding:10px 12px;
-  background:#fff7ed;
-  border-bottom:1px solid #fed7aa;
-}
-.tour-banner{display:flex; align-items:center; justify-content:space-between; gap:12px}
-.tour-pill{
-  display:inline-flex; align-items:center; gap:10px;
-  background:#ffedd5; color:#7c2d12;
-  border:1px solid #fdba74;
-  border-radius:999px;
-  padding:7px 12px;
-  font-weight:900;
-  font-size:12px;
-  box-shadow:none;
-}
-.tour-stats{font-weight:800; font-size:11px; color:var(--muted-2)}
-
-/* Tabelle (WICHTIG: kein overflow-x Container) */
 .table-section{
   padding:6px 12px 14px;
-  overflow:visible; /* statt overflow-x:auto -> verhindert horizontal-scrollbar */
+  overflow:visible;
 }
 table{
   width:100%;
@@ -194,11 +159,9 @@ table{
   border-spacing:0;
   table-layout:fixed;
   font-size:12px;
-
-  min-width:0;  /* statt min-width:920px -> MUSS weg */
+  min-width:0;
 }
 
-/* Sticky Header */
 thead th{
   position:sticky; top:0; z-index:2;
   background:linear-gradient(180deg,#f7f9fe,#eef2f8);
@@ -222,25 +185,19 @@ tbody td{
   border-bottom:1px solid var(--grid);
   border-right:1px solid var(--grid);
   background:#fff;
-
-  overflow:hidden; /* Schutz: breite Inhalte dürfen Tabelle nicht sprengen */
+  overflow:hidden;
 }
 tbody td:last-child{border-right:none}
 
-/* Zeilen */
 tbody tr:nth-child(odd) td{background:var(--alt)}
 tbody tr:nth-child(even) td{background:#ffffff}
 tbody tr+tr td{border-top:3px solid var(--row-sep)}
 tbody tr:hover td{background:#eff6ff}
 
-/* Zellen */
 .cell{display:flex; flex-direction:column; gap:4px; min-height:36px; width:100%}
 .cell-top,.cell-sub{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-
-/* Monospace Zahlen */
 .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:650}
 
-/* ID-Chips */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--chip-neutral-bg);
@@ -257,7 +214,6 @@ a.id-chip{
 a.id-chip:hover{filter:brightness(.98)}
 .id-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 
-/* Schlüssel */
 .badge-key{
   display:inline-block;
   background:var(--chip-key-bg);
@@ -271,7 +227,6 @@ a.id-chip:hover{filter:brightness(.98)}
   box-shadow:none;
 }
 
-/* Touren */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-block;
@@ -289,7 +244,6 @@ a.id-chip:hover{filter:brightness(.98)}
 }
 .tour-btn:hover{filter:brightness(.98)}
 
-/* Telefon-/Mail */
 .phone-col{display:flex; flex-direction:column; gap:6px}
 a.phone-chip, a.mail-chip{
   display:inline-flex; align-items:center; gap:6px;
@@ -313,15 +267,8 @@ a.mail-chip{
 }
 a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.98)}
 .chip-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
+.mail-chip .txt{white-space:normal; word-break:break-word; line-height:1.2;}
 
-/* WICHTIG: E-Mails dürfen nicht die Tabelle verbreitern */
-.mail-chip .txt{
-  white-space:normal;
-  word-break:break-word;
-  line-height:1.2;
-}
-
-/* Adresse-Pill */
 a.addr-chip{
   display:inline-flex; align-items:center; gap:8px; max-width:100%;
   background:var(--chip-addr-bg);
@@ -335,99 +282,6 @@ a.addr-chip{
 }
 .addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
 .addr-dot{width:6px; height:6px; background:#ef4444; border-radius:999px; display:inline-block}
-
-/* ========================= */
-/* Portrait full-width cards  */
-/* ========================= */
-@media (orientation: portrait) {
-  body{ font-size:11px; }
-  .container{ max-width:none; width:100% } /* Portrait: wieder responsiv */
-  .card{ border-left:none; border-right:none; border-radius:0; box-shadow:none }
-
-  .header{
-    padding:8px max(12px, env(safe-area-inset-right))
-             8px max(12px, env(safe-area-inset-left));
-  }
-  .brand-logo{ height:38px }
-
-  .searchbar{
-    position:sticky; top:0; z-index:5;
-    grid-template-columns:1fr;
-    gap:6px;
-    padding:8px max(12px, env(safe-area-inset-right))
-            8px max(12px, env(safe-area-inset-left));
-    border-bottom:1px solid var(--grid);
-    background:var(--surface);
-  }
-  .results-meta{ justify-self:start; }
-
-  .label{ font-size:10px }
-  .input{ padding:6px 8px; font-size:11px }
-  .btn{ padding:6px 8px; font-size:11px }
-
-  .tour-wrap{
-    padding:8px max(12px, env(safe-area-inset-right))
-            8px max(12px, env(safe-area-inset-left));
-  }
-  .tour-banner{ gap:8px }
-  .tour-pill{ padding:5px 10px; font-size:11px }
-  .tour-stats{ font-size:10px }
-
-  .table-section{
-    padding:8px max(12px, env(safe-area-inset-right))
-            12px max(12px, env(safe-area-inset-left));
-    overflow:visible;
-  }
-  table{ width:100%; min-width:0; border-spacing:0; table-layout:auto }
-  thead{ display:none }
-
-  tbody tr{
-    display:block;
-    margin:10px 0;
-    background:#fff;
-    border:1px solid var(--grid);
-    border-radius:12px;
-    box-shadow:0 1px 0 rgba(0,0,0,.02);
-    overflow:hidden;
-  }
-  tbody tr:nth-child(odd) td,
-  tbody tr:nth-child(even) td{ background:#fff }
-  tbody tr+tr td{ border-top:none }
-
-  tbody td{
-    display:flex;
-    gap:10px;
-    align-items:flex-start;
-    justify-content:space-between;
-    padding:8px 10px;
-    border:none;
-    border-bottom:1px solid var(--grid);
-    overflow:visible;
-  }
-  tbody td:last-child{ border-bottom:none }
-
-  tbody td::before{
-    content:attr(data-label);
-    flex:0 0 96px;
-    margin-right:8px;
-    white-space:nowrap;
-    font-weight:900;
-    color:var(--muted);
-    text-transform:uppercase;
-    letter-spacing:.3px;
-    font-size:10px;
-    line-height:1.2;
-  }
-
-  .cell{ gap:3px; min-height:auto }
-  .cell-top,.cell-sub{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-  .tour-inline{ gap:4px; row-gap:6px }
-  .tour-btn{ font-size:10px; padding:2px 6px; line-height:1.2 }
-  .badge-key{ font-size:10px; padding:2px 7px }
-  a.phone-chip, a.mail-chip{ font-size:10px; padding:3px 7px; max-width:100%; white-space:normal; line-height:1.25 }
-  .mail-chip .txt{ white-space:normal; word-break:break-word }
-  a.addr-chip{ font-size:10px; padding:3px 8px; max-width:100%; white-space:normal }
-}
 </style>
 </head>
 <body>
@@ -454,17 +308,8 @@ a.addr-chip{
         <div class="results-meta" id="resultsMeta" style="display:none;"></div>
       </div>
 
-      <!-- bleibt, wird aber nicht genutzt -->
-      <div class="tour-wrap" id="tourWrap">
-        <div class="tour-banner">
-          <span class="tour-pill" id="tourTitle"></span>
-          <small class="tour-stats" id="tourExtra"></small>
-        </div>
-      </div>
-
       <div class="table-section">
         <table id="resultTable" style="display:none;">
-          <!-- FIX: Prozent-Spalten (kein horizontal scroll) -->
           <colgroup>
             <col style="width:14%">
             <col style="width:36%">
@@ -493,7 +338,7 @@ const tourkundenData   = {  };
 const keyIndex         = {  };
 const beraterIndex     = {  };
 const beraterCSBIndex  = {  };
-const winterIndex      = {  };  // {KDNR: {tour:'...', lf:'LF2'}}
+const winterIndex      = {  };  // {KDNR: { "1028":"LF1", "3005":"LF3", ... }}
 
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
@@ -595,6 +440,7 @@ function buildData(){
     list.forEach(k=>{
       const csb = normalizeDigits(k.csb_nummer);
       if(!csb) return;
+
       if(!map.has(csb)){
         const rec = {...k};
         rec.csb_nummer   = csb;
@@ -602,6 +448,7 @@ function buildData(){
         rec.postleitzahl = normalizeDigits(rec.postleitzahl);
         rec.touren = [];
         rec.schluessel   = normalizeDigits(rec.schluessel) || (keyIndex[csb]||'');
+
         if (beraterCSBIndex[csb] && beraterCSBIndex[csb].name){
           rec.fachberater = beraterCSBIndex[csb].name;
         }
@@ -609,11 +456,12 @@ function buildData(){
         rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
         rec.market_email = (beraterCSBIndex[csb] && beraterCSBIndex[csb].email) ? beraterCSBIndex[csb].email : '';
 
-        // LF pro Kunde (aus Mo-Sa Winter per KD.NR/CSB)
-        rec.ladefolge = (winterIndex[csb] && winterIndex[csb].lf) ? String(winterIndex[csb].lf).trim() : '';
+        // Wichtig: LF-MAP pro Kunde (Tour -> LF)
+        rec.lf_map = (winterIndex[csb] ? winterIndex[csb] : {});
 
         map.set(csb, rec);
       }
+
       map.get(csb).touren.push({ tournummer: tourN, liefertag: k.liefertag });
     });
   }
@@ -688,17 +536,21 @@ function rowFor(k){
   c2.append(line2);
   td2.append(c2); tr.append(td2);
 
-  /* Touren (LF bei ALLEN Touren anzeigen, kein Extra-Chip) */
+  /* Touren: LF PRO TOUR aus lf_map (kein Extra-Chip, nur Text am Chip) */
   const td4 = document.createElement('td'); td4.setAttribute('data-label', 'Touren');
-  const c4 = el('div','cell'); const tours=el('div','tour-inline');
+  const c4 = el('div','cell');
+  const tours = el('div','tour-inline');
 
-  const lf = (k.ladefolge || '').toString().trim();
-  const lfText = lf ? (' ' + lf) : '';
+  const lfMap = k.lf_map || {};
 
   (k.touren||[]).forEach(t=>{
-    const tnum=(t.tournummer||'').toString().trim();
-    const day=(t.liefertag||'').substring(0,2);
-    const b=el('span','tour-btn', `${tnum} (${day})${lfText}`);
+    const tnum = (t.tournummer||'').toString().trim();
+    const day  = (t.liefertag||'').substring(0,2);
+
+    const lf = (lfMap[tnum] || '').toString().trim();     // z.B. "LF1"
+    const lfText = lf ? (' ' + lf) : '';
+
+    const b = el('span','tour-btn', `${tnum} (${day})${lfText}`);
     b.title='Tour '+tnum;
     b.onclick=()=>{
       pushPrevQuery();
@@ -708,7 +560,9 @@ function rowFor(k){
     tours.appendChild(b);
   });
 
-  c4.appendChild(tours); td4.appendChild(c4); tr.append(td4);
+  c4.appendChild(tours);
+  td4.appendChild(c4);
+  tr.append(td4);
 
   /* Schlüssel */
   const td5 = document.createElement('td'); td5.setAttribute('data-label', 'Schlüssel');
@@ -748,17 +602,8 @@ function renderTable(list){
   }
 }
 
-function closeTourTop(){
-  // wir nutzen tourWrap nicht mehr, aber sauber halten
-  $('#tourWrap').style.display='none';
-  $('#tourTitle').textContent='';
-  $('#tourExtra').textContent='';
-  setResultsMeta('');
-}
-
 function onSmart(){
   const qRaw=$('#smartSearch').value.trim();
-  closeTourTop();
   if(!qRaw){ renderTable([]); return; }
 
   if(/^\\d{1,3}$/.test(qRaw)){
@@ -788,7 +633,6 @@ function onSmart(){
 
 function onKey(){
   const q=$('#keySearch').value.trim();
-  closeTourTop();
   if(!q){ renderTable([]); return; }
 
   const n=q.replace(/[^0-9]/g,'').replace(/^0+(\\d)/,'$1');
@@ -817,7 +661,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   $('#btnReset').addEventListener('click', ()=>{
     $('#smartSearch').value='';
     $('#keySearch').value='';
-    closeTourTop();
     renderTable([]);
     prevQuery=null;
     $('#btnBack').style.display='none';
@@ -825,7 +668,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
 
-  /* Dispo-Flow: ESC reset, ENTER sucht */
   document.addEventListener('keydown', (e)=>{
     if(e.key === 'Escape'){
       $('#btnReset').click();
@@ -846,7 +688,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Ruhiges Dispo-Theme • LF wird an ALLEN Tour-Chips angezeigt • kein extra Chip • kein Tour-Pill oben")
+st.caption("LF wird PRO TOUR aus Blatt 'Mo-Sa Winter' angezeigt (KD.NR + Tour -> LA.F). Keine Extra-Chips/Zeilen.")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
@@ -859,6 +701,7 @@ with c3:
 berater_file = st.file_uploader("OPTIONAL: Fachberater-Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
 berater_csb_file = st.file_uploader("Fachberater–CSB-Zuordnung (A=Fachberater, I=CSB, O=Markt-Tel, X=Markt-Mail)", type=["xlsx"])
 
+
 def normalize_digits_py(v) -> str:
     if pd.isna(v):
         return ""
@@ -869,12 +712,13 @@ def normalize_digits_py(v) -> str:
     s = s.lstrip("0")
     return s if s else "0"
 
+
 def norm_de_py(s: str) -> str:
     if not s:
         return ""
-    x = s.replace("\u200b","").replace("\u200c","").replace("\u200d","").replace("\ufeff","")
-    x = x.replace("\u00A0"," ").replace("–","-").replace("—","-").lower()
-    x = x.replace("ä","ae").replace("ö","oe").replace("ü","ue").replace("ß","ss")
+    x = s.replace("\u200b", "").replace("\u200c", "").replace("\u200d", "").replace("\ufeff", "")
+    x = x.replace("\u00A0", " ").replace("–", "-").replace("—", "-").lower()
+    x = x.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
     x = unicodedata.normalize("NFD", x)
     x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
     x = re.sub(r"\(.*?\)", " ", x)
@@ -883,6 +727,7 @@ def norm_de_py(s: str) -> str:
     x = re.sub(r"[^a-z\s]", " ", x)
     x = " ".join(x.split())
     return x
+
 
 def build_key_map(df: pd.DataFrame) -> dict:
     if df.shape[1] < 6:
@@ -896,6 +741,7 @@ def build_key_map(df: pd.DataFrame) -> dict:
         if csb:
             out[csb] = key
     return out
+
 
 def build_berater_map(df: pd.DataFrame) -> dict:
     out = {}
@@ -912,17 +758,19 @@ def build_berater_map(df: pd.DataFrame) -> dict:
                 out[k] = t
     return out
 
+
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
     # A = Fachberater, I = CSB, O = Markt-Tel, X = Markt-Mail
     out = {}
     for _, row in df.iterrows():
         fach = str(row.iloc[0]).strip() if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
-        csb  = normalize_digits_py(row.iloc[8]) if df.shape[1] > 8 and not pd.isna(row.iloc[8]) else ""
-        tel  = str(row.iloc[14]).strip() if df.shape[1] > 14 and not pd.isna(row.iloc[14]) else ""
+        csb = normalize_digits_py(row.iloc[8]) if df.shape[1] > 8 and not pd.isna(row.iloc[8]) else ""
+        tel = str(row.iloc[14]).strip() if df.shape[1] > 14 and not pd.isna(row.iloc[14]) else ""
         mail = str(row.iloc[23]).strip() if df.shape[1] > 23 and not pd.isna(row.iloc[23]) else ""
         if csb:
             out[csb] = {"name": fach, "telefon": tel, "email": mail}
     return out
+
 
 def format_lf(v) -> str:
     if pd.isna(v):
@@ -937,11 +785,12 @@ def format_lf(v) -> str:
         return s2
     return s
 
+
 def build_winter_map(excel_file) -> dict:
     """
     Blatt 'Mo-Sa Winter':
     B=Tour, C=LA.F, D=KD.NR
-    Ergebnis: {KDNR: {tour:'...', lf:'LF2'}}
+    Ergebnis: {KDNR: { "1028":"LF1", "3005":"LF3", ... }}
     """
     out = {}
     try:
@@ -949,18 +798,24 @@ def build_winter_map(excel_file) -> dict:
     except Exception:
         return out
 
+    # Safety: wenn Spaltennamen vorhanden sind, nutzen wir notfalls die Indizes.
     for _, row in dfw.iterrows():
-        kd = normalize_digits_py(row.iloc[3])   # D: KD.NR
-        if not kd:
+        # Indizes laut Screenshot: B=Tour (1), C=LA.F (2), D=KD.NR (3)
+        kd = normalize_digits_py(row.iloc[3] if len(row) > 3 else "")
+        tour = normalize_digits_py(row.iloc[1] if len(row) > 1 else "")
+        lf = format_lf(row.iloc[2] if len(row) > 2 else "")
+
+        if not kd or not tour or not lf:
             continue
-        tour = normalize_digits_py(row.iloc[1]) # B: Tour (für dich optional)
-        lf = format_lf(row.iloc[2])             # C: LA.F -> LFx
-        out[kd] = {"tour": tour, "lf": lf}
+
+        out.setdefault(kd, {})[tour] = lf  # <<< pro Tour speichern
     return out
+
 
 def to_data_url(file) -> str:
     mime = file.type or ("image/png" if file.name.lower().endswith(".png") else "image/jpeg")
     return f"data:{mime};base64," + base64.b64encode(file.read()).decode("utf-8")
+
 
 if excel_file and key_file:
     if st.button("HTML erzeugen", type="primary"):
@@ -1029,7 +884,7 @@ if excel_file and key_file:
                         if spaltenname not in df.columns:
                             continue
                         tournr_raw = str(row[spaltenname]).strip()
-                        if not tournr_raw or not tournr_raw.replace('.', '', 1).isdigit():
+                        if not tournr_raw or not tournr_raw.replace(".", "", 1).isdigit():
                             continue
 
                         tournr = normalize_digits_py(tournr_raw)
