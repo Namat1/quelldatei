@@ -229,7 +229,8 @@ a.id-chip:hover{filter:brightness(.98)}
 
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
-  display:inline-block;
+  display:inline-flex;
+  align-items:center;
   background:var(--chip-tour-bg);
   border:1px solid var(--chip-tour-bd);
   color:var(--chip-tour-tx);
@@ -243,6 +244,18 @@ a.id-chip:hover{filter:brightness(.98)}
   box-shadow:none;
 }
 .tour-btn:hover{filter:brightness(.98)}
+
+/* LF im Tour-Pill blau absetzen */
+.tour-btn .lf{
+  margin-left:6px;
+  padding:1px 6px;
+  border-radius:999px;
+  background:#eff6ff;     /* hellblau */
+  border:1px solid #60a5fa; /* blau */
+  color:#1d4ed8;          /* kräftig blau */
+  font-weight:1000;
+  letter-spacing:.2px;
+}
 
 .phone-col{display:flex; flex-direction:column; gap:6px}
 a.phone-chip, a.mail-chip{
@@ -456,9 +469,8 @@ function buildData(){
         rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
         rec.market_email = (beraterCSBIndex[csb] && beraterCSBIndex[csb].email) ? beraterCSBIndex[csb].email : '';
 
-        // Wichtig: LF-MAP pro Kunde (Tour -> LF)
+        // LF pro Kunde (Tour -> LF)
         rec.lf_map = (winterIndex[csb] ? winterIndex[csb] : {});
-
         map.set(csb, rec);
       }
 
@@ -536,7 +548,7 @@ function rowFor(k){
   c2.append(line2);
   td2.append(c2); tr.append(td2);
 
-  /* Touren: LF PRO TOUR aus lf_map (kein Extra-Chip, nur Text am Chip) */
+  /* Touren: LF pro Tour als blauer Badge im gleichen Chip */
   const td4 = document.createElement('td'); td4.setAttribute('data-label', 'Touren');
   const c4 = el('div','cell');
   const tours = el('div','tour-inline');
@@ -546,11 +558,19 @@ function rowFor(k){
   (k.touren||[]).forEach(t=>{
     const tnum = (t.tournummer||'').toString().trim();
     const day  = (t.liefertag||'').substring(0,2);
+    const lf   = (lfMap[tnum] || '').toString().trim(); // "LF1"
 
-    const lf = (lfMap[tnum] || '').toString().trim();     // z.B. "LF1"
-    const lfText = lf ? (' ' + lf) : '';
+    const b = document.createElement('span');
+    b.className = 'tour-btn';
+    b.appendChild(document.createTextNode(`${tnum} (${day})`));
 
-    const b = el('span','tour-btn', `${tnum} (${day})${lfText}`);
+    if(lf){
+      const lfSpan = document.createElement('span');
+      lfSpan.className = 'lf';
+      lfSpan.textContent = lf;
+      b.appendChild(lfSpan);
+    }
+
     b.title='Tour '+tnum;
     b.onclick=()=>{
       pushPrevQuery();
@@ -688,7 +708,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("LF wird PRO TOUR aus Blatt 'Mo-Sa Winter' angezeigt (KD.NR + Tour -> LA.F). Keine Extra-Chips/Zeilen.")
+st.caption("LF wird PRO TOUR aus Blatt 'Mo-Sa Winter' angezeigt und im Tour-Chip blau markiert.")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
@@ -798,9 +818,8 @@ def build_winter_map(excel_file) -> dict:
     except Exception:
         return out
 
-    # Safety: wenn Spaltennamen vorhanden sind, nutzen wir notfalls die Indizes.
     for _, row in dfw.iterrows():
-        # Indizes laut Screenshot: B=Tour (1), C=LA.F (2), D=KD.NR (3)
+        # B=Tour (1), C=LA.F (2), D=KD.NR (3)
         kd = normalize_digits_py(row.iloc[3] if len(row) > 3 else "")
         tour = normalize_digits_py(row.iloc[1] if len(row) > 1 else "")
         lf = format_lf(row.iloc[2] if len(row) > 2 else "")
@@ -808,7 +827,7 @@ def build_winter_map(excel_file) -> dict:
         if not kd or not tour or not lf:
             continue
 
-        out.setdefault(kd, {})[tour] = lf  # <<< pro Tour speichern
+        out.setdefault(kd, {})[tour] = lf  # pro Tour speichern
     return out
 
 
