@@ -297,12 +297,12 @@ a.addr-chip{
 .addr-dot{width:6px; height:6px; background:#ef4444; border-radius:999px; display:inline-block}
 
 /* ============================== */
-/* Tour-Übersicht (nur bei Tour)  */
+/* Tour-Übersicht (kompakt)        */
 /* ============================== */
 .tour-summary{
-  margin:10px 12px 0;
+  margin:8px 12px 0;
   border:1px solid var(--grid);
-  background:linear-gradient(180deg,#ffffff 0%, #f7f9fe 100%);
+  background:#ffffff;
   border-radius:12px;
   box-shadow:var(--shadow-soft);
   overflow:hidden;
@@ -312,57 +312,60 @@ a.addr-chip{
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  padding:10px 12px;
+  padding:8px 10px;
   border-bottom:1px solid var(--grid);
+  background:linear-gradient(180deg,#ffffff 0%, #f7f9fe 100%);
 }
 .tour-summary-title{
   font-weight:950;
-  font-size:12px;
+  font-size:11px;         /* kleiner */
   color:#0f172a;
 }
 .tour-summary-meta{
   font-weight:850;
-  font-size:11px;
+  font-size:10px;         /* kleiner */
   color:var(--muted-2);
   white-space:nowrap;
 }
-.tour-summary-tablewrap{ padding:6px 10px 10px; }
+.tour-summary-tablewrap{ padding:4px 8px 8px; } /* kompakter */
+
 .tour-summary-table{
   width:100%;
   border-collapse:separate;
   border-spacing:0;
   table-layout:fixed;
-  font-size:11px;
+  font-size:10px;         /* kleiner */
 }
 .tour-summary-table th{
   text-align:left;
   font-weight:900;
-  font-size:10px;
+  font-size:9px;          /* kleiner */
   color:var(--muted);
   text-transform:uppercase;
-  letter-spacing:.25px;
-  padding:6px 8px;
+  letter-spacing:.22px;
+  padding:4px 6px;        /* kompakter */
   border-bottom:1px solid var(--grid);
   background:#f3f6fb;
 }
 .tour-summary-table td{
-  padding:6px 8px;
+  padding:4px 6px;        /* kompakter */
   border-bottom:1px solid var(--row-sep);
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 .tour-summary-table tr:last-child td{ border-bottom:none; }
+
 .lf-badge{
   display:inline-flex;
   align-items:center;
-  padding:2px 7px;
+  padding:1px 6px;
   border-radius:999px;
   background:#eff6ff;
   border:1px solid #60a5fa;
   color:#1d4ed8;
   font-weight:950;
-  font-size:10px;
+  font-size:9px;          /* kleiner */
 }
 </style>
 </head>
@@ -390,7 +393,7 @@ a.addr-chip{
         <div class="results-meta" id="resultsMeta" style="display:none;"></div>
       </div>
 
-      <!-- Tour-Übersicht: wird nur bei exakter 4-stelliger Tour-Suche angezeigt -->
+      <!-- Tour-Übersicht: nur bei exakter 4-stelliger Tour-Suche -->
       <div class="tour-summary" id="tourSummary" style="display:none;">
         <div class="tour-summary-head">
           <div class="tour-summary-title" id="tourSummaryTitle"></div>
@@ -405,6 +408,7 @@ a.addr-chip{
                 <th>SAP</th>
                 <th>Name</th>
                 <th>Straße</th>
+                <th>Ort</th>
                 <th>LF</th>
               </tr>
             </thead>
@@ -625,6 +629,13 @@ function closeTourSummary(){
   $('#tourSummaryBody').innerHTML='';
 }
 
+/* Sortierung nach LF (numerisch), ohne LF ans Ende */
+function lfSortKey(lf){
+  if(!lf) return 999999;
+  const m = String(lf).match(/(\\d+)/);
+  return m ? parseInt(m[1],10) : 999999;
+}
+
 function renderTourSummary(list, tour){
   const wrap = $('#tourSummary');
   const body = $('#tourSummaryBody');
@@ -638,20 +649,25 @@ function renderTourSummary(list, tour){
   $('#tourSummaryTitle').textContent = `Tour ${tour} – Kundenübersicht`;
   $('#tourSummaryMeta').textContent  = `${list.length} ${list.length===1?'Kunde':'Kunden'}`;
 
+  // 1) nach LF (numerisch) sortieren
+  // 2) bei Gleichstand Name
   const sorted = [...list].sort((a,b)=>{
     const lfa = (a.lf_map && a.lf_map[tour]) ? a.lf_map[tour] : '';
     const lfb = (b.lf_map && b.lf_map[tour]) ? b.lf_map[tour] : '';
-    if(lfa && lfb && lfa !== lfb) return lfa.localeCompare(lfb, 'de');
+    const ka = lfSortKey(lfa);
+    const kb = lfSortKey(lfb);
+    if(ka !== kb) return ka - kb;
     return (a.name||'').localeCompare((b.name||''), 'de');
   });
 
   for(const k of sorted){
     const tr = document.createElement('tr');
 
-    const csb = (k.csb_nummer||'-');
-    const sap = (k.sap_nummer||'-');
+    const csb  = (k.csb_nummer||'-');
+    const sap  = (k.sap_nummer||'-');
     const name = (k.name||'-');
     const str  = (k.strasse||'-');
+    const ort  = (k.ort||'-');
 
     const lf = (k.lf_map && k.lf_map[tour]) ? String(k.lf_map[tour]).trim() : '';
 
@@ -659,18 +675,19 @@ function renderTourSummary(list, tour){
     const td2=document.createElement('td'); td2.textContent=sap;
     const td3=document.createElement('td'); td3.textContent=name;
     const td4=document.createElement('td'); td4.textContent=str;
+    const td5=document.createElement('td'); td5.textContent=ort;
 
-    const td5=document.createElement('td');
+    const td6=document.createElement('td');
     if(lf){
       const s=document.createElement('span');
       s.className='lf-badge';
       s.textContent=lf;
-      td5.appendChild(s);
+      td6.appendChild(s);
     } else {
-      td5.textContent='-';
+      td6.textContent='-';
     }
 
-    tr.append(td1,td2,td3,td4,td5);
+    tr.append(td1,td2,td3,td4,td5,td6);
     body.appendChild(tr);
   }
 
@@ -868,7 +885,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Bei exakter Tour-Suche (4-stellig) erscheint oben eine Mini-Übersicht (CSB/SAP/Name/Straße/LF).")
+st.caption("Bei exakter Tour-Suche (4-stellig) erscheint oben eine kompakte Mini-Übersicht (CSB/SAP/Name/Straße/Ort/LF) – sortiert nach LF.")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
@@ -966,7 +983,7 @@ def format_lf(v) -> str:
     return s
 
 
-def build_winter_map(excel_file) -> dict:
+def build_winter_map(excel_file_obj) -> dict:
     """
     Blatt 'Mo-Sa Winter':
     B=Tour, C=LA.F, D=KD.NR
@@ -974,7 +991,7 @@ def build_winter_map(excel_file) -> dict:
     """
     out = {}
     try:
-        dfw = pd.read_excel(excel_file, sheet_name="Mo-Sa Winter")
+        dfw = pd.read_excel(excel_file_obj, sheet_name="Mo-Sa Winter")
     except Exception:
         return out
 
