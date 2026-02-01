@@ -608,7 +608,7 @@ function buildData(){
         rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
         rec.market_email = (beraterCSBIndex[csb] && beraterCSBIndex[csb].email) ? beraterCSBIndex[csb].email : '';
 
-        // Winter (Mo-Sa Winter): Tour + Ladefolge an Kunden hängen
+        // Winter: Tour + Ladefolge anhängen
         if (winterIndex[csb]){
           rec.winter_tour = (winterIndex[csb].tour || '').toString().trim();
           rec.winter_lf   = (winterIndex[csb].lf   || '').toString().trim();
@@ -832,7 +832,7 @@ function onSmart(){
     return;
   }
 
-  // Kundennummer/CSB 4+ Ziffern (falls später mal 5-stellig etc.) -> Winter-Pill, wenn eindeutig
+  // Kundennummer/CSB 4+ Ziffern -> Winter-Pill, wenn eindeutig
   if(/^\\d{4,}$/.test(qRaw)){
     const n=qRaw.replace(/^0+(\\d)/,'$1');
     const cr=allCustomers.filter(k=>(k.csb_nummer||'')===n);
@@ -991,34 +991,33 @@ def build_berater_csb_map(df: pd.DataFrame) -> dict:
             out[csb] = {"name": fach, "telefon": tel, "email": mail}
     return out
 
+def format_lf(v) -> str:
+    if pd.isna(v):
+        return ""
+    s = str(v).strip().replace(".0", "")
+    if not s:
+        return ""
+    if s.isdigit():
+        return f"LF{int(s)}"
+    s2 = s.replace(" ", "").upper()
+    if s2.startswith("LF"):
+        return s2
+    return s
+
 def build_winter_map(excel_file) -> dict:
-    """
-    Liest Blatt 'Mo-Sa Winter':
-    - Spalte B = Tour
-    - Spalte C = LA.F
-    - Spalte D = KD.NR
-    Ergebnis: { "42097": {"tour":"1037", "lf":"LF1"} , ...}
-    """
     out = {}
     try:
-        dfw = pd.read_excel(excel_file, sheet_name="Mo-Sa Winter", header=0)
+        dfw = pd.read_excel(excel_file, sheet_name="Mo-Sa Winter")
     except Exception:
         return out
 
-    if dfw.shape[1] < 4:
-        return out
-
     for _, row in dfw.iterrows():
-        tour_raw = row.iloc[1]  # B
-        lf_raw   = row.iloc[2]  # C
-        kd_raw   = row.iloc[3]  # D
-
-        kd = normalize_digits_py(kd_raw)
-        tour = normalize_digits_py(tour_raw)
-        lf = "" if pd.isna(lf_raw) else str(lf_raw).strip()
-
-        if kd and (tour or lf):
-            out[kd] = {"tour": tour, "lf": lf}
+        tour = normalize_digits_py(row.iloc[1])  # B: Tour
+        lf   = format_lf(row.iloc[2])           # C: LA.F
+        kd   = normalize_digits_py(row.iloc[3]) # D: KD.NR
+        if not kd:
+            continue
+        out[kd] = {"tour": tour, "lf": lf}
     return out
 
 def to_data_url(file) -> str:
@@ -1054,6 +1053,7 @@ if excel_file and key_file:
 
         try:
             with st.spinner("Lese Schlüsseldatei..."):
+                key_file.seek(0)
                 key_df = pd.read_excel(key_file, sheet_name=0, header=0)
                 if key_df.shape[1] < 2:
                     key_file.seek(0)
@@ -1071,6 +1071,7 @@ if excel_file and key_file:
             berater_csb_map = {}
             if berater_csb_file is not None:
                 with st.spinner("Lese Fachberater–CSB-Zuordnung..."):
+                    berater_csb_file.seek(0)
                     try:
                         bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=0)
                     except Exception:
@@ -1078,7 +1079,6 @@ if excel_file and key_file:
                         bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=None)
                     berater_csb_map = build_berater_csb_map(bcf)
 
-            # Winter-Index (Mo-Sa Winter)
             with st.spinner("Lese Winter-Ladefolgen (Mo-Sa Winter)..."):
                 excel_file.seek(0)
                 winter_map = build_winter_map(excel_file)
