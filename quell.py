@@ -244,8 +244,6 @@ a.id-chip:hover{filter:brightness(.98)}
   box-shadow:none;
 }
 .tour-btn:hover{filter:brightness(.98)}
-
-/* LF im Tour-Pill blau absetzen */
 .tour-btn .lf{
   margin-left:6px;
   padding:1px 6px;
@@ -275,9 +273,7 @@ a.phone-chip, a.mail-chip{
 }
 a.phone-chip.chip-fb{background:#eef6ff; border-color:#bcd3ff; color:#123a7a}
 a.phone-chip.chip-market{background:#f3efff; border-color:#d2c6ff; color:#2b1973}
-a.mail-chip{
-  background:#ecfdf5; border-color:#b7f7d6; color:#14532d; max-width:100%;
-}
+a.mail-chip{ background:#ecfdf5; border-color:#b7f7d6; color:#14532d; max-width:100%; }
 a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.98)}
 .chip-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
 .mail-chip .txt{white-space:normal; word-break:break-word; line-height:1.2;}
@@ -297,14 +293,15 @@ a.addr-chip{
 .addr-dot{width:6px; height:6px; background:#ef4444; border-radius:999px; display:inline-block}
 
 /* ============================== */
-/* Tour-Übersicht (kompakt)        */
+/* Tour-Übersicht (NOCH kleiner)   */
+/* + klickbare Zeilen              */
 /* ============================== */
 .tour-summary{
-  margin:8px 12px 0;
+  margin:6px 12px 0;
   border:1px solid var(--grid);
   background:#ffffff;
-  border-radius:12px;
-  box-shadow:var(--shadow-soft);
+  border-radius:10px;
+  box-shadow:0 1px 0 rgba(15,23,42,.03), 0 6px 16px rgba(15,23,42,.06);
   overflow:hidden;
 }
 .tour-summary-head{
@@ -312,43 +309,43 @@ a.addr-chip{
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  padding:8px 10px;
+  padding:6px 8px;
   border-bottom:1px solid var(--grid);
   background:linear-gradient(180deg,#ffffff 0%, #f7f9fe 100%);
 }
 .tour-summary-title{
   font-weight:950;
-  font-size:11px;         /* kleiner */
+  font-size:10px;
   color:#0f172a;
 }
 .tour-summary-meta{
   font-weight:850;
-  font-size:10px;         /* kleiner */
+  font-size:9px;
   color:var(--muted-2);
   white-space:nowrap;
 }
-.tour-summary-tablewrap{ padding:4px 8px 8px; } /* kompakter */
+.tour-summary-tablewrap{ padding:2px 6px 6px; }
 
 .tour-summary-table{
   width:100%;
   border-collapse:separate;
   border-spacing:0;
   table-layout:fixed;
-  font-size:10px;         /* kleiner */
+  font-size:9px;
 }
 .tour-summary-table th{
   text-align:left;
   font-weight:900;
-  font-size:9px;          /* kleiner */
+  font-size:8px;
   color:var(--muted);
   text-transform:uppercase;
   letter-spacing:.22px;
-  padding:4px 6px;        /* kompakter */
+  padding:3px 4px;
   border-bottom:1px solid var(--grid);
   background:#f3f6fb;
 }
 .tour-summary-table td{
-  padding:4px 6px;        /* kompakter */
+  padding:3px 4px;
   border-bottom:1px solid var(--row-sep);
   white-space:nowrap;
   overflow:hidden;
@@ -356,16 +353,25 @@ a.addr-chip{
 }
 .tour-summary-table tr:last-child td{ border-bottom:none; }
 
+/* klickbar */
+.tour-row{
+  cursor:pointer;
+}
+.tour-row:hover td{
+  background:#eff6ff;
+}
+
+/* kleine LF badge */
 .lf-badge{
   display:inline-flex;
   align-items:center;
-  padding:1px 6px;
+  padding:1px 5px;
   border-radius:999px;
   background:#eff6ff;
   border:1px solid #60a5fa;
   color:#1d4ed8;
   font-weight:950;
-  font-size:9px;          /* kleiner */
+  font-size:8px;
 }
 </style>
 </head>
@@ -393,7 +399,7 @@ a.addr-chip{
         <div class="results-meta" id="resultsMeta" style="display:none;"></div>
       </div>
 
-      <!-- Tour-Übersicht: nur bei exakter 4-stelliger Tour-Suche -->
+      <!-- Tour-Übersicht -->
       <div class="tour-summary" id="tourSummary" style="display:none;">
         <div class="tour-summary-head">
           <div class="tour-summary-title" id="tourSummaryTitle"></div>
@@ -447,7 +453,7 @@ const tourkundenData   = {  };
 const keyIndex         = {  };
 const beraterIndex     = {  };
 const beraterCSBIndex  = {  };
-const winterIndex      = {  };  // {KDNR: { "1028":"LF1", "3005":"LF3", ... }}
+const winterIndex      = {  };
 
 const $ = s => document.querySelector(s);
 const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; if(txt!==undefined) n.textContent=txt; return n;};
@@ -565,7 +571,6 @@ function buildData(){
         rec.market_phone = (beraterCSBIndex[csb] && beraterCSBIndex[csb].telefon) ? beraterCSBIndex[csb].telefon : '';
         rec.market_email = (beraterCSBIndex[csb] && beraterCSBIndex[csb].email) ? beraterCSBIndex[csb].email : '';
 
-        // LF pro Kunde (Tour -> LF)
         rec.lf_map = (winterIndex[csb] ? winterIndex[csb] : {});
         map.set(csb, rec);
       }
@@ -628,14 +633,13 @@ function closeTourSummary(){
   $('#tourSummaryMeta').textContent='';
   $('#tourSummaryBody').innerHTML='';
 }
-
-/* Sortierung nach LF (numerisch), ohne LF ans Ende */
 function lfSortKey(lf){
   if(!lf) return 999999;
   const m = String(lf).match(/(\\d+)/);
   return m ? parseInt(m[1],10) : 999999;
 }
 
+/* klick: Zeile -> Kunde (CSB) suchen */
 function renderTourSummary(list, tour){
   const wrap = $('#tourSummary');
   const body = $('#tourSummaryBody');
@@ -646,11 +650,9 @@ function renderTourSummary(list, tour){
     return;
   }
 
-  $('#tourSummaryTitle').textContent = `Tour ${tour} – Kundenübersicht`;
-  $('#tourSummaryMeta').textContent  = `${list.length} ${list.length===1?'Kunde':'Kunden'}`;
+  $('#tourSummaryTitle').textContent = `Tour ${tour} – Übersicht`;
+  $('#tourSummaryMeta').textContent  = `${list.length} ${list.length===1?'Kunde':'Kunden'} • Klick = CSB suchen`;
 
-  // 1) nach LF (numerisch) sortieren
-  // 2) bei Gleichstand Name
   const sorted = [...list].sort((a,b)=>{
     const lfa = (a.lf_map && a.lf_map[tour]) ? a.lf_map[tour] : '';
     const lfb = (b.lf_map && b.lf_map[tour]) ? b.lf_map[tour] : '';
@@ -662,14 +664,21 @@ function renderTourSummary(list, tour){
 
   for(const k of sorted){
     const tr = document.createElement('tr');
+    tr.className = 'tour-row';
+    tr.title = 'Klicken: CSB '+(k.csb_nummer||'')+' suchen';
+    tr.addEventListener('click', ()=>{
+      pushPrevQuery();
+      $('#smartSearch').value = (k.csb_nummer||'').toString();
+      onSmart();
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
 
     const csb  = (k.csb_nummer||'-');
     const sap  = (k.sap_nummer||'-');
     const name = (k.name||'-');
     const str  = (k.strasse||'-');
     const ort  = (k.ort||'-');
-
-    const lf = (k.lf_map && k.lf_map[tour]) ? String(k.lf_map[tour]).trim() : '';
+    const lf   = (k.lf_map && k.lf_map[tour]) ? String(k.lf_map[tour]).trim() : '';
 
     const td1=document.createElement('td'); td1.textContent=csb;
     const td2=document.createElement('td'); td2.textContent=sap;
@@ -700,14 +709,12 @@ function rowFor(k){
   const sap = k.sap_nummer||'-';
   const plz = k.postleitzahl||'-';
 
-  /* CSB / SAP */
   const td1 = document.createElement('td'); td1.setAttribute('data-label', 'CSB / SAP');
   const c1 = el('div','cell');
   const l1 = el('div','cell-top'); l1.appendChild(makeIdChip('CSB', csb));
   const l2 = el('div','cell-sub'); l2.appendChild(makeIdChip('SAP', sap));
   c1.append(l1,l2); td1.append(c1); tr.append(td1);
 
-  /* Name / Adresse */
   const td2 = document.createElement('td'); td2.setAttribute('data-label', 'Name / Adresse');
   const c2 = el('div','cell');
   c2.append(el('div','cell-top', k.name||'-'));
@@ -716,7 +723,6 @@ function rowFor(k){
   c2.append(line2);
   td2.append(c2); tr.append(td2);
 
-  /* Touren: LF pro Tour als blauer Badge im gleichen Chip */
   const td4 = document.createElement('td'); td4.setAttribute('data-label', 'Touren');
   const c4 = el('div','cell');
   const tours = el('div','tour-inline');
@@ -726,7 +732,7 @@ function rowFor(k){
   (k.touren||[]).forEach(t=>{
     const tnum = (t.tournummer||'').toString().trim();
     const day  = (t.liefertag||'').substring(0,2);
-    const lf   = (lfMap[tnum] || '').toString().trim(); // "LF1"
+    const lf   = (lfMap[tnum] || '').toString().trim();
 
     const b = document.createElement('span');
     b.className = 'tour-btn';
@@ -744,6 +750,7 @@ function rowFor(k){
       pushPrevQuery();
       $('#smartSearch').value=tnum;
       onSmart();
+      window.scrollTo({top:0, behavior:'smooth'});
     };
     tours.appendChild(b);
   });
@@ -752,13 +759,11 @@ function rowFor(k){
   td4.appendChild(c4);
   tr.append(td4);
 
-  /* Schlüssel */
   const td5 = document.createElement('td'); td5.setAttribute('data-label', 'Schlüssel');
   const key=(k.schluessel||'')||(keyIndex[csb]||'');
   td5.appendChild(key ? el('span','badge-key',key) : el('span','', '-'));
   tr.append(td5);
 
-  /* Fachberater / Markt */
   const td6 = document.createElement('td'); td6.setAttribute('data-label', 'Fachberater / Markt');
   const col=el('div','phone-col');
   const fbPhone = k.fb_phone;
@@ -885,7 +890,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Bei exakter Tour-Suche (4-stellig) erscheint oben eine kompakte Mini-Übersicht (CSB/SAP/Name/Straße/Ort/LF) – sortiert nach LF.")
+st.caption("Tour-Übersicht ist jetzt noch kleiner + klickbar: Klick auf eine Zeile sucht direkt den CSB.")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
@@ -957,7 +962,6 @@ def build_berater_map(df: pd.DataFrame) -> dict:
 
 
 def build_berater_csb_map(df: pd.DataFrame) -> dict:
-    # A = Fachberater, I = CSB, O = Markt-Tel, X = Markt-Mail
     out = {}
     for _, row in df.iterrows():
         fach = str(row.iloc[0]).strip() if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
@@ -984,11 +988,6 @@ def format_lf(v) -> str:
 
 
 def build_winter_map(excel_file_obj) -> dict:
-    """
-    Blatt 'Mo-Sa Winter':
-    B=Tour, C=LA.F, D=KD.NR
-    Ergebnis: {KDNR: { "1028":"LF1", "3005":"LF3", ... }}
-    """
     out = {}
     try:
         dfw = pd.read_excel(excel_file_obj, sheet_name="Mo-Sa Winter")
