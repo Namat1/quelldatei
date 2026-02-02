@@ -334,6 +334,13 @@ a.addr-chip{
 }
 .print-btn:hover{ background:#e6f0ff; }
 
+/* ✅ Copy Feedback */
+.print-btn.ok{
+  border-color:#86efac;
+  background:#ecfdf5;
+  color:#14532d;
+}
+
 .tour-summary-tablewrap{ padding:2px 6px 6px; }
 .tour-summary-table{
   width:100%;
@@ -467,16 +474,6 @@ a.addr-chip{
   .tour-summary-table td:nth-child(2){
     display:none !important; /* SAP */
   }
-  /* ✅ "LF" im Druck in "Ladefolge" umbenennen */
-  .tour-summary-table th:last-child{
-    font-weight:900 !important;
-  }
-  .tour-summary-table th:last-child::after{
-    content:"";
-  }
-  .tour-summary-table th:last-child{
-    /* überschreibt den sichtbaren Text via JS (siehe unten) – CSS kann Text nicht zuverlässig ersetzen */
-  }
 }
 </style>
 </head>
@@ -512,6 +509,7 @@ a.addr-chip{
             <div class="tour-summary-meta" id="tourSummaryMeta"></div>
           </div>
           <div class="tour-summary-actions">
+            <button class="print-btn" id="btnCopyTour" title="Tour inkl. Kunden in Zwischenablage kopieren">Kopieren</button>
             <button class="print-btn" id="btnPrintTour" title="Tour-Übersicht drucken (A4)">Drucken</button>
           </div>
         </div>
@@ -570,6 +568,8 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 
 let allCustomers = [];
 let prevQuery = null;
+let currentTourNumber = null;
+
 const DIAL_SCHEME = 'callto';
 
 function setResultsMeta(text){
@@ -742,6 +742,7 @@ function closeTourSummary(){
   $('#tourSummaryTitle').textContent='';
   $('#tourSummaryMeta').textContent='';
   $('#tourSummaryBody').innerHTML='';
+  currentTourNumber = null;
 }
 
 function lfSortKey(lf){
@@ -760,6 +761,8 @@ function renderTourSummary(list, tour){
     closeTourSummary();
     return;
   }
+
+  currentTourNumber = String(tour).trim();
 
   // Wochentag(e) für diese Tour
   const daySet = new Set();
@@ -825,6 +828,90 @@ function renderTourSummary(list, tour){
   }
 
   wrap.style.display='block';
+}
+
+/* ===================== */
+/* COPY: Tour in Clipboard */
+/* ===================== */
+function escapeTSV(s){
+  return String(s ?? '').replace(/\\t/g,' ').replace(/\\r?\\n/g,' ').trim();
+}
+
+function buildTourClipboardText(){
+  if(!currentTourNumber) return '';
+
+  const title = ($('#tourSummaryTitle').textContent || '').trim(); // "1078 – Montag/Dienstag"
+  const rows  = Array.from(document.querySelectorAll('#tourSummaryBody tr'));
+
+  // TSV (perfekt für Excel/Teams/Outlook)
+  let out = '';
+  out += `Tour\\t${title}\\n`;
+  out += `CSB\\tName\\tStraße\\tOrt\\tLadefolge\\n`;
+
+  for(const tr of rows){
+    const tds = tr.querySelectorAll('td');
+    if(!tds || tds.length < 6) continue;
+
+    const csb  = escapeTSV(tds[0].textContent);
+    const name = escapeTSV(tds[2].textContent);
+    const str  = escapeTSV(tds[3].textContent);
+    const ort  = escapeTSV(tds[4].textContent);
+    const lf   = escapeTSV(tds[5].textContent);
+
+    out += `${csb}\\t${name}\\t${str}\\t${ort}\\t${lf}\\n`;
+  }
+
+  return out.trim();
+}
+
+async function copyTextToClipboard(text){
+  if(!text) return false;
+
+  // Modern API (Secure Context)
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  }catch(e){}
+
+  // Fallback
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly','');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){
+    return false;
+  }
+}
+
+async function onCopyTour(){
+  if($('#tourSummary').style.display==='none') return;
+
+  const txt = buildTourClipboardText();
+  const btn = $('#btnCopyTour');
+  const oldText = btn.textContent;
+
+  const ok = await copyTextToClipboard(txt);
+
+  if(ok){
+    btn.textContent = 'Kopiert ✓';
+    btn.classList.add('ok');
+  }else{
+    btn.textContent = 'Kopieren fehlgeschlagen';
+  }
+
+  setTimeout(()=>{
+    btn.textContent = oldText;
+    btn.classList.remove('ok');
+  }, 1200);
 }
 
 function rowFor(k){
@@ -981,8 +1068,6 @@ function debounce(fn,d=140){
 function setPrintHeaders(){
   const th = document.getElementById('thLF');
   if(!th) return;
-  // Im Screen bleibt "LF", im Print ändern wir dynamisch kurz vorher
-  // (CSS kann den Text nicht zuverlässig ersetzen)
   const screenText = 'LF';
   const printText  = 'Ladefolge';
 
@@ -1011,6 +1096,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
 
+  $('#btnCopyTour').addEventListener('click', onCopyTour);
+
   $('#btnPrintTour').addEventListener('click', ()=>{
     if($('#tourSummary').style.display==='none'){ return; }
     window.print();
@@ -1036,7 +1123,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • weiterhin plain text + groß.")
+st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Copy-Button kopiert Tour+Kunden (TSV) in Zwischenablage.")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
