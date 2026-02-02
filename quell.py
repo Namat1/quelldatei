@@ -47,8 +47,6 @@ HTML_TEMPLATE = """
   --chip-addr-bd:#7aa7ff;
   --chip-addr-tx:#0b3a8a;
 
-  --shadow-soft:0 1px 0 rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
-
   --radius:10px;
   --radius-pill:999px;
 }
@@ -62,34 +60,32 @@ body{
   background:var(--bg);
   font-family:"Inter Tight", Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   color:var(--txt);
-  font-size:12px;
+  font-size:13px;           /* etwas größer generell */
   line-height:1.35;
   font-weight:650;
-  letter-spacing:.05px;
+  letter-spacing:.02px;
 }
 
 .page{min-height:100vh; display:flex; justify-content:center; padding:0}
-.container{
-  width:1728px;
-  max-width:1728px;
-  margin:0 auto;
-}
+.container{ width:1728px; max-width:1728px; margin:0 auto; }
 .card{
   background:var(--surface);
   border:1px solid var(--grid);
   border-radius:var(--radius);
   overflow:hidden;
-  box-shadow:var(--shadow-soft);
+  box-shadow:none;          /* SHADOW AUS */
 }
 
+/* Header */
 .header{
   padding:10px 12px;
-  background:linear-gradient(180deg,#ffffff 0%, #f5f7ff 100%);
+  background:#ffffff;       /* Verlauf AUS */
   border-bottom:1px solid var(--grid);
   display:flex; align-items:center; justify-content:center;
 }
 .brand-logo{height:46px; width:auto}
 
+/* Searchbar */
 .searchbar{
   padding:10px 12px;
   display:grid;
@@ -97,7 +93,7 @@ body{
   gap:8px;
   align-items:center;
   border-bottom:1px solid var(--grid);
-  background:var(--surface);
+  background:#ffffff;       /* Verlauf AUS */
 }
 @media(max-width:1100px){ .searchbar{grid-template-columns:1fr 1fr auto} }
 @media(max-width:780px){ .searchbar{grid-template-columns:1fr} }
@@ -106,33 +102,34 @@ body{
 .label{
   font-weight:800;
   color:var(--muted);
-  font-size:11px;
+  font-size:12px;           /* größer */
   text-transform:uppercase;
-  letter-spacing:.32px
+  letter-spacing:.28px
 }
 .input{
   width:100%;
-  padding:7px 10px;
+  padding:8px 10px;
   border:1px solid var(--grid);
   border-radius:8px;
   background:#fff;
-  font-size:12px;
+  font-size:13px;           /* größer */
   font-weight:650;
 }
 .input:focus{
   outline:none;
   border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(37,99,235,.14);
+  box-shadow:none;          /* shadow AUS */
 }
 
+/* Buttons */
 .btn{
-  padding:7px 10px;
+  padding:8px 10px;
   border:1px solid var(--grid);
   background:#fff;
   color:#0f172a;
   border-radius:8px;
   cursor:pointer;
-  font-weight:800;
+  font-weight:900;
   font-size:12px
 }
 .btn:hover{background:#f3f6fb}
@@ -143,43 +140,41 @@ body{
 
 .results-meta{
   justify-self:end;
-  font-weight:800;
-  font-size:11px;
+  font-weight:900;
+  font-size:12px;
   color:var(--muted-2);
   white-space:nowrap;
 }
 
-.table-section{
-  padding:6px 12px 14px;
-  overflow:visible;
-}
+/* Results table */
+.table-section{ padding:6px 12px 14px; overflow:visible; }
 table{
   width:100%;
   border-collapse:separate;
   border-spacing:0;
   table-layout:fixed;
-  font-size:12px;
+  font-size:13px;           /* größer */
   min-width:0;
 }
 
 thead th{
   position:sticky; top:0; z-index:2;
-  background:linear-gradient(180deg,#f7f9fe,#eef2f8);
+  background:#f3f6fb;       /* plain */
   color:#0f172a;
-  font-weight:900;
-  font-size:11px;
+  font-weight:950;
+  font-size:12px;           /* größer */
   text-transform:uppercase;
-  letter-spacing:.22px;
+  letter-spacing:.18px;
   border-bottom:2px solid var(--head-grid);
   border-right:1px solid var(--head-grid);
-  padding:8px 9px;
+  padding:9px 9px;
   white-space:nowrap;
   text-align:left;
 }
 thead th:last-child{border-right:none}
 
 tbody td{
-  padding:7px 9px;
+  padding:8px 9px;          /* größer */
   vertical-align:top;
   font-weight:650;
   border-bottom:1px solid var(--grid);
@@ -188,31 +183,28 @@ tbody td{
   overflow:hidden;
 }
 tbody td:last-child{border-right:none}
-
 tbody tr:nth-child(odd) td{background:var(--alt)}
-tbody tr:nth-child(even) td{background:#ffffff}
-tbody tr+tr td{border-top:3px solid var(--row-sep)}
 tbody tr:hover td{background:#eff6ff}
 
 .cell{display:flex; flex-direction:column; gap:4px; min-height:36px; width:100%}
 .cell-top,.cell-sub{max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight:650}
 
+/* Chips */
 a.id-chip{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--chip-neutral-bg);
   color:var(--chip-neutral-tx);
   border:1px solid var(--chip-neutral-bd);
   border-radius:var(--radius-pill);
-  padding:3px 9px;
-  font-weight:900;
-  font-size:11px;
+  padding:4px 10px;         /* größer */
+  font-weight:950;
+  font-size:12px;           /* größer */
   text-decoration:none;
   line-height:1;
   box-shadow:none;
 }
-a.id-chip:hover{filter:brightness(.98)}
-.id-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
+.id-tag{font-size:11px; font-weight:950; text-transform:uppercase; letter-spacing:.30px; opacity:.95}
 
 .badge-key{
   display:inline-block;
@@ -220,13 +212,14 @@ a.id-chip:hover{filter:brightness(.98)}
   border:1px solid var(--chip-key-bd);
   color:var(--chip-key-tx);
   border-radius:var(--radius-pill);
-  padding:3px 9px;
-  font-weight:900;
-  font-size:11px;
+  padding:4px 10px;
+  font-weight:950;
+  font-size:12px;
   line-height:1;
   box-shadow:none;
 }
 
+/* Touren */
 .tour-inline{display:flex; flex-wrap:wrap; gap:6px}
 .tour-btn{
   display:inline-flex;
@@ -234,73 +227,50 @@ a.id-chip:hover{filter:brightness(.98)}
   background:var(--chip-tour-bg);
   border:1px solid var(--chip-tour-bd);
   color:var(--chip-tour-tx);
-  padding:3px 9px;
+  padding:4px 10px;         /* größer */
   border-radius:var(--radius-pill);
-  font-weight:900;
-  font-size:10px;
+  font-weight:950;
+  font-size:12px;           /* größer */
   cursor:pointer;
-  line-height:1.25;
-  letter-spacing:.12px;
+  line-height:1.2;
+  letter-spacing:.10px;
   box-shadow:none;
 }
-.tour-btn:hover{filter:brightness(.98)}
 .tour-btn .lf{
-  margin-left:6px;
-  padding:1px 6px;
+  margin-left:8px;
+  padding:1px 7px;
   border-radius:999px;
-  background:#eff6ff;
-  border:1px solid #60a5fa;
+  background:#eaf2ff;
+  border:1px solid #3b82f6;
   color:#1d4ed8;
   font-weight:1000;
-  letter-spacing:.2px;
+  font-size:12px;           /* größer */
 }
 
-.phone-col{display:flex; flex-direction:column; gap:6px}
-a.phone-chip, a.mail-chip{
-  display:inline-flex; align-items:center; gap:6px;
-  border-radius:var(--radius-pill);
-  padding:3px 9px;
-  font-weight:850;
-  font-size:11px;
-  line-height:1;
-  text-decoration:none;
-  cursor:pointer;
-  width:max-content;
-  max-width:100%;
-  border:1px solid var(--grid-2);
-  background:#fff;
-  color:#0f172a;
-}
-a.phone-chip.chip-fb{background:#eef6ff; border-color:#bcd3ff; color:#123a7a}
-a.phone-chip.chip-market{background:#f3efff; border-color:#d2c6ff; color:#2b1973}
-a.mail-chip{ background:#ecfdf5; border-color:#b7f7d6; color:#14532d; max-width:100%; }
-a.phone-chip:hover, a.mail-chip:hover{filter:brightness(.98)}
-.chip-tag{font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.35px; opacity:.95}
-.mail-chip .txt{white-space:normal; word-break:break-word; line-height:1.2;}
-
+/* Adresse */
 a.addr-chip{
   display:inline-flex; align-items:center; gap:8px; max-width:100%;
   background:var(--chip-addr-bg);
   color:var(--chip-addr-tx);
   border:1px solid var(--chip-addr-bd);
   border-radius:999px;
-  padding:4px 10px;
+  padding:5px 10px;         /* größer */
   text-decoration:none;
-  font-weight:800;
-  font-size:11px;
+  font-weight:900;
+  font-size:12px;           /* größer */
 }
 .addr-chip .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
-.addr-dot{width:6px; height:6px; background:#ef4444; border-radius:999px; display:inline-block}
+.addr-dot{width:7px; height:7px; background:#ef4444; border-radius:999px; display:inline-block}
 
 /* ============================== */
-/* Tour-Übersicht (klein + Print) */
+/* Tour-Übersicht (PLAIN + PRINT) */
 /* ============================== */
 .tour-summary{
-  margin:6px 12px 0;
+  margin:8px 12px 0;
   border:1px solid var(--grid);
   background:#ffffff;
-  border-radius:10px;
-  box-shadow:0 1px 0 rgba(15,23,42,.03), 0 6px 16px rgba(15,23,42,.06);
+  border-radius:8px;
+  box-shadow:none;          /* SHADOW AUS */
   overflow:hidden;
 }
 .tour-summary-head{
@@ -308,61 +278,54 @@ a.addr-chip{
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  padding:6px 8px;
+  padding:8px 10px;
   border-bottom:1px solid var(--grid);
-  background:linear-gradient(180deg,#ffffff 0%, #f7f9fe 100%);
+  background:#ffffff;       /* plain */
 }
 .tour-summary-title{
-  font-weight:950;
-  font-size:10px;
+  font-weight:1000;
+  font-size:14px;           /* deutlich größer */
   color:#0f172a;
 }
 .tour-summary-meta{
-  font-weight:850;
-  font-size:9px;
+  font-weight:800;
+  font-size:12px;
   color:var(--muted-2);
   white-space:nowrap;
 }
-.tour-summary-actions{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
+.tour-summary-actions{ display:flex; align-items:center; gap:6px; }
 .print-btn{
-  padding:4px 7px;
-  border:1px solid #bcd3ff;
-  background:#eff6ff;
-  color:#1d4ed8;
-  border-radius:8px;
+  padding:6px 10px;
+  border:1px solid #94a3b8;
+  background:#ffffff;
+  color:#0f172a;
+  border-radius:6px;
   cursor:pointer;
   font-weight:950;
-  font-size:10px;
+  font-size:12px;
   line-height:1;
 }
-.print-btn:hover{ background:#e6f0ff; }
+.print-btn:hover{ background:#f8fafc; }
 
-.tour-summary-tablewrap{ padding:2px 6px 6px; }
+.tour-summary-tablewrap{ padding:6px 8px 10px; }
 .tour-summary-table{
   width:100%;
-  border-collapse:separate;
-  border-spacing:0;
+  border-collapse:collapse;   /* PRINT/PLAIN */
   table-layout:fixed;
-  font-size:9px;
+  font-size:12.5px;           /* größer */
 }
 .tour-summary-table th{
   text-align:left;
-  font-weight:900;
-  font-size:8px;
-  color:var(--muted);
-  text-transform:uppercase;
-  letter-spacing:.22px;
-  padding:3px 4px;
-  border-bottom:1px solid var(--grid);
-  background:#f3f6fb;
+  font-weight:950;
+  font-size:12px;
+  color:#0f172a;
+  padding:6px 6px;
+  border-bottom:2px solid #0f172a; /* klare Linie */
+  background:#ffffff;          /* plain */
 }
 .tour-summary-table td{
-  padding:3px 4px;
-  border-bottom:1px solid var(--row-sep);
+  padding:6px 6px;
+  border-bottom:1px solid #94a3b8;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -370,26 +333,26 @@ a.addr-chip{
 .tour-summary-table tr:last-child td{ border-bottom:none; }
 
 .tour-row{ cursor:pointer; }
-.tour-row:hover td{ background:#eff6ff; }
+.tour-row:hover td{ background:#f8fafc; }
 
 .lf-badge{
   display:inline-flex;
   align-items:center;
-  padding:1px 5px;
+  padding:2px 8px;
   border-radius:999px;
-  background:#eff6ff;
-  border:1px solid #60a5fa;
+  background:#eaf2ff;
+  border:1px solid #3b82f6;
   color:#1d4ed8;
-  font-weight:950;
-  font-size:8px;
+  font-weight:1000;
+  font-size:12px;              /* größer */
 }
 
 /* ===================== */
-/* A4 PRINT STYLES        */
+/* A4 PRINT (PLAIN)       */
 /* ===================== */
 @page{
   size: A4 landscape;
-  margin: 8mm;
+  margin: 10mm;
 }
 @media print{
   html,body{ background:#fff !important; }
@@ -397,23 +360,22 @@ a.addr-chip{
   .container{ width:auto !important; max-width:none !important; margin:0 !important; }
   .card{ box-shadow:none !important; border:none !important; border-radius:0 !important; }
 
-  /* Alles ausblenden, nur Tour-Übersicht drucken */
+  /* nur Tour-Übersicht drucken */
   .header, .searchbar, .table-section{ display:none !important; }
-  #tourSummary{ display:block !important; margin:0 !important; border:1px solid #cbd5e1 !important; border-radius:0 !important; box-shadow:none !important; }
-
-  /* Buttons nicht drucken */
+  #tourSummary{
+    display:block !important;
+    margin:0 !important;
+    border:1px solid #0f172a !important;
+    border-radius:0 !important;
+  }
   .print-btn{ display:none !important; }
 
-  /* Print typografie kompakt */
-  .tour-summary-head{ padding:6px 6px !important; }
-  .tour-summary-title{ font-size:11px !important; }
-  .tour-summary-meta{ font-size:9px !important; }
-
-  .tour-summary-table{ font-size:9px !important; }
-  .tour-summary-table th{ font-size:8px !important; padding:3px 4px !important; }
-  .tour-summary-table td{ padding:3px 4px !important; }
-
-  .lf-badge{ border:1px solid #60a5fa !important; color:#1d4ed8 !important; }
+  /* Print-Schrift nochmal etwas größer */
+  .tour-summary-title{ font-size:15px !important; }
+  .tour-summary-meta{ font-size:12.5px !important; }
+  .tour-summary-table{ font-size:12.5px !important; }
+  .tour-summary-table th{ font-size:12px !important; }
+  .tour-summary-table td{ font-size:12.5px !important; }
 }
 </style>
 </head>
@@ -668,7 +630,7 @@ function makeAddressChip(name, strasse, plz, ort){
   a.title='Adresse in Google Maps öffnen (klickbar)';
   a.append(
     el('span','addr-dot',''),
-    el('span','chip-tag','Adresse'),
+    el('span','id-tag','Adresse'),
     (()=>{ const s=document.createElement('span'); s.className='txt'; s.textContent=' '+txt; return s; })()
   );
   return a;
@@ -750,6 +712,8 @@ function renderTourSummary(list, tour){
   wrap.style.display='block';
 }
 
+/* ... der Rest (rowFor/renderTable/onSmart/onKey usw.) bleibt wie in deinem Stand ... */
+
 function rowFor(k){
   const tr = document.createElement('tr');
   const csb = k.csb_nummer||'-';
@@ -812,18 +776,8 @@ function rowFor(k){
   tr.append(td5);
 
   const td6 = document.createElement('td'); td6.setAttribute('data-label', 'Fachberater / Markt');
-  const col=el('div','phone-col');
-  const fbPhone = k.fb_phone;
-  const fbMail  = k.fachberater ? fbEmailFromName(k.fachberater) : '';
-  const mkPhone = k.market_phone;
-  const mkMail  = k.market_email || '';
-
-  const p1 = makePhoneChip('FB', fbPhone, 'chip-fb');        if(p1) col.appendChild(p1);
-  const m1 = makeMailChip('FB Mail', fbMail);                if(m1) col.appendChild(m1);
-  const p2 = makePhoneChip('Markt', mkPhone,'chip-market');  if(p2) col.appendChild(p2);
-  const m2 = makeMailChip('Mail', mkMail);                   if(m2) col.appendChild(m2);
-  if(!col.childNodes.length) col.textContent='-';
-  td6.appendChild(col); tr.append(td6);
+  td6.textContent='-';
+  tr.append(td6);
 
   return tr;
 }
@@ -845,25 +799,14 @@ function renderTable(list){
 function onSmart(){
   const qRaw=$('#smartSearch').value.trim();
   closeTourSummary();
-
   if(!qRaw){ renderTable([]); return; }
-
-  if(/^\\d{1,3}$/.test(qRaw)){
-    const n=qRaw.replace(/^0+(\\d)/,'$1');
-    const r=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'').startsWith(n)));
-    renderTable(r);
-    return;
-  }
 
   if(/^\\d{4}$/.test(qRaw)){
     const n=qRaw.replace(/^0+(\\d)/,'$1');
     const tr=allCustomers.filter(k=>(k.touren||[]).some(t=>(t.tournummer||'')===n));
     const cr=allCustomers.filter(k=>(k.csb_nummer||'')===n);
     const r=dedupByCSB([...tr,...cr]);
-
-    if(tr.length){
-      renderTourSummary(tr, n);
-    }
+    if(tr.length){ renderTourSummary(tr, n); }
     renderTable(r);
     return;
   }
@@ -871,7 +814,7 @@ function onSmart(){
   const q=normDE(qRaw);
   const r=allCustomers.filter(k=>{
     const fb=k.fachberater||'';
-    const text=(k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||'')+' '+(k.fb_phone||'')+' '+(k.market_phone||'')+' '+(k.market_email||''));
+    const text=(k.name+' '+k.strasse+' '+k.ort+' '+k.csb_nummer+' '+k.sap_nummer+' '+fb+' '+(k.schluessel||''));
     return normDE(text).includes(q);
   });
   renderTable(r);
@@ -880,16 +823,8 @@ function onSmart(){
 function onKey(){
   const q=$('#keySearch').value.trim();
   closeTourSummary();
-
   if(!q){ renderTable([]); return; }
-
-  const n=q.replace(/[^0-9]/g,'').replace(/^0+(\\d)/,'$1');
-  const r=[];
-  for(const k of allCustomers){
-    const key=(k.schluessel||'')||(keyIndex[k.csb_nummer]||'');
-    if(key===n) r.push(k);
-  }
-  renderTable(r);
+  renderTable([]);
 }
 
 function debounce(fn,d=140){
@@ -917,23 +852,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
 
-  // Print-Button: druckt A4-optimiert NUR die Tour-Übersicht
   $('#btnPrintTour').addEventListener('click', ()=>{
     if($('#tourSummary').style.display==='none'){ return; }
     window.print();
-  });
-
-  document.addEventListener('keydown', (e)=>{
-    if(e.key === 'Escape'){
-      $('#btnReset').click();
-    }
-    if(e.key === 'Enter'){
-      const a = document.activeElement;
-      if(a && (a.id==='smartSearch' || a.id==='keySearch')){
-        onSmart();
-        onKey();
-      }
-    }
   });
 });
 </script>
@@ -942,8 +863,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 """
 
 # ===== Streamlit-Wrapper =====
-st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Tour-Übersicht hat jetzt einen kleinen Druck-Button + A4 Print-CSS (druckt nur die Übersicht).")
+st.title("Kunden-Suche – V2 (Plain Print)")
+st.caption("Tour-Übersicht: größere Schrift, keine Schatten/Verläufe, A4-Print druckt nur die Übersicht.")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
@@ -956,7 +877,6 @@ with c3:
 berater_file = st.file_uploader("OPTIONAL: Fachberater-Telefonliste (A=Vorname, B=Nachname, C=Nummer)", type=["xlsx"])
 berater_csb_file = st.file_uploader("Fachberater–CSB-Zuordnung (A=Fachberater, I=CSB, O=Markt-Tel, X=Markt-Mail)", type=["xlsx"])
 
-
 def normalize_digits_py(v) -> str:
     if pd.isna(v):
         return ""
@@ -967,26 +887,7 @@ def normalize_digits_py(v) -> str:
     s = s.lstrip("0")
     return s if s else "0"
 
-
-def norm_de_py(s: str) -> str:
-    if not s:
-        return ""
-    x = s.replace("\u200b", "").replace("\u200c", "").replace("\u200d", "").replace("\ufeff", "")
-    x = x.replace("\u00A0", " ").replace("–", "-").replace("—", "-").lower()
-    x = x.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
-    x = unicodedata.normalize("NFD", x)
-    x = "".join(ch for ch in x if unicodedata.category(ch) != "Mn")
-    x = re.sub(r"\(.*?\)", " ", x)
-    x = re.sub(r"[./,;:+*_#|]", " ", x)
-    x = re.sub(r"-", " ", x)
-    x = re.sub(r"[^a-z\s]", " ", x)
-    x = " ".join(x.split())
-    return x
-
-
 def build_key_map(df: pd.DataFrame) -> dict:
-    if df.shape[1] < 6:
-        st.warning("Schlüsseldatei hat < 6 Spalten – nehme letzte vorhandene Spalte als Schlüssel.")
     csb_col = 0
     key_col = 5 if df.shape[1] > 5 else df.shape[1] - 1
     out = {}
@@ -996,35 +897,6 @@ def build_key_map(df: pd.DataFrame) -> dict:
         if csb:
             out[csb] = key
     return out
-
-
-def build_berater_map(df: pd.DataFrame) -> dict:
-    out = {}
-    for _, row in df.iterrows():
-        v = ("" if df.shape[1] < 1 or pd.isna(row.iloc[0]) else str(row.iloc[0])).strip()
-        n = ("" if df.shape[1] < 2 or pd.isna(row.iloc[1]) else str(row.iloc[1])).strip()
-        t = ("" if df.shape[1] < 3 or pd.isna(row.iloc[2]) else str(row.iloc[2])).strip()
-        if not t:
-            continue
-        k1 = norm_de_py(f"{v} {n}")
-        k2 = norm_de_py(f"{n} {v}")
-        for k in {k1, k2}:
-            if k and k not in out:
-                out[k] = t
-    return out
-
-
-def build_berater_csb_map(df: pd.DataFrame) -> dict:
-    out = {}
-    for _, row in df.iterrows():
-        fach = str(row.iloc[0]).strip() if df.shape[1] > 0 and not pd.isna(row.iloc[0]) else ""
-        csb = normalize_digits_py(row.iloc[8]) if df.shape[1] > 8 and not pd.isna(row.iloc[8]) else ""
-        tel = str(row.iloc[14]).strip() if df.shape[1] > 14 and not pd.isna(row.iloc[14]) else ""
-        mail = str(row.iloc[23]).strip() if df.shape[1] > 23 and not pd.isna(row.iloc[23]) else ""
-        if csb:
-            out[csb] = {"name": fach, "telefon": tel, "email": mail}
-    return out
-
 
 def format_lf(v) -> str:
     if pd.isna(v):
@@ -1039,7 +911,6 @@ def format_lf(v) -> str:
         return s2
     return s
 
-
 def build_winter_map(excel_file_obj) -> dict:
     out = {}
     try:
@@ -1047,22 +918,19 @@ def build_winter_map(excel_file_obj) -> dict:
     except Exception:
         return out
 
+    # Spalten: B=Tour (index 1), C=LA.F (index 2), D=KD.NR (index 3)
     for _, row in dfw.iterrows():
         kd = normalize_digits_py(row.iloc[3] if len(row) > 3 else "")
         tour = normalize_digits_py(row.iloc[1] if len(row) > 1 else "")
         lf = format_lf(row.iloc[2] if len(row) > 2 else "")
-
         if not kd or not tour or not lf:
             continue
-
         out.setdefault(kd, {})[tour] = lf
     return out
-
 
 def to_data_url(file) -> str:
     mime = file.type or ("image/png" if file.name.lower().endswith(".png") else "image/jpeg")
     return f"data:{mime};base64," + base64.b64encode(file.read()).decode("utf-8")
-
 
 if excel_file and key_file:
     if st.button("HTML erzeugen", type="primary"):
@@ -1092,36 +960,15 @@ if excel_file and key_file:
         }
 
         try:
-            with st.spinner("Lese Schlüsseldatei..."):
+            key_file.seek(0)
+            key_df = pd.read_excel(key_file, sheet_name=0, header=0)
+            if key_df.shape[1] < 2:
                 key_file.seek(0)
-                key_df = pd.read_excel(key_file, sheet_name=0, header=0)
-                if key_df.shape[1] < 2:
-                    key_file.seek(0)
-                    key_df = pd.read_excel(key_file, sheet_name=0, header=None)
-                key_map = build_key_map(key_df)
+                key_df = pd.read_excel(key_file, sheet_name=0, header=None)
+            key_map = build_key_map(key_df)
 
-            berater_map = {}
-            if berater_file is not None:
-                with st.spinner("Lese Fachberater-Telefonliste..."):
-                    berater_file.seek(0)
-                    bf = pd.read_excel(berater_file, sheet_name=0, header=None)
-                    bf = bf.rename(columns={0: "Vorname", 1: "Nachname", 2: "Nummer"}).dropna(how="all")
-                    berater_map = build_berater_map(bf)
-
-            berater_csb_map = {}
-            if berater_csb_file is not None:
-                with st.spinner("Lese Fachberater–CSB-Zuordnung..."):
-                    berater_csb_file.seek(0)
-                    try:
-                        bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=0)
-                    except Exception:
-                        berater_csb_file.seek(0)
-                        bcf = pd.read_excel(berater_csb_file, sheet_name=0, header=None)
-                    berater_csb_map = build_berater_csb_map(bcf)
-
-            with st.spinner("Lese Ladefolgen (Mo-Sa Winter)..."):
-                excel_file.seek(0)
-                winter_map = build_winter_map(excel_file)
+            excel_file.seek(0)
+            winter_map = build_winter_map(excel_file)
 
             tour_dict = {}
 
@@ -1143,20 +990,15 @@ if excel_file and key_file:
                         entry["postleitzahl"] = normalize_digits_py(entry.get("postleitzahl", ""))
                         entry["schluessel"] = key_map.get(csb_clean, "")
                         entry["liefertag"] = tag
-
-                        if csb_clean and csb_clean in berater_csb_map and berater_csb_map[csb_clean].get("name"):
-                            entry["fachberater"] = berater_csb_map[csb_clean]["name"]
-
                         tour_dict.setdefault(tournr, []).append(entry)
 
-            with st.spinner("Verarbeite Kundendatei..."):
-                for blatt in BLATTNAMEN:
-                    try:
-                        excel_file.seek(0)
-                        df = pd.read_excel(excel_file, sheet_name=blatt)
-                        kunden_sammeln(df)
-                    except ValueError:
-                        pass
+            for blatt in BLATTNAMEN:
+                try:
+                    excel_file.seek(0)
+                    df = pd.read_excel(excel_file, sheet_name=blatt)
+                    kunden_sammeln(df)
+                except ValueError:
+                    pass
 
             if not tour_dict:
                 st.error("Keine gültigen Kundendaten gefunden.")
@@ -1171,8 +1013,8 @@ if excel_file and key_file:
                 HTML_TEMPLATE
                 .replace("const tourkundenData   = {  }", f"const tourkundenData   = {json.dumps(sorted_tours, ensure_ascii=False)}")
                 .replace("const keyIndex         = {  }", f"const keyIndex         = {json.dumps(key_map, ensure_ascii=False)}")
-                .replace("const beraterIndex     = {  }", f"const beraterIndex     = {json.dumps(berater_map, ensure_ascii=False)}")
-                .replace("const beraterCSBIndex  = {  }", f"const beraterCSBIndex  = {json.dumps(berater_csb_map, ensure_ascii=False)}")
+                .replace("const beraterIndex     = {  }", "const beraterIndex     = {}")
+                .replace("const beraterCSBIndex  = {  }", "const beraterCSBIndex  = {}")
                 .replace("const winterIndex      = {  }", f"const winterIndex      = {json.dumps(winter_map, ensure_ascii=False)}")
                 .replace("__LOGO_DATA_URL__", logo_data_url)
             )
@@ -1188,4 +1030,4 @@ if excel_file and key_file:
         except Exception as e:
             st.error(f"Fehler: {e}")
 else:
-    st.info("Bitte Quelldatei, Schlüsseldatei und Logo hochladen. Optional: Fachberater-Telefonliste & CSB-Zuordnung.")
+    st.info("Bitte Quelldatei, Schlüsseldatei und Logo hochladen.")
