@@ -469,7 +469,7 @@ a.addr-chip{
 
   .tour-row:hover td{ background:#fff !important; }
 
-  /* ✅ PRINT: SAP-Spalte ausblenden, LF-Header als "Ladefolge" */
+  /* ✅ PRINT: SAP-Spalte ausblenden */
   .tour-summary-table th:nth-child(2),
   .tour-summary-table td:nth-child(2){
     display:none !important; /* SAP */
@@ -831,37 +831,90 @@ function renderTourSummary(list, tour){
 }
 
 /* ===================== */
-/* COPY: Tour in Clipboard */
+/* COPY: Tour in Clipboard (schön formatiert, Teams/Outlook) */
 /* ===================== */
-function escapeTSV(s){
-  return String(s ?? '').replace(/\\t/g,' ').replace(/\\r?\\n/g,' ').trim();
+function cleanCell(s){
+  return String(s ?? '')
+    .replace(/\\r?\\n/g,' ')
+    .replace(/\\t/g,' ')
+    .replace(/\\s+/g,' ')
+    .trim();
+}
+function shorten(s, max){
+  s = cleanCell(s);
+  if(max <= 3) return s.slice(0, max);
+  return s.length > max ? (s.slice(0, max-1) + '…') : s;
+}
+function padRight(s, w){
+  s = String(s ?? '');
+  if(s.length >= w) return s;
+  return s + ' '.repeat(w - s.length);
 }
 
+/* prettified text for Teams/Outlook: monospace inside ``` ... ``` */
 function buildTourClipboardText(){
   if(!currentTourNumber) return '';
 
-  const title = ($('#tourSummaryTitle').textContent || '').trim(); // "1078 – Montag/Dienstag"
+  const title = ($('#tourSummaryTitle').textContent || '').trim(); // z.B. "1077 – Montag"
   const rows  = Array.from(document.querySelectorAll('#tourSummaryBody tr'));
 
-  // TSV (perfekt für Excel/Teams/Outlook)
-  let out = '';
-  out += `Tour\\t${title}\\n`;
-  out += `CSB\\tName\\tStraße\\tOrt\\tLadefolge\\n`;
-
+  // Daten sammeln
+  const data = [];
   for(const tr of rows){
     const tds = tr.querySelectorAll('td');
     if(!tds || tds.length < 6) continue;
 
-    const csb  = escapeTSV(tds[0].textContent);
-    const name = escapeTSV(tds[2].textContent);
-    const str  = escapeTSV(tds[3].textContent);
-    const ort  = escapeTSV(tds[4].textContent);
-    const lf   = escapeTSV(tds[5].textContent);
-
-    out += `${csb}\\t${name}\\t${str}\\t${ort}\\t${lf}\\n`;
+    data.push({
+      csb:  cleanCell(tds[0].textContent),
+      name: cleanCell(tds[2].textContent),
+      str:  cleanCell(tds[3].textContent),
+      ort:  cleanCell(tds[4].textContent),
+      lf:   cleanCell(tds[5].textContent),
+    });
   }
 
-  return out.trim();
+  // Spaltenbreiten dynamisch (mit Caps)
+  const caps = { csb:6, name:28, str:28, ort:18, lf:10 };
+
+  const w = {
+    csb:  Math.min(caps.csb,  Math.max(3,  ...data.map(r=>r.csb.length))),
+    name: Math.min(caps.name, Math.max(4,  ...data.map(r=>r.name.length))),
+    str:  Math.min(caps.str,  Math.max(6,  ...data.map(r=>r.str.length))),
+    ort:  Math.min(caps.ort,  Math.max(3,  ...data.map(r=>r.ort.length))),
+    lf:   Math.min(caps.lf,   Math.max(8,  ...data.map(r=>r.lf.length))),
+  };
+
+  const header =
+    padRight('CSB', w.csb) + '  ' +
+    padRight('Name', w.name) + '  ' +
+    padRight('Straße', w.str) + '  ' +
+    padRight('Ort', w.ort) + '  ' +
+    padRight('Ladefolge', w.lf);
+
+  const sep =
+    '-'.repeat(w.csb) + '  ' +
+    '-'.repeat(w.name) + '  ' +
+    '-'.repeat(w.str) + '  ' +
+    '-'.repeat(w.ort) + '  ' +
+    '-'.repeat(w.lf);
+
+  const lines = data.map(r =>
+    padRight(shorten(r.csb,  w.csb),  w.csb)  + '  ' +
+    padRight(shorten(r.name, w.name), w.name) + '  ' +
+    padRight(shorten(r.str,  w.str),  w.str)  + '  ' +
+    padRight(shorten(r.ort,  w.ort),  w.ort)  + '  ' +
+    padRight(shorten(r.lf,   w.lf),   w.lf)
+  );
+
+  return [
+    `Tour  ${title}`,
+    '',
+    '```',
+    header,
+    sep,
+    ...lines,
+    '```'
+  ].join('\\n');
 }
 
 async function copyTextToClipboard(text){
@@ -1123,7 +1176,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Copy-Button kopiert Tour+Kunden (TSV) in Zwischenablage.")
+st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: sauber formatiert als Codeblock (Teams/Outlook).")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
