@@ -317,16 +317,10 @@ a.addr-chip{
   font-size:10px;
   color:#0f172a;
 }
-/* ✅ Meta bleibt im DOM, aber unsichtbar (du willst es nirgends sehen) */
-.tour-summary-meta{
-  display:none !important;
-}
+/* Meta bleibt im DOM, aber unsichtbar */
+.tour-summary-meta{ display:none !important; }
 
-.tour-summary-actions{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
+.tour-summary-actions{ display:flex; align-items:center; gap:6px; }
 .print-btn{
   padding:4px 7px;
   border:1px solid #bcd3ff;
@@ -406,7 +400,7 @@ a.addr-chip{
   /* Alles ausblenden, nur Tour-Übersicht drucken */
   .header, .searchbar, .table-section{ display:none !important; }
 
-  /* ✅ PRINT: Plain text, größer, KEINE Schatten/Verläufe/Boxen */
+  /* PRINT: Plain text, größer, KEINE Schatten/Verläufe/Boxen */
   #tourSummary{
     display:block !important;
     margin:0 !important;
@@ -430,7 +424,6 @@ a.addr-chip{
     font-weight:900 !important;
     color:#000 !important;
   }
-  /* Meta NIE drucken */
   .tour-summary-meta{ display:none !important; }
 
   /* Tabelle: plain, groß, gut lesbar */
@@ -457,7 +450,7 @@ a.addr-chip{
     letter-spacing:0 !important;
   }
 
-  /* LF Badge: plain text (kein Chip-Look) */
+  /* LF Badge: plain text */
   .lf-badge{
     border:none !important;
     background:transparent !important;
@@ -467,8 +460,23 @@ a.addr-chip{
     font-weight:900 !important;
   }
 
-  /* Hover/Interaktion egal im Print */
   .tour-row:hover td{ background:#fff !important; }
+
+  /* ✅ PRINT: SAP-Spalte ausblenden, LF-Header als "Ladefolge" */
+  .tour-summary-table th:nth-child(2),
+  .tour-summary-table td:nth-child(2){
+    display:none !important; /* SAP */
+  }
+  /* ✅ "LF" im Druck in "Ladefolge" umbenennen */
+  .tour-summary-table th:last-child{
+    font-weight:900 !important;
+  }
+  .tour-summary-table th:last-child::after{
+    content:"";
+  }
+  .tour-summary-table th:last-child{
+    /* überschreibt den sichtbaren Text via JS (siehe unten) – CSS kann Text nicht zuverlässig ersetzen */
+  }
 }
 </style>
 </head>
@@ -509,7 +517,7 @@ a.addr-chip{
         </div>
 
         <div class="tour-summary-tablewrap">
-          <table class="tour-summary-table">
+          <table class="tour-summary-table" id="tourSummaryTable">
             <thead>
               <tr>
                 <th>CSB</th>
@@ -517,7 +525,7 @@ a.addr-chip{
                 <th>Name</th>
                 <th>Straße</th>
                 <th>Ort</th>
-                <th>LF</th>
+                <th id="thLF">LF</th>
               </tr>
             </thead>
             <tbody id="tourSummaryBody"></tbody>
@@ -742,7 +750,7 @@ function lfSortKey(lf){
   return m ? parseInt(m[1],10) : 999999;
 }
 
-/* ✅ Titel: nur Tournummer + Wochentag(e) */
+/* Titel: nur Tournummer + Wochentag(e) */
 function renderTourSummary(list, tour){
   const wrap = $('#tourSummary');
   const body = $('#tourSummaryBody');
@@ -753,7 +761,7 @@ function renderTourSummary(list, tour){
     return;
   }
 
-  // Wochentag(e) für diese Tour ermitteln (aus liefertag in k.touren)
+  // Wochentag(e) für diese Tour
   const daySet = new Set();
   for(const k of list){
     for(const t of (k.touren||[])){
@@ -762,14 +770,11 @@ function renderTourSummary(list, tour){
       }
     }
   }
-
   const dayOrder = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
   const days = Array.from(daySet).sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b));
   const dayLabel = days.length ? days.join("/") : "";
 
   $('#tourSummaryTitle').textContent = dayLabel ? `${tour} – ${dayLabel}` : `${tour}`;
-
-  /* ✅ du willst diesen Text nirgends sehen -> leer lassen */
   $('#tourSummaryMeta').textContent  = "";
 
   const sorted = [...list].sort((a,b)=>{
@@ -972,8 +977,25 @@ function debounce(fn,d=140){
   };
 }
 
+/* ✅ Druck-spezifische Headline-Umbenennung */
+function setPrintHeaders(){
+  const th = document.getElementById('thLF');
+  if(!th) return;
+  // Im Screen bleibt "LF", im Print ändern wir dynamisch kurz vorher
+  // (CSS kann den Text nicht zuverlässig ersetzen)
+  const screenText = 'LF';
+  const printText  = 'Ladefolge';
+
+  const beforePrint = ()=>{ th.textContent = printText; };
+  const afterPrint  = ()=>{ th.textContent = screenText; };
+
+  window.addEventListener('beforeprint', beforePrint);
+  window.addEventListener('afterprint', afterPrint);
+}
+
 document.addEventListener('DOMContentLoaded', ()=>{
   if(Object.keys(tourkundenData).length>0){ buildData(); }
+  setPrintHeaders();
 
   $('#smartSearch').addEventListener('input', debounce(onSmart,140));
   $('#keySearch').addEventListener('input', debounce(onKey,140));
@@ -989,7 +1011,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
 
-  // Print-Button: druckt A4-optimiert NUR die Tour-Übersicht
   $('#btnPrintTour').addEventListener('click', ()=>{
     if($('#tourSummary').style.display==='none'){ return; }
     window.print();
@@ -1015,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Tour-Übersicht: Meta-Text entfernt • Druck: größer & plain text (nur Übersicht).")
+st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • weiterhin plain text + groß.")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
