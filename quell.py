@@ -293,8 +293,7 @@ a.addr-chip{
 .addr-dot{width:6px; height:6px; background:#ef4444; border-radius:999px; display:inline-block}
 
 /* ============================== */
-/* Tour-Übersicht (NOCH kleiner)   */
-/* + klickbare Zeilen              */
+/* Tour-Übersicht (klein + Print) */
 /* ============================== */
 .tour-summary{
   margin:6px 12px 0;
@@ -324,8 +323,25 @@ a.addr-chip{
   color:var(--muted-2);
   white-space:nowrap;
 }
-.tour-summary-tablewrap{ padding:2px 6px 6px; }
+.tour-summary-actions{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.print-btn{
+  padding:4px 7px;
+  border:1px solid #bcd3ff;
+  background:#eff6ff;
+  color:#1d4ed8;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:950;
+  font-size:10px;
+  line-height:1;
+}
+.print-btn:hover{ background:#e6f0ff; }
 
+.tour-summary-tablewrap{ padding:2px 6px 6px; }
 .tour-summary-table{
   width:100%;
   border-collapse:separate;
@@ -353,15 +369,9 @@ a.addr-chip{
 }
 .tour-summary-table tr:last-child td{ border-bottom:none; }
 
-/* klickbar */
-.tour-row{
-  cursor:pointer;
-}
-.tour-row:hover td{
-  background:#eff6ff;
-}
+.tour-row{ cursor:pointer; }
+.tour-row:hover td{ background:#eff6ff; }
 
-/* kleine LF badge */
 .lf-badge{
   display:inline-flex;
   align-items:center;
@@ -372,6 +382,38 @@ a.addr-chip{
   color:#1d4ed8;
   font-weight:950;
   font-size:8px;
+}
+
+/* ===================== */
+/* A4 PRINT STYLES        */
+/* ===================== */
+@page{
+  size: A4 landscape;
+  margin: 8mm;
+}
+@media print{
+  html,body{ background:#fff !important; }
+  .page{ display:block !important; }
+  .container{ width:auto !important; max-width:none !important; margin:0 !important; }
+  .card{ box-shadow:none !important; border:none !important; border-radius:0 !important; }
+
+  /* Alles ausblenden, nur Tour-Übersicht drucken */
+  .header, .searchbar, .table-section{ display:none !important; }
+  #tourSummary{ display:block !important; margin:0 !important; border:1px solid #cbd5e1 !important; border-radius:0 !important; box-shadow:none !important; }
+
+  /* Buttons nicht drucken */
+  .print-btn{ display:none !important; }
+
+  /* Print typografie kompakt */
+  .tour-summary-head{ padding:6px 6px !important; }
+  .tour-summary-title{ font-size:11px !important; }
+  .tour-summary-meta{ font-size:9px !important; }
+
+  .tour-summary-table{ font-size:9px !important; }
+  .tour-summary-table th{ font-size:8px !important; padding:3px 4px !important; }
+  .tour-summary-table td{ padding:3px 4px !important; }
+
+  .lf-badge{ border:1px solid #60a5fa !important; color:#1d4ed8 !important; }
 }
 </style>
 </head>
@@ -402,8 +444,13 @@ a.addr-chip{
       <!-- Tour-Übersicht -->
       <div class="tour-summary" id="tourSummary" style="display:none;">
         <div class="tour-summary-head">
-          <div class="tour-summary-title" id="tourSummaryTitle"></div>
-          <div class="tour-summary-meta" id="tourSummaryMeta"></div>
+          <div>
+            <div class="tour-summary-title" id="tourSummaryTitle"></div>
+            <div class="tour-summary-meta" id="tourSummaryMeta"></div>
+          </div>
+          <div class="tour-summary-actions">
+            <button class="print-btn" id="btnPrintTour" title="Tour-Übersicht drucken (A4)">Drucken</button>
+          </div>
         </div>
 
         <div class="tour-summary-tablewrap">
@@ -633,13 +680,13 @@ function closeTourSummary(){
   $('#tourSummaryMeta').textContent='';
   $('#tourSummaryBody').innerHTML='';
 }
+
 function lfSortKey(lf){
   if(!lf) return 999999;
   const m = String(lf).match(/(\\d+)/);
   return m ? parseInt(m[1],10) : 999999;
 }
 
-/* klick: Zeile -> Kunde (CSB) suchen */
 function renderTourSummary(list, tour){
   const wrap = $('#tourSummary');
   const body = $('#tourSummaryBody');
@@ -870,6 +917,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   $('#btnBack').addEventListener('click', ()=>{ popPrevQuery(); });
 
+  // Print-Button: druckt A4-optimiert NUR die Tour-Übersicht
+  $('#btnPrintTour').addEventListener('click', ()=>{
+    if($('#tourSummary').style.display==='none'){ return; }
+    window.print();
+  });
+
   document.addEventListener('keydown', (e)=>{
     if(e.key === 'Escape'){
       $('#btnReset').click();
@@ -890,7 +943,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Tour-Übersicht ist jetzt noch kleiner + klickbar: Klick auf eine Zeile sucht direkt den CSB.")
+st.caption("Tour-Übersicht hat jetzt einen kleinen Druck-Button + A4 Print-CSS (druckt nur die Übersicht).")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
