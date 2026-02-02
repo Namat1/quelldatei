@@ -828,7 +828,7 @@ function renderTourSummary(list, tour){
 
 /* ===================== */
 /* COPY: echte Tabelle (funktioniert auch bei file://) */
-/* - Schrift wieder "normal/größer" (wie du willst) */
+/* - verbessert für Outlook: mso-* + pt */
 /* - SAP mit drin */
 /* ===================== */
 
@@ -868,10 +868,17 @@ function buildTourClipboardHTML(){
     });
   }
 
-  // ✅ Wunsch: Schriftart wieder "normal/größer"
-  // -> Office-safe + gut lesbar
+  // ✅ Outlook/Word: mso-* + pt ist "gewichtiger" bei STRG+V
   const fontFace = "Calibri, Arial, Segoe UI, Tahoma, sans-serif";
-  const cellFont = `font-family:${fontFace};font-size:9pt;line-height:1.15;mso-line-height-rule:exactly;`;
+  const cellFont = [
+    `font-family:${fontFace}`,
+    `font-size:8pt`,
+    `line-height:1.05`,
+    `mso-line-height-rule:exactly`,
+    `mso-ansi-font-size:8.0pt`,
+    `mso-bidi-font-size:8.0pt`,
+    `mso-fareast-font-size:8.0pt`
+  ].join(';') + ';';
 
   const th = (txt) =>
     `<th style="border:0.5pt solid #222;padding:2pt 4pt;text-align:left;background:#f2f2f2;white-space:nowrap;${cellFont}">
@@ -889,7 +896,7 @@ function buildTourClipboardHTML(){
     Tour ${escapeHtml(title)}
   </div>
 
-  <table style="border-collapse:collapse;border:0.5pt solid #222;${cellFont}">
+  <table style="border-collapse:collapse;border:0.5pt solid #222;${cellFont}mso-table-lspace:0pt;mso-table-rspace:0pt;">
     <thead>
       <tr>
         ${th("CSB")}
@@ -942,7 +949,7 @@ async function copyTourTableToClipboard(){
   const html = buildTourClipboardHTML();
   const text = buildTourClipboardPlain();
 
-  // 1) Modern (funktioniert zuverlässig nur in secure context)
+  // 1) Modern (zuverlässig nur in secure context)
   try{
     if(navigator.clipboard && window.isSecureContext && window.ClipboardItem){
       const item = new ClipboardItem({
@@ -1221,7 +1228,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: echte HTML-Tabelle (robust auch bei file://, Schrift normal/größer).")
+st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: HTML-Tabelle mit Outlook-„mso“-Font-Styles (besser bei STRG+V).")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
