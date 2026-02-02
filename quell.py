@@ -832,6 +832,7 @@ function renderTourSummary(list, tour){
 
 /* ===================== */
 /* COPY: echte Tabelle (text/html + text/plain fallback) */
+/* - noch kleiner, mit SAP-Spalte                           */
 /* ===================== */
 
 function cleanCell(s){
@@ -862,6 +863,7 @@ function buildTourClipboardHTML(){
 
     data.push({
       csb:  cleanCell(tds[0].textContent),
+      sap:  cleanCell(tds[1].textContent),
       name: cleanCell(tds[2].textContent),
       str:  cleanCell(tds[3].textContent),
       ort:  cleanCell(tds[4].textContent),
@@ -869,28 +871,31 @@ function buildTourClipboardHTML(){
     });
   }
 
+  // ✅ EXTRA kompakt: 9px Font, minimal Padding, dünnere Linien
   const html = `
-<div style="font-family:Segoe UI,Arial,sans-serif;font-size:10px;line-height:1.15;">
-  <div style="font-weight:700;margin:0 0 4px 0;font-size:10px;">Tour ${escapeHtml(title)}</div>
+<div style="font-family:Segoe UI,Arial,sans-serif;font-size:9px;line-height:1.1;">
+  <div style="font-weight:700;margin:0 0 3px 0;font-size:9px;">Tour ${escapeHtml(title)}</div>
 
-  <table style="border-collapse:collapse;border:1px solid #222;">
+  <table style="border-collapse:collapse;border:0.75px solid #222;">
     <thead>
       <tr>
-        <th style="border:1px solid #222;padding:2px 4px;text-align:left;background:#f2f2f2;white-space:nowrap;">CSB</th>
-        <th style="border:1px solid #222;padding:2px 4px;text-align:left;background:#f2f2f2;">Name</th>
-        <th style="border:1px solid #222;padding:2px 4px;text-align:left;background:#f2f2f2;">Straße</th>
-        <th style="border:1px solid #222;padding:2px 4px;text-align:left;background:#f2f2f2;">Ort</th>
-        <th style="border:1px solid #222;padding:2px 4px;text-align:left;background:#f2f2f2;white-space:nowrap;">Ladefolge</th>
+        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;white-space:nowrap;">CSB</th>
+        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;white-space:nowrap;">SAP</th>
+        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;">Name</th>
+        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;">Straße</th>
+        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;">Ort</th>
+        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;white-space:nowrap;">Ladefolge</th>
       </tr>
     </thead>
     <tbody>
       ${data.map(r => `
         <tr>
-          <td style="border:1px solid #222;padding:2px 4px;white-space:nowrap;">${escapeHtml(r.csb)}</td>
-          <td style="border:1px solid #222;padding:2px 4px;">${escapeHtml(r.name)}</td>
-          <td style="border:1px solid #222;padding:2px 4px;">${escapeHtml(r.str)}</td>
-          <td style="border:1px solid #222;padding:2px 4px;">${escapeHtml(r.ort)}</td>
-          <td style="border:1px solid #222;padding:2px 4px;white-space:nowrap;">${escapeHtml(r.lf)}</td>
+          <td style="border:0.75px solid #222;padding:1px 3px;white-space:nowrap;">${escapeHtml(r.csb)}</td>
+          <td style="border:0.75px solid #222;padding:1px 3px;white-space:nowrap;">${escapeHtml(r.sap)}</td>
+          <td style="border:0.75px solid #222;padding:1px 3px;">${escapeHtml(r.name)}</td>
+          <td style="border:0.75px solid #222;padding:1px 3px;">${escapeHtml(r.str)}</td>
+          <td style="border:0.75px solid #222;padding:1px 3px;">${escapeHtml(r.ort)}</td>
+          <td style="border:0.75px solid #222;padding:1px 3px;white-space:nowrap;">${escapeHtml(r.lf)}</td>
         </tr>
       `).join('')}
     </tbody>
@@ -900,21 +905,21 @@ function buildTourClipboardHTML(){
   return html;
 }
 
-
 function buildTourClipboardPlain(){
   const title = ($('#tourSummaryTitle').textContent || '').trim();
   const rows  = Array.from(document.querySelectorAll('#tourSummaryBody tr'));
 
-  let out = `Tour\\t${title}\\nCSB\\tName\\tStraße\\tOrt\\tLadefolge\\n`;
+  let out = `Tour\\t${title}\\nCSB\\tSAP\\tName\\tStraße\\tOrt\\tLadefolge\\n`;
   for(const tr of rows){
     const tds = tr.querySelectorAll('td');
     if(!tds || tds.length < 6) continue;
     const csb  = cleanCell(tds[0].textContent);
+    const sap  = cleanCell(tds[1].textContent);
     const name = cleanCell(tds[2].textContent);
     const str  = cleanCell(tds[3].textContent);
     const ort  = cleanCell(tds[4].textContent);
     const lf   = cleanCell(tds[5].textContent);
-    out += `${csb}\\t${name}\\t${str}\\t${ort}\\t${lf}\\n`;
+    out += `${csb}\\t${sap}\\t${name}\\t${str}\\t${ort}\\t${lf}\\n`;
   }
   return out.trim();
 }
@@ -1187,7 +1192,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: echte Tabelle (HTML) + TSV Fallback.")
+st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: echte Tabelle (HTML) mit SAP + TSV Fallback (extra kompakt).")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
