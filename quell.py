@@ -293,7 +293,7 @@ a.addr-chip{
 .addr-dot{width:6px; height:6px; background:#ef4444; border-radius:999px; display:inline-block}
 
 /* ============================== */
-/* Tour-Übersicht (klein + Print) */
+/* Tour-Übersicht (UI)            */
 /* ============================== */
 .tour-summary{
   margin:6px 12px 0;
@@ -317,12 +317,11 @@ a.addr-chip{
   font-size:10px;
   color:#0f172a;
 }
+/* ✅ Meta bleibt im DOM, aber unsichtbar (du willst es nirgends sehen) */
 .tour-summary-meta{
-  font-weight:850;
-  font-size:9px;
-  color:var(--muted-2);
-  white-space:nowrap;
+  display:none !important;
 }
+
 .tour-summary-actions{
   display:flex;
   align-items:center;
@@ -368,7 +367,6 @@ a.addr-chip{
   text-overflow:ellipsis;
 }
 .tour-summary-table tr:last-child td{ border-bottom:none; }
-
 .tour-row{ cursor:pointer; }
 .tour-row:hover td{ background:#eff6ff; }
 
@@ -389,31 +387,88 @@ a.addr-chip{
 /* ===================== */
 @page{
   size: A4 landscape;
-  margin: 8mm;
+  margin: 10mm;
 }
 @media print{
-  html,body{ background:#fff !important; }
+  html,body{
+    background:#fff !important;
+    color:#000 !important;
+  }
   .page{ display:block !important; }
   .container{ width:auto !important; max-width:none !important; margin:0 !important; }
-  .card{ box-shadow:none !important; border:none !important; border-radius:0 !important; }
+  .card{
+    box-shadow:none !important;
+    border:none !important;
+    border-radius:0 !important;
+    background:#fff !important;
+  }
 
   /* Alles ausblenden, nur Tour-Übersicht drucken */
   .header, .searchbar, .table-section{ display:none !important; }
-  #tourSummary{ display:block !important; margin:0 !important; border:1px solid #cbd5e1 !important; border-radius:0 !important; box-shadow:none !important; }
+
+  /* ✅ PRINT: Plain text, größer, KEINE Schatten/Verläufe/Boxen */
+  #tourSummary{
+    display:block !important;
+    margin:0 !important;
+    border:none !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+    background:#fff !important;
+  }
+  .tour-summary-head{
+    border:none !important;
+    background:#fff !important;
+    padding:0 0 6mm 0 !important;
+  }
 
   /* Buttons nicht drucken */
   .print-btn{ display:none !important; }
 
-  /* Print typografie kompakt */
-  .tour-summary-head{ padding:6px 6px !important; }
-  .tour-summary-title{ font-size:11px !important; }
-  .tour-summary-meta{ font-size:9px !important; }
+  /* Titel groß */
+  .tour-summary-title{
+    font-size:18px !important;
+    font-weight:900 !important;
+    color:#000 !important;
+  }
+  /* Meta NIE drucken */
+  .tour-summary-meta{ display:none !important; }
 
-  .tour-summary-table{ font-size:9px !important; }
-  .tour-summary-table th{ font-size:8px !important; padding:3px 4px !important; }
-  .tour-summary-table td{ padding:3px 4px !important; }
+  /* Tabelle: plain, groß, gut lesbar */
+  .tour-summary-tablewrap{ padding:0 !important; }
+  .tour-summary-table{
+    font-size:14px !important;
+    border-collapse:collapse !important;
+    table-layout:auto !important;
+  }
+  .tour-summary-table th,
+  .tour-summary-table td{
+    padding:6px 6px !important;
+    border:1px solid #000 !important;
+    background:#fff !important;
+    color:#000 !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+  }
+  .tour-summary-table th{
+    font-size:13px !important;
+    font-weight:900 !important;
+    text-transform:none !important;
+    letter-spacing:0 !important;
+  }
 
-  .lf-badge{ border:1px solid #60a5fa !important; color:#1d4ed8 !important; }
+  /* LF Badge: plain text (kein Chip-Look) */
+  .lf-badge{
+    border:none !important;
+    background:transparent !important;
+    color:#000 !important;
+    padding:0 !important;
+    font-size:14px !important;
+    font-weight:900 !important;
+  }
+
+  /* Hover/Interaktion egal im Print */
+  .tour-row:hover td{ background:#fff !important; }
 }
 </style>
 </head>
@@ -713,7 +768,9 @@ function renderTourSummary(list, tour){
   const dayLabel = days.length ? days.join("/") : "";
 
   $('#tourSummaryTitle').textContent = dayLabel ? `${tour} – ${dayLabel}` : `${tour}`;
-  $('#tourSummaryMeta').textContent  = `${list.length} ${list.length===1?'Kunde':'Kunden'} • Klick = CSB suchen`;
+
+  /* ✅ du willst diesen Text nirgends sehen -> leer lassen */
+  $('#tourSummaryMeta').textContent  = "";
 
   const sorted = [...list].sort((a,b)=>{
     const lfa = (a.lf_map && a.lf_map[tour]) ? a.lf_map[tour] : '';
@@ -958,7 +1015,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Tour-Übersicht hat jetzt einen kleinen Druck-Button + A4 Print-CSS (druckt nur die Übersicht).")
+st.caption("Tour-Übersicht: Meta-Text entfernt • Druck: größer & plain text (nur Übersicht).")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
