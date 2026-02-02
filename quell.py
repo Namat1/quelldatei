@@ -870,26 +870,27 @@ function buildTourClipboardHTML(){
   }
 
   const html = `
-<div style="font-family:Segoe UI,Arial,sans-serif;font-size:12px;">
-  <div style="font-weight:700;margin:0 0 8px 0;">Tour ${escapeHtml(title)}</div>
-  <table style="border-collapse:collapse;border:1px solid #111;">
+<div style="font-family:Segoe UI,Arial,sans-serif;font-size:10px;line-height:1.15;">
+  <div style="font-weight:700;margin:0 0 4px 0;font-size:10px;">Tour ${escapeHtml(title)}</div>
+
+  <table style="border-collapse:collapse;border:1px solid #222;">
     <thead>
       <tr>
-        <th style="border:1px solid #111;padding:4px 6px;text-align:left;background:#f2f2f2;">CSB</th>
-        <th style="border:1px solid #111;padding:4px 6px;text-align:left;background:#f2f2f2;">Name</th>
-        <th style="border:1px solid #111;padding:4px 6px;text-align:left;background:#f2f2f2;">Straße</th>
-        <th style="border:1px solid #111;padding:4px 6px;text-align:left;background:#f2f2f2;">Ort</th>
-        <th style="border:1px solid #111;padding:4px 6px;text-align:left;background:#f2f2f2;">Ladefolge</th>
+        <th style="border:1px solid #222;padding:2px 4px;text-align:left;background:#f2f2f2;white-space:nowrap;">CSB</th>
+        <th style="border:1px solid #222;padding:2px 4px;text-align:left;background:#f2f2f2;">Name</th>
+        <th style="border:1px solid #222;padding:2px 4px;text-align:left;background:#f2f2f2;">Straße</th>
+        <th style="border:1px solid #222;padding:2px 4px;text-align:left;background:#f2f2f2;">Ort</th>
+        <th style="border:1px solid #222;padding:2px 4px;text-align:left;background:#f2f2f2;white-space:nowrap;">Ladefolge</th>
       </tr>
     </thead>
     <tbody>
       ${data.map(r => `
         <tr>
-          <td style="border:1px solid #111;padding:4px 6px;white-space:nowrap;">${escapeHtml(r.csb)}</td>
-          <td style="border:1px solid #111;padding:4px 6px;">${escapeHtml(r.name)}</td>
-          <td style="border:1px solid #111;padding:4px 6px;">${escapeHtml(r.str)}</td>
-          <td style="border:1px solid #111;padding:4px 6px;">${escapeHtml(r.ort)}</td>
-          <td style="border:1px solid #111;padding:4px 6px;white-space:nowrap;">${escapeHtml(r.lf)}</td>
+          <td style="border:1px solid #222;padding:2px 4px;white-space:nowrap;">${escapeHtml(r.csb)}</td>
+          <td style="border:1px solid #222;padding:2px 4px;">${escapeHtml(r.name)}</td>
+          <td style="border:1px solid #222;padding:2px 4px;">${escapeHtml(r.str)}</td>
+          <td style="border:1px solid #222;padding:2px 4px;">${escapeHtml(r.ort)}</td>
+          <td style="border:1px solid #222;padding:2px 4px;white-space:nowrap;">${escapeHtml(r.lf)}</td>
         </tr>
       `).join('')}
     </tbody>
@@ -898,6 +899,7 @@ function buildTourClipboardHTML(){
 
   return html;
 }
+
 
 function buildTourClipboardPlain(){
   const title = ($('#tourSummaryTitle').textContent || '').trim();
