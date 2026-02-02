@@ -832,7 +832,8 @@ function renderTourSummary(list, tour){
 
 /* ===================== */
 /* COPY: echte Tabelle (text/html + text/plain fallback) */
-/* - ULTRA klein, mit SAP                               */
+/* - ULTRA klein, andere Schrift (Arial Narrow/Calibri)  */
+/* - SAP mit drin                                        */
 /* ===================== */
 
 function cleanCell(s){
@@ -871,31 +872,40 @@ function buildTourClipboardHTML(){
     });
   }
 
-  // ✅ ULTRA kompakt: 6.5pt Font, minimal Padding, dünne Linien (Outlook/Word)
-  const html = `
-<div style="font-family:Segoe UI,Arial,sans-serif;font-size:6.5pt;line-height:1.0;">
-  <div style="font-weight:700;margin:0 0 2px 0;font-size:6.5pt;">Tour ${escapeHtml(title)}</div>
+  const fontStack = "'Arial Narrow', Calibri, Arial, Tahoma, sans-serif";
 
-  <table style="border-collapse:collapse;border:0.5pt solid #222;font-size:6.5pt;line-height:1.0;">
+  // ✅ ULTRA kompakt (Office): pt statt px, sehr wenig Padding, sehr dünne Linien
+  const html = `
+<div style="font-family:${fontStack};
+            font-size:6pt; line-height:1.0;
+            mso-line-height-rule:exactly;
+            -webkit-text-size-adjust:100%;">
+  <div style="font-weight:700;margin:0 0 2px 0;font-size:6pt;">
+    Tour ${escapeHtml(title)}
+  </div>
+
+  <table style="border-collapse:collapse;border:0.25pt solid #222;
+                font-family:${fontStack};
+                font-size:6pt; line-height:1.0;">
     <thead>
       <tr>
-        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;white-space:nowrap;">CSB</th>
-        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;white-space:nowrap;">SAP</th>
-        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;">Name</th>
-        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;">Straße</th>
-        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;">Ort</th>
-        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;white-space:nowrap;">Ladefolge</th>
+        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;white-space:nowrap;">CSB</th>
+        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;white-space:nowrap;">SAP</th>
+        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;">Name</th>
+        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;">Straße</th>
+        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;">Ort</th>
+        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;white-space:nowrap;">Ladefolge</th>
       </tr>
     </thead>
     <tbody>
       ${data.map(r => `
         <tr>
-          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;white-space:nowrap;">${escapeHtml(r.csb)}</td>
-          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;white-space:nowrap;">${escapeHtml(r.sap)}</td>
-          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;">${escapeHtml(r.name)}</td>
-          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;">${escapeHtml(r.str)}</td>
-          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;">${escapeHtml(r.ort)}</td>
-          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;white-space:nowrap;">${escapeHtml(r.lf)}</td>
+          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;white-space:nowrap;">${escapeHtml(r.csb)}</td>
+          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;white-space:nowrap;">${escapeHtml(r.sap)}</td>
+          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;">${escapeHtml(r.name)}</td>
+          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;">${escapeHtml(r.str)}</td>
+          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;">${escapeHtml(r.ort)}</td>
+          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;white-space:nowrap;">${escapeHtml(r.lf)}</td>
         </tr>
       `).join('')}
     </tbody>
@@ -1192,7 +1202,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: echte HTML-Tabelle (ULTRA klein, mit SAP) + TSV Fallback.")
+st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: echte HTML-Tabelle (Arial Narrow/Calibri, 6pt) + TSV Fallback.")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
