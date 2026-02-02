@@ -509,7 +509,7 @@ a.addr-chip{
             <div class="tour-summary-meta" id="tourSummaryMeta"></div>
           </div>
           <div class="tour-summary-actions">
-            <button class="print-btn" id="btnCopyTour" title="Tour als Tabelle kopieren (Outlook/Teams/Word)">Kopieren</button>
+            <button class="print-btn" id="btnCopyTour" title="Tour als Tabelle kopieren">Kopieren</button>
             <button class="print-btn" id="btnPrintTour" title="Tour-Übersicht drucken (A4)">Drucken</button>
           </div>
         </div>
@@ -568,7 +568,6 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 
 let allCustomers = [];
 let prevQuery = null;
-let currentTourNumber = null;
 
 const DIAL_SCHEME = 'callto';
 
@@ -742,7 +741,6 @@ function closeTourSummary(){
   $('#tourSummaryTitle').textContent='';
   $('#tourSummaryMeta').textContent='';
   $('#tourSummaryBody').innerHTML='';
-  currentTourNumber = null;
 }
 
 function lfSortKey(lf){
@@ -761,8 +759,6 @@ function renderTourSummary(list, tour){
     closeTourSummary();
     return;
   }
-
-  currentTourNumber = String(tour).trim();
 
   // Wochentag(e) für diese Tour
   const daySet = new Set();
@@ -831,9 +827,9 @@ function renderTourSummary(list, tour){
 }
 
 /* ===================== */
-/* COPY: echte Tabelle (text/html + text/plain fallback) */
-/* - ULTRA klein, andere Schrift (Arial Narrow/Calibri)  */
-/* - SAP mit drin                                        */
+/* COPY: echte Tabelle (funktioniert auch bei file://) */
+/* - Schrift wieder "normal/größer" (wie du willst) */
+/* - SAP mit drin */
 /* ===================== */
 
 function cleanCell(s){
@@ -872,40 +868,47 @@ function buildTourClipboardHTML(){
     });
   }
 
-  const fontStack = "'Arial Narrow', Calibri, Arial, Tahoma, sans-serif";
+  // ✅ Wunsch: Schriftart wieder "normal/größer"
+  // -> Office-safe + gut lesbar
+  const fontFace = "Calibri, Arial, Segoe UI, Tahoma, sans-serif";
+  const cellFont = `font-family:${fontFace};font-size:9pt;line-height:1.15;mso-line-height-rule:exactly;`;
 
-  // ✅ ULTRA kompakt (Office): pt statt px, sehr wenig Padding, sehr dünne Linien
+  const th = (txt) =>
+    `<th style="border:0.5pt solid #222;padding:2pt 4pt;text-align:left;background:#f2f2f2;white-space:nowrap;${cellFont}">
+      ${escapeHtml(txt)}
+     </th>`;
+
+  const td = (txt, nowrap=false) =>
+    `<td style="border:0.5pt solid #222;padding:2pt 4pt;${nowrap?'white-space:nowrap;':''}${cellFont}">
+      ${escapeHtml(txt)}
+     </td>`;
+
   const html = `
-<div style="font-family:${fontStack};
-            font-size:6pt; line-height:1.0;
-            mso-line-height-rule:exactly;
-            -webkit-text-size-adjust:100%;">
-  <div style="font-weight:700;margin:0 0 2px 0;font-size:6pt;">
+<div style="${cellFont}-webkit-text-size-adjust:100%;">
+  <div style="margin:0 0 6pt 0;${cellFont}font-weight:700;">
     Tour ${escapeHtml(title)}
   </div>
 
-  <table style="border-collapse:collapse;border:0.25pt solid #222;
-                font-family:${fontStack};
-                font-size:6pt; line-height:1.0;">
+  <table style="border-collapse:collapse;border:0.5pt solid #222;${cellFont}">
     <thead>
       <tr>
-        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;white-space:nowrap;">CSB</th>
-        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;white-space:nowrap;">SAP</th>
-        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;">Name</th>
-        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;">Straße</th>
-        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;">Ort</th>
-        <th style="border:0.25pt solid #222;padding:0.25pt 1.5pt;text-align:left;background:#f2f2f2;white-space:nowrap;">Ladefolge</th>
+        ${th("CSB")}
+        ${th("SAP")}
+        ${th("Name")}
+        ${th("Straße")}
+        ${th("Ort")}
+        ${th("Ladefolge")}
       </tr>
     </thead>
     <tbody>
       ${data.map(r => `
         <tr>
-          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;white-space:nowrap;">${escapeHtml(r.csb)}</td>
-          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;white-space:nowrap;">${escapeHtml(r.sap)}</td>
-          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;">${escapeHtml(r.name)}</td>
-          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;">${escapeHtml(r.str)}</td>
-          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;">${escapeHtml(r.ort)}</td>
-          <td style="border:0.25pt solid #222;padding:0.25pt 1.5pt;white-space:nowrap;">${escapeHtml(r.lf)}</td>
+          ${td(r.csb, true)}
+          ${td(r.sap, true)}
+          ${td(r.name)}
+          ${td(r.str)}
+          ${td(r.ort)}
+          ${td(r.lf, true)}
         </tr>
       `).join('')}
     </tbody>
@@ -923,13 +926,14 @@ function buildTourClipboardPlain(){
   for(const tr of rows){
     const tds = tr.querySelectorAll('td');
     if(!tds || tds.length < 6) continue;
-    const csb  = cleanCell(tds[0].textContent);
-    const sap  = cleanCell(tds[1].textContent);
-    const name = cleanCell(tds[2].textContent);
-    const str  = cleanCell(tds[3].textContent);
-    const ort  = cleanCell(tds[4].textContent);
-    const lf   = cleanCell(tds[5].textContent);
-    out += `${csb}\\t${sap}\\t${name}\\t${str}\\t${ort}\\t${lf}\\n`;
+    out += [
+      cleanCell(tds[0].textContent),
+      cleanCell(tds[1].textContent),
+      cleanCell(tds[2].textContent),
+      cleanCell(tds[3].textContent),
+      cleanCell(tds[4].textContent),
+      cleanCell(tds[5].textContent),
+    ].join('\\t') + '\\n';
   }
   return out.trim();
 }
@@ -938,6 +942,7 @@ async function copyTourTableToClipboard(){
   const html = buildTourClipboardHTML();
   const text = buildTourClipboardPlain();
 
+  // 1) Modern (funktioniert zuverlässig nur in secure context)
   try{
     if(navigator.clipboard && window.isSecureContext && window.ClipboardItem){
       const item = new ClipboardItem({
@@ -947,29 +952,43 @@ async function copyTourTableToClipboard(){
       await navigator.clipboard.write([item]);
       return true;
     }
-  }catch(e){}
+  }catch(e){ /* ignore */ }
 
+  // 2) ✅ Fallback: Rich copy via execCommand (funktioniert auch bei file://)
   try{
-    if(navigator.clipboard && window.isSecureContext){
+    const holder = document.createElement('div');
+    holder.setAttribute('contenteditable', 'true');
+    holder.style.position = 'fixed';
+    holder.style.left = '-9999px';
+    holder.style.top = '0';
+    holder.style.opacity = '0';
+    holder.innerHTML = html;
+    document.body.appendChild(holder);
+
+    const range = document.createRange();
+    range.selectNodeContents(holder);
+
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const ok = document.execCommand('copy');
+
+    sel.removeAllRanges();
+    document.body.removeChild(holder);
+
+    if(ok) return true;
+  }catch(e){ /* ignore */ }
+
+  // 3) letzter Fallback: Plain Text
+  try{
+    if(navigator.clipboard){
       await navigator.clipboard.writeText(text);
       return true;
     }
-  }catch(e){}
+  }catch(e){ /* ignore */ }
 
-  try{
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.setAttribute('readonly','');
-    ta.style.position = 'fixed';
-    ta.style.left = '-9999px';
-    document.body.appendChild(ta);
-    ta.select();
-    const ok = document.execCommand('copy');
-    document.body.removeChild(ta);
-    return ok;
-  }catch(e){
-    return false;
-  }
+  return false;
 }
 
 async function onCopyTour(){
@@ -1202,7 +1221,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: echte HTML-Tabelle (Arial Narrow/Calibri, 6pt) + TSV Fallback.")
+st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: echte HTML-Tabelle (robust auch bei file://, Schrift normal/größer).")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
