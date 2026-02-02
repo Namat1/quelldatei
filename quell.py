@@ -509,7 +509,7 @@ a.addr-chip{
             <div class="tour-summary-meta" id="tourSummaryMeta"></div>
           </div>
           <div class="tour-summary-actions">
-            <button class="print-btn" id="btnCopyTour" title="Tour inkl. Kunden in Zwischenablage kopieren">Kopieren</button>
+            <button class="print-btn" id="btnCopyTour" title="Tour als Tabelle kopieren (Outlook/Teams/Word)">Kopieren</button>
             <button class="print-btn" id="btnPrintTour" title="Tour-Übersicht drucken (A4)">Drucken</button>
           </div>
         </div>
@@ -831,8 +831,9 @@ function renderTourSummary(list, tour){
 }
 
 /* ===================== */
-/* COPY: Tour in Clipboard (schön formatiert, Teams/Outlook) */
+/* COPY: echte Tabelle (text/html + text/plain fallback) */
 /* ===================== */
+
 function cleanCell(s){
   return String(s ?? '')
     .replace(/\\r?\\n/g,' ')
@@ -840,25 +841,20 @@ function cleanCell(s){
     .replace(/\\s+/g,' ')
     .trim();
 }
-function shorten(s, max){
-  s = cleanCell(s);
-  if(max <= 3) return s.slice(0, max);
-  return s.length > max ? (s.slice(0, max-1) + '…') : s;
-}
-function padRight(s, w){
-  s = String(s ?? '');
-  if(s.length >= w) return s;
-  return s + ' '.repeat(w - s.length);
+
+function escapeHtml(s){
+  return String(s ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
 }
 
-/* prettified text for Teams/Outlook: monospace inside ``` ... ``` */
-function buildTourClipboardText(){
-  if(!currentTourNumber) return '';
-
-  const title = ($('#tourSummaryTitle').textContent || '').trim(); // z.B. "1077 – Montag"
+function buildTourClipboardHTML(){
+  const title = ($('#tourSummaryTitle').textContent || '').trim();
   const rows  = Array.from(document.querySelectorAll('#tourSummaryBody tr'));
 
-  // Daten sammeln
   const data = [];
   for(const tr of rows){
     const tds = tr.querySelectorAll('td');
@@ -873,54 +869,69 @@ function buildTourClipboardText(){
     });
   }
 
-  // Spaltenbreiten dynamisch (mit Caps)
-  const caps = { csb:6, name:28, str:28, ort:18, lf:10 };
+  const html = `
+<div style="font-family:Segoe UI,Arial,sans-serif;font-size:12px;">
+  <div style="font-weight:700;margin:0 0 8px 0;">Tour ${escapeHtml(title)}</div>
+  <table style="border-collapse:collapse;border:1px solid #111;">
+    <thead>
+      <tr>
+        <th style="border:1px solid #111;padding:4px 6px;text-align:left;background:#f2f2f2;">CSB</th>
+        <th style="border:1px solid #111;padding:4px 6px;text-align:left;background:#f2f2f2;">Name</th>
+        <th style="border:1px solid #111;padding:4px 6px;text-align:left;background:#f2f2f2;">Straße</th>
+        <th style="border:1px solid #111;padding:4px 6px;text-align:left;background:#f2f2f2;">Ort</th>
+        <th style="border:1px solid #111;padding:4px 6px;text-align:left;background:#f2f2f2;">Ladefolge</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${data.map(r => `
+        <tr>
+          <td style="border:1px solid #111;padding:4px 6px;white-space:nowrap;">${escapeHtml(r.csb)}</td>
+          <td style="border:1px solid #111;padding:4px 6px;">${escapeHtml(r.name)}</td>
+          <td style="border:1px solid #111;padding:4px 6px;">${escapeHtml(r.str)}</td>
+          <td style="border:1px solid #111;padding:4px 6px;">${escapeHtml(r.ort)}</td>
+          <td style="border:1px solid #111;padding:4px 6px;white-space:nowrap;">${escapeHtml(r.lf)}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+</div>`.trim();
 
-  const w = {
-    csb:  Math.min(caps.csb,  Math.max(3,  ...data.map(r=>r.csb.length))),
-    name: Math.min(caps.name, Math.max(4,  ...data.map(r=>r.name.length))),
-    str:  Math.min(caps.str,  Math.max(6,  ...data.map(r=>r.str.length))),
-    ort:  Math.min(caps.ort,  Math.max(3,  ...data.map(r=>r.ort.length))),
-    lf:   Math.min(caps.lf,   Math.max(8,  ...data.map(r=>r.lf.length))),
-  };
-
-  const header =
-    padRight('CSB', w.csb) + '  ' +
-    padRight('Name', w.name) + '  ' +
-    padRight('Straße', w.str) + '  ' +
-    padRight('Ort', w.ort) + '  ' +
-    padRight('Ladefolge', w.lf);
-
-  const sep =
-    '-'.repeat(w.csb) + '  ' +
-    '-'.repeat(w.name) + '  ' +
-    '-'.repeat(w.str) + '  ' +
-    '-'.repeat(w.ort) + '  ' +
-    '-'.repeat(w.lf);
-
-  const lines = data.map(r =>
-    padRight(shorten(r.csb,  w.csb),  w.csb)  + '  ' +
-    padRight(shorten(r.name, w.name), w.name) + '  ' +
-    padRight(shorten(r.str,  w.str),  w.str)  + '  ' +
-    padRight(shorten(r.ort,  w.ort),  w.ort)  + '  ' +
-    padRight(shorten(r.lf,   w.lf),   w.lf)
-  );
-
-  return [
-    `Tour  ${title}`,
-    '',
-    '```',
-    header,
-    sep,
-    ...lines,
-    '```'
-  ].join('\\n');
+  return html;
 }
 
-async function copyTextToClipboard(text){
-  if(!text) return false;
+function buildTourClipboardPlain(){
+  const title = ($('#tourSummaryTitle').textContent || '').trim();
+  const rows  = Array.from(document.querySelectorAll('#tourSummaryBody tr'));
 
-  // Modern API (Secure Context)
+  let out = `Tour\\t${title}\\nCSB\\tName\\tStraße\\tOrt\\tLadefolge\\n`;
+  for(const tr of rows){
+    const tds = tr.querySelectorAll('td');
+    if(!tds || tds.length < 6) continue;
+    const csb  = cleanCell(tds[0].textContent);
+    const name = cleanCell(tds[2].textContent);
+    const str  = cleanCell(tds[3].textContent);
+    const ort  = cleanCell(tds[4].textContent);
+    const lf   = cleanCell(tds[5].textContent);
+    out += `${csb}\\t${name}\\t${str}\\t${ort}\\t${lf}\\n`;
+  }
+  return out.trim();
+}
+
+async function copyTourTableToClipboard(){
+  const html = buildTourClipboardHTML();
+  const text = buildTourClipboardPlain();
+
+  try{
+    if(navigator.clipboard && window.isSecureContext && window.ClipboardItem){
+      const item = new ClipboardItem({
+        "text/html": new Blob([html], { type: "text/html" }),
+        "text/plain": new Blob([text], { type: "text/plain" }),
+      });
+      await navigator.clipboard.write([item]);
+      return true;
+    }
+  }catch(e){}
+
   try{
     if(navigator.clipboard && window.isSecureContext){
       await navigator.clipboard.writeText(text);
@@ -928,7 +939,6 @@ async function copyTextToClipboard(text){
     }
   }catch(e){}
 
-  // Fallback
   try{
     const ta = document.createElement('textarea');
     ta.value = text;
@@ -948,11 +958,10 @@ async function copyTextToClipboard(text){
 async function onCopyTour(){
   if($('#tourSummary').style.display==='none') return;
 
-  const txt = buildTourClipboardText();
   const btn = $('#btnCopyTour');
   const oldText = btn.textContent;
 
-  const ok = await copyTextToClipboard(txt);
+  const ok = await copyTourTableToClipboard();
 
   if(ok){
     btn.textContent = 'Kopiert ✓';
@@ -1176,7 +1185,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: sauber formatiert als Codeblock (Teams/Outlook).")
+st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: echte Tabelle (HTML) + TSV Fallback.")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
@@ -1280,7 +1289,6 @@ def build_winter_map(excel_file_obj) -> dict:
     except Exception:
         return out
 
-    # Spalte B: Tour (idx 1), Spalte C: LA.F (idx 2), Spalte D: KD.NR (idx 3)
     for _, row in dfw.iterrows():
         kd = normalize_digits_py(row.iloc[3] if len(row) > 3 else "")
         tour = normalize_digits_py(row.iloc[1] if len(row) > 1 else "")
