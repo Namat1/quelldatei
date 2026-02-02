@@ -391,8 +391,6 @@ a.addr-chip{
   size: A4 landscape;
   margin: 8mm;
 }
-
-/* >>>>> UPDATED PRINT BLOCK (nur Druck ändern) <<<<< */
 @media print{
   html,body{ background:#fff !important; }
   .page{ display:block !important; }
@@ -401,56 +399,21 @@ a.addr-chip{
 
   /* Alles ausblenden, nur Tour-Übersicht drucken */
   .header, .searchbar, .table-section{ display:none !important; }
-  #tourSummary{
-    display:block !important;
-    margin:0 !important;
-    border:0 !important;
-    border-radius:0 !important;
-    box-shadow:none !important;
-  }
+  #tourSummary{ display:block !important; margin:0 !important; border:1px solid #cbd5e1 !important; border-radius:0 !important; box-shadow:none !important; }
 
   /* Buttons nicht drucken */
   .print-btn{ display:none !important; }
 
-  /* Druck-Typografie: deutlich größer */
-  .tour-summary-head{ padding:10px 10px !important; }
-  .tour-summary-title{ font-size:18px !important; font-weight:900 !important; }
-  .tour-summary-meta{ font-size:13px !important; }
+  /* Print typografie kompakt */
+  .tour-summary-head{ padding:6px 6px !important; }
+  .tour-summary-title{ font-size:11px !important; }
+  .tour-summary-meta{ font-size:9px !important; }
 
-  .tour-summary-table{ font-size:14px !important; }
-  .tour-summary-table th{
-    font-size:13px !important;
-    padding:8px 10px !important;
-    background:#fff !important;
-    border-bottom:2px solid #000 !important;
-    color:#000 !important;
-  }
-  .tour-summary-table td{
-    font-size:14px !important;
-    padding:8px 10px !important;
-    border-bottom:1px solid #999 !important;
-    color:#000 !important;
-  }
+  .tour-summary-table{ font-size:9px !important; }
+  .tour-summary-table th{ font-size:8px !important; padding:3px 4px !important; }
+  .tour-summary-table td{ padding:3px 4px !important; }
 
-  /* Nur Druck: Spalten ausblenden (CSB/SAP/Name) */
-  .tour-summary-table th:nth-child(1),
-  .tour-summary-table td:nth-child(1),
-  .tour-summary-table th:nth-child(2),
-  .tour-summary-table td:nth-child(2),
-  .tour-summary-table th:nth-child(3),
-  .tour-summary-table td:nth-child(3){
-    display:none !important;
-  }
-
-  /* Druck: LF-Badge als normaler Text (gut lesbar) */
-  .lf-badge{
-    background:transparent !important;
-    border:0 !important;
-    padding:0 !important;
-    color:#000 !important;
-    font-weight:900 !important;
-    font-size:14px !important;
-  }
+  .lf-badge{ border:1px solid #60a5fa !important; color:#1d4ed8 !important; }
 }
 </style>
 </head>
@@ -499,7 +462,7 @@ a.addr-chip{
                 <th>Name</th>
                 <th>Straße</th>
                 <th>Ort</th>
-                <th>Ladefolge</th>
+                <th>LF</th>
               </tr>
             </thead>
             <tbody id="tourSummaryBody"></tbody>
@@ -724,6 +687,7 @@ function lfSortKey(lf){
   return m ? parseInt(m[1],10) : 999999;
 }
 
+/* ✅ Titel: nur Tournummer + Wochentag(e) */
 function renderTourSummary(list, tour){
   const wrap = $('#tourSummary');
   const body = $('#tourSummaryBody');
@@ -734,7 +698,21 @@ function renderTourSummary(list, tour){
     return;
   }
 
-  $('#tourSummaryTitle').textContent = `Tour ${tour} – Übersicht`;
+  // Wochentag(e) für diese Tour ermitteln (aus liefertag in k.touren)
+  const daySet = new Set();
+  for(const k of list){
+    for(const t of (k.touren||[])){
+      if(String(t.tournummer||'').trim() === String(tour).trim()){
+        if(t.liefertag) daySet.add(String(t.liefertag).trim());
+      }
+    }
+  }
+
+  const dayOrder = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
+  const days = Array.from(daySet).sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b));
+  const dayLabel = days.length ? days.join("/") : "";
+
+  $('#tourSummaryTitle').textContent = dayLabel ? `${tour} – ${dayLabel}` : `${tour}`;
   $('#tourSummaryMeta').textContent  = `${list.length} ${list.length===1?'Kunde':'Kunden'} • Klick = CSB suchen`;
 
   const sorted = [...list].sort((a,b)=>{
@@ -1084,7 +1062,7 @@ def build_winter_map(excel_file_obj) -> dict:
     except Exception:
         return out
 
-    # Spalte B = Tour (Index 1), Spalte C = LA.F (Index 2), Spalte D = KD.NR (Index 3)
+    # Spalte B: Tour (idx 1), Spalte C: LA.F (idx 2), Spalte D: KD.NR (idx 3)
     for _, row in dfw.iterrows():
         kd = normalize_digits_py(row.iloc[3] if len(row) > 3 else "")
         tour = normalize_digits_py(row.iloc[1] if len(row) > 1 else "")
