@@ -832,7 +832,7 @@ function renderTourSummary(list, tour){
 
 /* ===================== */
 /* COPY: echte Tabelle (text/html + text/plain fallback) */
-/* - noch kleiner, mit SAP-Spalte                           */
+/* - ULTRA klein, mit SAP                               */
 /* ===================== */
 
 function cleanCell(s){
@@ -871,31 +871,31 @@ function buildTourClipboardHTML(){
     });
   }
 
-  // ✅ EXTRA kompakt: 9px Font, minimal Padding, dünnere Linien
+  // ✅ ULTRA kompakt: 6.5pt Font, minimal Padding, dünne Linien (Outlook/Word)
   const html = `
-<div style="font-family:Segoe UI,Arial,sans-serif;font-size:9px;line-height:1.1;">
-  <div style="font-weight:700;margin:0 0 3px 0;font-size:9px;">Tour ${escapeHtml(title)}</div>
+<div style="font-family:Segoe UI,Arial,sans-serif;font-size:6.5pt;line-height:1.0;">
+  <div style="font-weight:700;margin:0 0 2px 0;font-size:6.5pt;">Tour ${escapeHtml(title)}</div>
 
-  <table style="border-collapse:collapse;border:0.75px solid #222;">
+  <table style="border-collapse:collapse;border:0.5pt solid #222;font-size:6.5pt;line-height:1.0;">
     <thead>
       <tr>
-        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;white-space:nowrap;">CSB</th>
-        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;white-space:nowrap;">SAP</th>
-        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;">Name</th>
-        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;">Straße</th>
-        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;">Ort</th>
-        <th style="border:0.75px solid #222;padding:1px 3px;text-align:left;background:#f2f2f2;white-space:nowrap;">Ladefolge</th>
+        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;white-space:nowrap;">CSB</th>
+        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;white-space:nowrap;">SAP</th>
+        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;">Name</th>
+        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;">Straße</th>
+        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;">Ort</th>
+        <th style="border:0.5pt solid #222;padding:0.5pt 2pt;text-align:left;background:#f2f2f2;white-space:nowrap;">Ladefolge</th>
       </tr>
     </thead>
     <tbody>
       ${data.map(r => `
         <tr>
-          <td style="border:0.75px solid #222;padding:1px 3px;white-space:nowrap;">${escapeHtml(r.csb)}</td>
-          <td style="border:0.75px solid #222;padding:1px 3px;white-space:nowrap;">${escapeHtml(r.sap)}</td>
-          <td style="border:0.75px solid #222;padding:1px 3px;">${escapeHtml(r.name)}</td>
-          <td style="border:0.75px solid #222;padding:1px 3px;">${escapeHtml(r.str)}</td>
-          <td style="border:0.75px solid #222;padding:1px 3px;">${escapeHtml(r.ort)}</td>
-          <td style="border:0.75px solid #222;padding:1px 3px;white-space:nowrap;">${escapeHtml(r.lf)}</td>
+          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;white-space:nowrap;">${escapeHtml(r.csb)}</td>
+          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;white-space:nowrap;">${escapeHtml(r.sap)}</td>
+          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;">${escapeHtml(r.name)}</td>
+          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;">${escapeHtml(r.str)}</td>
+          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;">${escapeHtml(r.ort)}</td>
+          <td style="border:0.5pt solid #222;padding:0.5pt 2pt;white-space:nowrap;">${escapeHtml(r.lf)}</td>
         </tr>
       `).join('')}
     </tbody>
@@ -1192,7 +1192,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: echte Tabelle (HTML) mit SAP + TSV Fallback (extra kompakt).")
+st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: echte HTML-Tabelle (ULTRA klein, mit SAP) + TSV Fallback.")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
@@ -1296,6 +1296,7 @@ def build_winter_map(excel_file_obj) -> dict:
     except Exception:
         return out
 
+    # Spalte B: Tour (idx 1), Spalte C: LA.F (idx 2), Spalte D: KD.NR (idx 3)
     for _, row in dfw.iterrows():
         kd = normalize_digits_py(row.iloc[3] if len(row) > 3 else "")
         tour = normalize_digits_py(row.iloc[1] if len(row) > 1 else "")
