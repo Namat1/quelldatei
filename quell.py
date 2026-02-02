@@ -317,7 +317,6 @@ a.addr-chip{
   font-size:10px;
   color:#0f172a;
 }
-/* Meta bleibt im DOM, aber unsichtbar */
 .tour-summary-meta{ display:none !important; }
 
 .tour-summary-actions{ display:flex; align-items:center; gap:6px; }
@@ -333,8 +332,6 @@ a.addr-chip{
   line-height:1;
 }
 .print-btn:hover{ background:#e6f0ff; }
-
-/* ✅ Copy Feedback */
 .print-btn.ok{
   border-color:#86efac;
   background:#ecfdf5;
@@ -404,10 +401,8 @@ a.addr-chip{
     background:#fff !important;
   }
 
-  /* Alles ausblenden, nur Tour-Übersicht drucken */
   .header, .searchbar, .table-section{ display:none !important; }
 
-  /* PRINT: Plain text, größer, KEINE Schatten/Verläufe/Boxen */
   #tourSummary{
     display:block !important;
     margin:0 !important;
@@ -422,10 +417,8 @@ a.addr-chip{
     padding:0 0 6mm 0 !important;
   }
 
-  /* Buttons nicht drucken */
   .print-btn{ display:none !important; }
 
-  /* Titel groß */
   .tour-summary-title{
     font-size:18px !important;
     font-weight:900 !important;
@@ -433,7 +426,6 @@ a.addr-chip{
   }
   .tour-summary-meta{ display:none !important; }
 
-  /* Tabelle: plain, groß, gut lesbar */
   .tour-summary-tablewrap{ padding:0 !important; }
   .tour-summary-table{
     font-size:14px !important;
@@ -457,7 +449,6 @@ a.addr-chip{
     letter-spacing:0 !important;
   }
 
-  /* LF Badge: plain text */
   .lf-badge{
     border:none !important;
     background:transparent !important;
@@ -469,10 +460,10 @@ a.addr-chip{
 
   .tour-row:hover td{ background:#fff !important; }
 
-  /* ✅ PRINT: SAP-Spalte ausblenden */
+  /* PRINT: SAP-Spalte ausblenden */
   .tour-summary-table th:nth-child(2),
   .tour-summary-table td:nth-child(2){
-    display:none !important; /* SAP */
+    display:none !important;
   }
 }
 </style>
@@ -509,7 +500,7 @@ a.addr-chip{
             <div class="tour-summary-meta" id="tourSummaryMeta"></div>
           </div>
           <div class="tour-summary-actions">
-            <button class="print-btn" id="btnCopyTour" title="Tour als Tabelle kopieren">Kopieren</button>
+            <button class="print-btn" id="btnCopyTour" title="Tour als Tabelle (Outlook) kopieren">Kopieren</button>
             <button class="print-btn" id="btnPrintTour" title="Tour-Übersicht drucken (A4)">Drucken</button>
           </div>
         </div>
@@ -568,7 +559,6 @@ const el = (t,c,txt)=>{const n=document.createElement(t); if(c) n.className=c; i
 
 let allCustomers = [];
 let prevQuery = null;
-
 const DIAL_SCHEME = 'callto';
 
 function setResultsMeta(text){
@@ -827,9 +817,7 @@ function renderTourSummary(list, tour){
 }
 
 /* ===================== */
-/* COPY: echte Tabelle (funktioniert auch bei file://) */
-/* - verbessert für Outlook: mso-* + pt */
-/* - SAP mit drin */
+/* COPY: Outlook-optimiert */
 /* ===================== */
 
 function cleanCell(s){
@@ -839,7 +827,6 @@ function cleanCell(s){
     .replace(/\\s+/g,' ')
     .trim();
 }
-
 function escapeHtml(s){
   return String(s ?? '')
     .replace(/&/g,'&amp;')
@@ -857,7 +844,6 @@ function buildTourClipboardHTML(){
   for(const tr of rows){
     const tds = tr.querySelectorAll('td');
     if(!tds || tds.length < 6) continue;
-
     data.push({
       csb:  cleanCell(tds[0].textContent),
       sap:  cleanCell(tds[1].textContent),
@@ -868,35 +854,42 @@ function buildTourClipboardHTML(){
     });
   }
 
-  // ✅ Outlook/Word: mso-* + pt ist "gewichtiger" bei STRG+V
+  // ✅ Wenn du es NOCH kleiner willst: 7pt (aber 8pt ist meist Outlook-sicher)
+  const pt = "8pt";
   const fontFace = "Calibri, Arial, Segoe UI, Tahoma, sans-serif";
   const cellFont = [
     `font-family:${fontFace}`,
-    `font-size:8pt`,
+    `font-size:${pt}`,
     `line-height:1.05`,
     `mso-line-height-rule:exactly`,
-    `mso-ansi-font-size:8.0pt`,
-    `mso-bidi-font-size:8.0pt`,
-    `mso-fareast-font-size:8.0pt`
+    `mso-ansi-font-size:${pt}`,
+    `mso-bidi-font-size:${pt}`,
+    `mso-fareast-font-size:${pt}`
   ].join(';') + ';';
+
+  // Span in jeder Zelle -> Outlook hält sich eher daran
+  const span = (txt) => `<span style="${cellFont}">${escapeHtml(txt)}</span>`;
 
   const th = (txt) =>
     `<th style="border:0.5pt solid #222;padding:2pt 4pt;text-align:left;background:#f2f2f2;white-space:nowrap;${cellFont}">
-      ${escapeHtml(txt)}
+      ${span(txt)}
      </th>`;
 
   const td = (txt, nowrap=false) =>
     `<td style="border:0.5pt solid #222;padding:2pt 4pt;${nowrap?'white-space:nowrap;':''}${cellFont}">
-      ${escapeHtml(txt)}
+      ${span(txt)}
      </td>`;
 
-  const html = `
+  // StartFragment/EndFragment ist bei Outlook-Kopieren sehr wichtig
+  return `
+<html><body>
+<!--StartFragment-->
 <div style="${cellFont}-webkit-text-size-adjust:100%;">
   <div style="margin:0 0 6pt 0;${cellFont}font-weight:700;">
-    Tour ${escapeHtml(title)}
+    ${span("Tour " + title)}
   </div>
 
-  <table style="border-collapse:collapse;border:0.5pt solid #222;${cellFont}mso-table-lspace:0pt;mso-table-rspace:0pt;">
+  <table class="MsoTableGrid" style="border-collapse:collapse;border:0.5pt solid #222;${cellFont}mso-table-lspace:0pt;mso-table-rspace:0pt;">
     <thead>
       <tr>
         ${th("CSB")}
@@ -920,9 +913,9 @@ function buildTourClipboardHTML(){
       `).join('')}
     </tbody>
   </table>
-</div>`.trim();
-
-  return html;
+</div>
+<!--EndFragment-->
+</body></html>`.trim();
 }
 
 function buildTourClipboardPlain(){
@@ -949,7 +942,7 @@ async function copyTourTableToClipboard(){
   const html = buildTourClipboardHTML();
   const text = buildTourClipboardPlain();
 
-  // 1) Modern (zuverlässig nur in secure context)
+  // 1) Modern Clipboard (secure context)
   try{
     if(navigator.clipboard && window.isSecureContext && window.ClipboardItem){
       const item = new ClipboardItem({
@@ -961,7 +954,7 @@ async function copyTourTableToClipboard(){
     }
   }catch(e){ /* ignore */ }
 
-  // 2) ✅ Fallback: Rich copy via execCommand (funktioniert auch bei file://)
+  // 2) Fallback execCommand: funktioniert auch bei file://
   try{
     const holder = document.createElement('div');
     holder.setAttribute('contenteditable', 'true');
@@ -1018,6 +1011,8 @@ async function onCopyTour(){
     btn.classList.remove('ok');
   }, 1200);
 }
+
+/* ===================== */
 
 function rowFor(k){
   const tr = document.createElement('tr');
@@ -1169,7 +1164,7 @@ function debounce(fn,d=140){
   };
 }
 
-/* ✅ Druck-spezifische Headline-Umbenennung */
+/* Druck: LF Header */
 function setPrintHeaders(){
   const th = document.getElementById('thLF');
   if(!th) return;
@@ -1228,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 # ===== Streamlit-Wrapper =====
 st.title("Kunden-Suche – V2 (Dispo UI, FIX 1728px ohne horizontal Scroll)")
-st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: HTML-Tabelle mit Outlook-„mso“-Font-Styles (besser bei STRG+V).")
+st.caption("Druck: SAP-Spalte weg • LF-Header im Druck = „Ladefolge“ • Kopieren: Outlook-optimierte HTML-Tabelle (klein bei STRG+V).")
 
 c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
@@ -1332,7 +1327,6 @@ def build_winter_map(excel_file_obj) -> dict:
     except Exception:
         return out
 
-    # Spalte B: Tour (idx 1), Spalte C: LA.F (idx 2), Spalte D: KD.NR (idx 3)
     for _, row in dfw.iterrows():
         kd = normalize_digits_py(row.iloc[3] if len(row) > 3 else "")
         tour = normalize_digits_py(row.iloc[1] if len(row) > 1 else "")
